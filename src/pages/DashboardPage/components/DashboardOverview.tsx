@@ -20,7 +20,7 @@ const DashboardOverview: React.FC = () => {
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [stats, setStats] = useState({
     totalProducts: 0,
-    featuredProducts: 0,
+    digitalFreeProducts: 0,
     totalCategories: 0,
     recentProducts: 0
   });
@@ -29,7 +29,7 @@ const DashboardOverview: React.FC = () => {
 
   useEffect(() => {
     if (products) {
-      const featured = products.filter((p: Product) => p.featured).length;
+      const digitalFree = products.filter((p: Product) => p.type === 'digital' && p.is_free).length;
       const recent = products.filter((p: Product) => {
         const createdAt = new Date(p.created_at);
         const weekAgo = new Date();
@@ -39,7 +39,7 @@ const DashboardOverview: React.FC = () => {
 
       setStats({
         totalProducts: products.length,
-        featuredProducts: featured,
+        digitalFreeProducts: digitalFree,
         totalCategories: categories?.length || 0,
         recentProducts: recent
       });
@@ -145,17 +145,16 @@ const DashboardOverview: React.FC = () => {
         
         <div className="stat-card stat-card-accent">
           <div className="stat-icon">
-            <i className="fas fa-star"></i>
+            <i className="fas fa-gift"></i>
           </div>
           <div className="stat-content">
-            <h3 className="stat-label">Sản phẩm nổi bật</h3>
-            <p className="stat-number">{stats.featuredProducts}</p>
+            <h3 className="stat-label">Digital miễn phí</h3>
+            <p className="stat-number">{stats.digitalFreeProducts}</p>
             <span className="stat-change">
-              {stats.totalProducts > 0 ? Math.round((stats.featuredProducts / stats.totalProducts) * 100) : 0}% tổng số
             </span>
           </div>
           <div className="stat-bg-icon">
-            <i className="fas fa-star"></i>
+            <i className="fas fa-gift"></i>
           </div>
         </div>
         

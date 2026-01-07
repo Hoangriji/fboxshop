@@ -1,24 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useProducts } from '../../../hooks/useProducts';
 import { useCategories } from '../../../hooks/useCategories';
-import { useVirtualScroll } from '../../../hooks/useVirtualScroll';
 import { ProductsService } from '../../../services/firebaseService';
 import ProductFormModal from './ProductFormModal';
 import type { Product } from '../../../types';
 
-const ITEM_HEIGHT = 110;
-const CONTAINER_HEIGHT = 600;
-
 const ProductsManagement: React.FC = () => {
   const { products, loading, mutate } = useProducts();
   const { categories } = useCategories();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'price_high' | 'price_low' | 'name_asc' | 'name_desc'>('newest');
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const categoryDropdownRef = React.useRef<HTMLDivElement>(null);
+  const sortDropdownRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let filtered = products;
@@ -34,20 +33,37 @@ const ProductsManagement: React.FC = () => {
       filtered = filtered.filter(p => p.category === selectedCategory);
     }
 
-    setFilteredProducts(filtered);
-  }, [products, searchQuery, selectedCategory]);
+    // Sort products
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'price_high':
+          return b.price_vnd - a.price_vnd;
+        case 'price_low':
+          return a.price_vnd - b.price_vnd;
+        case 'name_asc':
+          return a.name.localeCompare(b.name);
+        case 'name_desc':
+          return b.name.localeCompare(a.name);
+        default:
+          return 0;
+      }
+    });
 
-  const virtualScroll = useVirtualScroll(filteredProducts, {
-    itemHeight: ITEM_HEIGHT,
-    containerHeight: CONTAINER_HEIGHT,
-    overscan: 5,
-  });
+    setFilteredProducts(sorted);
+  }, [products, searchQuery, selectedCategory, sortBy]);
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
         setCategoryDropdownOpen(false);
+      }
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setSortDropdownOpen(false);
       }
     };
 
@@ -82,6 +98,14 @@ const ProductsManagement: React.FC = () => {
 
   const handleToggleFeatured = async (product: Product) => {
     try {
+      const currentFeaturedCount = products.filter(p => p.featured).length;
+      
+      // Kiểm tra giới hạn 8 sản phẩm featured
+      if (!product.featured && currentFeaturedCount >= 8) {
+        alert('Chỉ được chọn tối đa 8 sản phẩm nổi bật cho carousel!');
+        return;
+      }
+      
       await ProductsService.updateProduct(product.id, {
         featured: !product.featured
       });
@@ -94,6 +118,18 @@ const ProductsManagement: React.FC = () => {
 
   const handleSubmitProduct = async (productData: Partial<Product>) => {
     try {
+      // Kiểm tra giới hạn sản phẩm digital free
+      if (productData.type === 'digital' && productData.is_free) {
+        const currentFreeDigitalCount = products.filter(
+          p => p.type === 'digital' && p.is_free && p.id !== editingProduct?.id
+        ).length;
+        
+        if (currentFreeDigitalCount >= 8) {
+          alert('Chỉ được chọn tối đa 8 sản phẩm digital miễn phí cho carousel!');
+          return;
+        }
+      }
+      
       if (editingProduct) {
         // Update existing product
         await ProductsService.updateProduct(editingProduct.id, productData);
@@ -127,21 +163,11 @@ const ProductsManagement: React.FC = () => {
       <div className="page-header">
         <h2><i className="fas fa-box"></i> Quản lý sản phẩm</h2>
         <button className="btn-primary" onClick={handleAddProduct}>
-          <i className="fas fa-plus"></i> Thêm sản phẩm mới
+          <i className="fas fa-plus"></i> <span>Thêm sản phẩm mới</span>
         </button>
       </div>
       
       <div className="products-filters">
-        <div className="search-wrapper">
-          <input 
-            type="text" 
-            placeholder="Tìm kiếm sản phẩm..." 
-            className="search-input"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <i className="fas fa-search"></i>
-        </div>
         
         <div className="category-dropdown" ref={categoryDropdownRef}>
           <button
@@ -183,6 +209,89 @@ const ProductsManagement: React.FC = () => {
             </div>
           )}
         </div>
+
+        <div className="category-dropdown" ref={sortDropdownRef}>
+          <button
+            className={`category-dropdown-btn ${sortDropdownOpen ? 'open' : ''}`}
+            onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
+          >
+            <i className="fas fa-sort"></i>
+            <span>
+              {sortBy === 'newest' && 'Mới nhất'}
+              {sortBy === 'oldest' && 'Cũ nhất'}
+              {sortBy === 'price_high' && 'Giá cao đến thấp'}
+              {sortBy === 'price_low' && 'Giá thấp đến cao'}
+              {sortBy === 'name_asc' && 'Tên A-Z'}
+              {sortBy === 'name_desc' && 'Tên Z-A'}
+            </span>
+            <i className="fas fa-chevron-down"></i>
+          </button>
+          
+          {sortDropdownOpen && (
+            <div className="category-dropdown-list">
+              <div
+                className={`category-option ${sortBy === 'newest' ? 'selected' : ''}`}
+                onClick={() => {
+                  setSortBy('newest');
+                  setSortDropdownOpen(false);
+                }}
+              >
+                <i className="fas fa-clock"></i>
+                <span>Mới nhất</span>
+              </div>
+              <div
+                className={`category-option ${sortBy === 'oldest' ? 'selected' : ''}`}
+                onClick={() => {
+                  setSortBy('oldest');
+                  setSortDropdownOpen(false);
+                }}
+              >
+                <i className="fas fa-history"></i>
+                <span>Cũ nhất</span>
+              </div>
+              <div
+                className={`category-option ${sortBy === 'price_high' ? 'selected' : ''}`}
+                onClick={() => {
+                  setSortBy('price_high');
+                  setSortDropdownOpen(false);
+                }}
+              >
+                <i className="fas fa-arrow-down"></i>
+                <span>Giá cao đến thấp</span>
+              </div>
+              <div
+                className={`category-option ${sortBy === 'price_low' ? 'selected' : ''}`}
+                onClick={() => {
+                  setSortBy('price_low');
+                  setSortDropdownOpen(false);
+                }}
+              >
+                <i className="fas fa-arrow-up"></i>
+                <span>Giá thấp đến cao</span>
+              </div>
+              <div
+                className={`category-option ${sortBy === 'name_asc' ? 'selected' : ''}`}
+                onClick={() => {
+                  setSortBy('name_asc');
+                  setSortDropdownOpen(false);
+                }}
+              >
+                <i className="fas fa-sort-alpha-down"></i>
+                <span>Tên A-Z</span>
+              </div>
+              <div
+                className={`category-option ${sortBy === 'name_desc' ? 'selected' : ''}`}
+                onClick={() => {
+                  setSortBy('name_desc');
+                  setSortDropdownOpen(false);
+                }}
+              >
+                <i className="fas fa-sort-alpha-up"></i>
+                <span>Tên Z-A</span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="products-table-wrapper">
@@ -192,70 +301,57 @@ const ProductsManagement: React.FC = () => {
             <p>Chưa có sản phẩm nào{searchQuery || selectedCategory ? ' phù hợp với bộ lọc' : ''}.</p>
             {!searchQuery && !selectedCategory && (
               <button className="btn-primary" onClick={handleAddProduct}>
-                <i className="fas fa-plus"></i> Thêm sản phẩm đầu tiên
+                <i className="fas fa-plus"></i> <span>Thêm sản phẩm đầu tiên</span>
               </button>
             )}
           </div>
         ) : (
-          <div className="virtual-list-container" ref={virtualScroll.containerRef}>
-            <div className="virtual-list-spacer" style={{ height: virtualScroll.totalHeight }}>
-              {virtualScroll.virtualItems.map(({ index, offsetTop }) => {
-                const product = filteredProducts[index];
-                const category = categories.find(c => c.id === product.category);
-                return (
-                  <div
-                    key={product.id}
-                    className="product-list-item"
-                    style={{ 
-                      position: 'absolute',
-                      top: offsetTop,
-                      left: 0,
-                      right: 0,
-                      height: ITEM_HEIGHT
-                    }}
-                  >
-                    <div className="product-image-small">
-                      <img src={product.images[0]} alt={product.name} />
+          <div className="products-list">
+            {filteredProducts.map((product) => {
+              const category = categories.find(c => c.id === product.category);
+              return (
+                <div key={product.id} className="product-list-item">
+                  <div className="product-image-small">
+                    <img src={product.images[0]} alt={product.name} />
+                  </div>
+                  <div className="product-info-main">
+                    <div className="product-name-section">
+                      <h4>{product.name}</h4>
+                      <span className="product-id">#{product.id}</span>
                     </div>
-                    <div className="product-info-main">
-                      <div className="product-name-section">
-                        <h4>{product.name}</h4>
-                        <span className="product-id">#{product.id}</span>
-                      </div>
-                      <div className="product-meta">
-                        <span className="category-badge">
-                          {category?.name || product.category}
-                        </span>
-                        <span className="product-price">
-                          {product.price_vnd.toLocaleString('vi-VN')}₫
-                        </span>
-                        <span className={`status-badge ${product.stock_status}`}>
-                          {product.stock_status === 'in_stock' ? 'Còn hàng' : 
-                           product.stock_status === 'low_stock' ? 'Sắp hết' : 'Hết hàng'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="product-actions">
-                      {product.featured ? (
-                        <span className="featured-badge active" onClick={() => handleToggleFeatured(product)}>
-                          <i className="fas fa-star"></i>
-                        </span>
-                      ) : (
-                        <span className="not-featured" onClick={() => handleToggleFeatured(product)}>
-                          <i className="far fa-star"></i>
-                        </span>
-                      )}
-                      <button className="btn-action btn-edit" title="Chỉnh sửa" onClick={() => handleEditProduct(product)}>
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button className="btn-action btn-delete" title="Xóa" onClick={() => handleDeleteProduct(product)}>
-                        <i className="fas fa-trash"></i>
-                      </button>
+                    <div className="product-meta">
+                      <span className="category-badge">
+                        {category?.name || product.category}
+                      </span>
+                      <span className="product-price">
+                        {product.price_vnd.toLocaleString('vi-VN')}₫
+                      </span>
+                      <span className={`status-badge ${product.stock_status}`}>
+                        {product.stock_status === 'in_stock' ? 'Còn hàng' : 
+                         product.stock_status === 'low_stock' ? 'Sắp hết' : 'Hết hàng'}
+                      </span>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="product-actions">
+                    {product.featured ? (
+                      <span className="featured-badge active" onClick={() => handleToggleFeatured(product)}>
+                        <i className="fas fa-star"></i>
+                      </span>
+                    ) : (
+                      <span className="not-featured" onClick={() => handleToggleFeatured(product)}>
+                        <i className="far fa-star"></i>
+                      </span>
+                    )}
+                    <button className="btn-action btn-edit" title="Chỉnh sửa" onClick={() => handleEditProduct(product)}>
+                      <i className="fas fa-edit"></i>
+                    </button>
+                    <button className="btn-action btn-delete" title="Xóa" onClick={() => handleDeleteProduct(product)}>
+                      <i className="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

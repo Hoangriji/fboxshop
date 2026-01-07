@@ -153,7 +153,8 @@ export const useProductStore = create<ProductStore>((set, get) => ({
 
   // Computed getters
   getFeaturedProducts: () => {
-    return get().products.filter(product => product.featured).slice(0, 12);
+    // Lấy 8 sản phẩm featured đầu tiên
+    return get().products.filter(product => product.featured).slice(0, 8);
   },
 
   getProductsByCategory: (category) => {
@@ -161,7 +162,10 @@ export const useProductStore = create<ProductStore>((set, get) => ({
   },
 
   getDigitalProducts: () => {
-    return get().products.filter(product => product.type === 'digital').slice(0, 12);
+    // Lấy 8 sản phẩm digital free đầu tiên
+    return get().products
+      .filter(product => product.type === 'digital' && product.is_free)
+      .slice(0, 8);
   },
 
   getPhysicalProducts: () => {
