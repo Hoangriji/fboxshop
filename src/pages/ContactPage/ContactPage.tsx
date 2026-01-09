@@ -1,5 +1,6 @@
 import React from 'react';
 import Button from '../../components/Button/Button';
+import { openZaloImmediate } from '../../utils/zaloHelper';
 import './ContactPage.css';
 
 const ContactPage: React.FC = () => {
@@ -54,25 +55,26 @@ const ContactPage: React.FC = () => {
 
             <div className="contact-method facebook">
               <div className="method-icon">
-                <i className="fab fa-facebook"></i>
+                <i className="fas fa-comments"></i>
               </div>
               <div className="method-info">
-                <h3>Messenger</h3>
-                <p>Liên hệ trực tiếp với team hỗ trợ qua Facebook Messenger</p>
+                <h3>Zalo</h3>
+                <p>Liên hệ trực tiếp với team hỗ trợ qua Zalo</p>
                 <div className="method-details">
                   <span><i className="fas fa-clock"></i> Phản hồi trong 5-10 phút</span>
                   <span><i className="fas fa-users"></i> Hỗ trợ trực tiếp</span>
                 </div>
                 <Button 
                   variant="primary" 
-                  onClick={() => window.open('https://m.me/uside.shop', '_blank')}
+                  onClick={() => openZaloImmediate()}
                 >
-                  <i className="fab fa-facebook-messenger"></i>
+                  <i className="fas fa-comments"></i>
                   Nhắn tin ngay
                 </Button>
               </div>
             </div>
-            <div className="contact-method discord">
+            {/* TEMPORARILY DISABLED - Discord/Coin */}
+            {/* <div className="contact-method discord">
               <div className="method-icon">
                 <i className="fab fa-discord"></i>
               </div>
@@ -91,7 +93,7 @@ const ContactPage: React.FC = () => {
                   Tham gia Discord
                 </Button>
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div className="contact-info">
@@ -103,7 +105,7 @@ const ContactPage: React.FC = () => {
               <div className="faq-list">
                 <div className="faq-item">
                   <h4>Làm sao để thanh toán?</h4>
-                  <p>Bạn có thể thanh toán bằng tiền mặt (VND) qua Facebook hoặc Virtual Currency (UCoin) qua Discord.</p>
+                  <p>Bạn có thể thanh toán bằng tiền mặt (VND) qua Zalo.</p>
                 </div>
                 <div className="faq-item">
                   <h4>Thời gian giao hàng bao lâu?</h4>
@@ -119,7 +121,7 @@ const ContactPage: React.FC = () => {
                 </div>
                 <div className="faq-item">
                   <h4>Tôi có thể mua sản phẩm digital miễn phí ở đâu?</h4>
-                  <p>Các sản phẩm digital miễn phí như wallpaper, preset, template có thể tải trực tiếp trên website mục "Tải Miễn Phí" hoặc qua Discord server.</p>
+                  <p>Các sản phẩm digital miễn phí như wallpaper, preset, template có thể tải trực tiếp trên website mục "Tải Miễn Phí".</p>
                 </div>
               </div>
             </div>

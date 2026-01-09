@@ -7,6 +7,7 @@ import { LazySection } from "../../components/LazySection";
 import { SkeletonCarousel, SkeletonCard } from "../../components/Skeleton";
 import { TechButton } from "../../components/TechButton";
 import Button from "../../components/Button";
+import { openZaloImmediate } from "../../utils/zaloHelper";
 import "./HomePage.css";
 
 const HomePage = () => {
@@ -364,21 +365,27 @@ const HomePage = () => {
         <div className="contact-grid">
           <div className="contact-card facebook">
             <div className="contact-icon">
-              <i className="fab fa-facebook-messenger"></i>
+              <i className="fas fa-comments"></i>
             </div>
-            <h3>Messenger</h3>
+            <h3>Zalo</h3>
             <p>Thanh toán VND, tư vấn sản phẩm</p>
-            <Button variant="primary">Chat ngay</Button>
+            <Button 
+              variant="primary"
+              onClick={() => openZaloImmediate()}
+            >
+              Chat ngay
+            </Button>
           </div>
 
-          <div className="contact-card discord">
+          {/* TEMPORARILY DISABLED - Discord/Coin payment */}
+          {/* <div className="contact-card discord">
             <div className="contact-icon">
               <i className="fab fa-discord"></i>
             </div>
             <h3>Discord Server</h3>
             <p>Thanh toán USide Coin</p>
             <Button variant="secondary">Join server</Button>
-          </div>
+          </div> */}
         </div>
       </section>
       </LazySection>

@@ -1,41 +1,82 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProducts } from '../../hooks/useProducts';
-import { useSiteConfig } from '../../hooks/useSiteConfig';
+// import { useSiteConfig } from '../../hooks/useSiteConfig';
 import { WishlistButton } from '../../components/WishlistButton';
 import { RelatedProducts } from '../../components/RelatedProducts';
+import { Toast } from '../../components/Toast';
+import { openZaloChat, openZaloImmediate } from '../../utils/zaloHelper';
 import './ProductDetailPage.css';
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { products } = useProducts();
-  const { config } = useSiteConfig();
+  // const { config } = useSiteConfig();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showToast, setShowToast] = useState(false);
+  const [redirectTimer, setRedirectTimer] = useState<number | null>(null);
 
   // Tìm product trực tiếp từ database
   const product = products.find(p => p.id === id);
 
-  // Handle contact for purchase
-  const handleMessengerPurchase = () => {
-    if (!product || !config) return;
+  // Handle contact for purchase with optimized UX
+  const handleZaloPurchase = async () => {
+    if (!product) return;
     
-    const message = config.site?.contact?.facebook_text
-      ?.replace('[PRODUCT_NAME]', product.name)
-      ?.replace('[PRICE]', `${product.price_vnd.toLocaleString('vi-VN')} VNĐ`) || 
-      `Tôi muốn mua sản phẩm: ${product.name} - Giá: ${product.price_vnd.toLocaleString('vi-VN')} VNĐ`;
+    // Tạo message template với thông tin sản phẩm
+    const productUrl = window.location.href;
+    const messageTemplate = `Tôi muốn mua sản phẩm:
+• Mã SP: ${product.id}
+• Tên: ${product.name}
+• Giá: ${product.price_vnd.toLocaleString('vi-VN')} VNĐ
+• Link: ${productUrl}`;
     
-    const messengerUrl = config.site?.contact?.facebook || 'https://m.me/uside.shop';
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`${messengerUrl}?text=${encodedMessage}`, '_blank');
+    // Copy message template vào clipboard
+    try {
+      await navigator.clipboard.writeText(messageTemplate);
+      
+      // Hiển thị toast notification
+      setShowToast(true);
+      
+      // Auto redirect sau 3s
+      const timer = setTimeout(() => {
+        openZaloChat();
+        setShowToast(false);
+      }, 3000);
+      
+      setRedirectTimer(timer);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      // Nếu không copy được, vẫn chuyển đến Zalo
+      openZaloChat();
+    }
   };
 
-  const handleDiscordPurchase = () => {
-    if (!product || !config) return;
-    
-    const discordUrl = config.site?.contact?.discord || 'https://discord.gg/uside-shop';
-    window.open(discordUrl, '_blank');
+  // Handle open Zalo immediately
+  const handleOpenZaloNow = () => {
+    if (redirectTimer) {
+      clearTimeout(redirectTimer);
+    }
+    openZaloImmediate();
+    setShowToast(false);
   };
+
+  // Handle close toast
+  const handleCloseToast = () => {
+    if (redirectTimer) {
+      clearTimeout(redirectTimer);
+    }
+    setShowToast(false);
+  };
+
+  // TEMPORARILY DISABLED - Discord/Coin payment
+  // const handleDiscordPurchase = () => {
+  //   if (!product || !config) return;
+  //   
+  //   const discordUrl = config.site?.contact?.discord || 'https://discord.gg/uside-shop';
+  //   window.open(discordUrl, '_blank');
+  // };
 
   if (!product) {
     return (
@@ -94,22 +135,6 @@ const ProductDetailPage: React.FC = () => {
             <div className="detail-category">{product.category}</div>
             
             <h1 className="detail-name">{product.name}</h1>
-            
-            {product.rating && (
-              <div className="detail-rating">
-                <div className="detail-stars">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <i 
-                      key={star}
-                      className={`fas fa-star ${star <= product.rating! ? 'active' : ''}`}
-                    ></i>
-                  ))}
-                </div>
-                <span className="detail-rating-text">
-                  {product.rating}/5 ({product.review_count} đánh giá)
-                </span>
-              </div>
-            )}
 
             <div className="detail-price-section">
               <div className="detail-current-price">{product.price_vnd.toLocaleString()}đ</div>
@@ -150,17 +175,15 @@ const ProductDetailPage: React.FC = () => {
                 <div>
                   <button 
                     className="detail-messenger-btn"
-                    onClick={handleMessengerPurchase}
+                    onClick={handleZaloPurchase}
                     disabled={stockStatus === 'out_of_stock'}
                   >
-                    <i className="fab fa-facebook-messenger"></i>
-                    <div className="btn-content">
-                      <span className="btn-label">Mua qua Messenger</span>
-                      <span className="btn-price">{product.price_vnd.toLocaleString('vi-VN')} VNĐ</span>
-                    </div>
+                    <i className="fas fa-comments"></i>
+                    <span className="btn-label">Inbox Zalo để đặt hàng</span>
                   </button>
                   
-                  <button 
+                  {/* TEMPORARILY DISABLED - Discord/Coin payment */}
+                  {/* <button 
                     className="detail-discord-btn"
                     onClick={handleDiscordPurchase}
                     disabled={stockStatus === 'out_of_stock'}
@@ -170,7 +193,7 @@ const ProductDetailPage: React.FC = () => {
                       <span className="btn-label">Mua bằng Coin</span>
                       <span className="btn-price">{product.price_virtual.toLocaleString('vi-VN')} UC</span>
                     </div>
-                  </button>
+                  </button> */}
                 </div>
                 
                 <WishlistButton 
@@ -272,6 +295,20 @@ const ProductDetailPage: React.FC = () => {
             currentProductId={String(product.id)}
           />
         </div>
+      )}
+
+      {/* Toast Notification */}
+      {showToast && (
+        <Toast
+          message="Đã copy thông tin sản phẩm vào clipboard!"
+          type="success"
+          duration={3000}
+          countdown={3}
+          showCountdown={true}
+          onClose={handleCloseToast}
+          onAction={handleOpenZaloNow}
+          actionLabel="Mở Zalo ngay"
+        />
       )}
     </div>
   );

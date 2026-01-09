@@ -21,12 +21,13 @@ const Footer: React.FC = () => {
               Chất lượng cao, giá cả hợp lý, dịch vụ tận tâm.
             </p>
             <div className="footer-social">
-              <a href="#" className="social-link facebook">
-                <i className="fab fa-facebook"></i>
+              <a href={`https://zalo.me/${import.meta.env.VITE_ZALO_PHONE}`} className="social-link facebook" target="_blank" rel="noopener noreferrer">
+                <i className="fas fa-comments"></i>
               </a>
-              <a href="#" className="social-link discord">
+              {/* TEMPORARILY DISABLED - Discord */}
+              {/* <a href="#" className="social-link discord">
                 <i className="fab fa-discord"></i>
-              </a>
+              </a> */}
               <a href="#" className="social-link youtube">
                 <i className="fab fa-youtube"></i>
               </a>
@@ -75,19 +76,20 @@ const Footer: React.FC = () => {
             </h3>
             <div className="footer-contact">
               <div className="contact-item">
-                <i className="fab fa-facebook-messenger"></i>
+                <i className="fas fa-comments"></i>
                 <div>
-                  <span className="contact-label">Messenger</span>
-                  <span className="contact-value">USide Shop Official</span>
+                  <span className="contact-label">Zalo</span>
+                  <span className="contact-value">Hân Nguyễn</span>
                 </div>
               </div>
-              <div className="contact-item">
+              {/* TEMPORARILY DISABLED - Discord/Coin */}
+              {/* <div className="contact-item">
                 <i className="fab fa-discord"></i>
                 <div>
                   <span className="contact-label">Discord</span>
                   <span className="contact-value">USide Community</span>
                 </div>
-              </div>
+              </div> */}
               <div className="contact-item">
                 <i className="fas fa-clock"></i>
                 <div>
@@ -109,7 +111,7 @@ const Footer: React.FC = () => {
         {/* Footer Bottom */}
         <div className="footer-bottom">
           <div className="footer-bottom-left">
-            <p>&copy; 2024 USide Shop. Tất cả quyền được bảo lưu.</p>
+            <p>&copy; 2025 USide Shop. Tất cả quyền được bảo lưu.</p>
             <div className="footer-legal">
               <a href="#" className="legal-link">Điều Khoản Sử Dụng</a>
               <span className="separator">•</span>
@@ -123,7 +125,8 @@ const Footer: React.FC = () => {
               <span className="payment-label">Thanh toán:</span>
               <div className="payment-icons">
                 <i className="fas fa-money-bill-wave" title="VND Cash"></i>
-                <i className="fas fa-coins" title="USide Coin"></i>
+                {/* TEMPORARILY DISABLED - USide Coin */}
+                {/* <i className="fas fa-coins" title="USide Coin"></i> */}
               </div>
             </div>
           </div>

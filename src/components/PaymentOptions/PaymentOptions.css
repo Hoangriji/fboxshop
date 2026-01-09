@@ -5,61 +5,65 @@
   margin-top: 1.5rem;
 }
 
+/* Payment Grid - Single button layout */
 .payment-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  display: flex;
+  width: 100%;
 }
 
 .payment-button {
+  font-family: 'Quicksand', sans-serif;
+  width: 100%;
+  padding: 16px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: var(--border-radius);
+  transition: all var(--transition-smooth);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  padding: 1rem 1.5rem;
-  min-height: 60px;
-  font-weight: 600;
-  border-radius: var(--border-radius);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  gap: 12px;
+  cursor: pointer;
 }
 
 .payment-button i {
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.payment-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.25rem;
+  font-size: 1.2rem;
 }
 
 .payment-method {
-  font-size: 0.9rem;
-  opacity: 0.9;
+  font-size: 15px;
+  font-weight: 600;
 }
 
-.payment-amount {
-  font-size: 1.1rem;
-  font-weight: 700;
-}
-
-/* VND Payment Button */
+/* Zalo Payment Button - Neumorphic */
 .vnd-payment {
-  background: linear-gradient(135deg, #1877f2, #42a5f5);
   color: white;
-  border: none;
+  background: var(--accent-primary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  letter-spacing: 0.5px;
+  box-shadow:
+    inset -8px -8px 16px rgba(0, 0, 0, 0.5),
+    inset 6px 6px 12px rgba(255, 255, 255, 0.2),
+    0 8px 25px rgba(0, 0, 0, 0.4),
+    0 0 20px var(--accent-glow);
 }
 
 .vnd-payment:hover {
-  background: linear-gradient(135deg, #166fe5, #2196f3);
-  transform: translateY(-2px);
-  box-shadow: 
-    0 8px 25px rgba(24, 119, 242, 0.3),
-    var(--shadow-inset);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow:
+    inset -10px -10px 20px rgba(0, 0, 0, 0.6),
+    inset 8px 8px 16px rgba(255, 255, 255, 0.25),
+    0 15px 35px rgba(0, 0, 0, 0.5),
+    0 0 35px var(--accent-glow);
+}
+
+.vnd-payment:active {
+  transform: translateY(-1px) scale(1.01);
+  box-shadow:
+    inset -6px -6px 12px rgba(0, 0, 0, 0.4),
+    inset 4px 4px 8px rgba(255, 255, 255, 0.15),
+    0 4px 15px rgba(0, 0, 0, 0.3),
+    0 0 15px var(--accent-glow);
 }
 
 /* Virtual Payment Button */
@@ -125,23 +129,17 @@
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
-  .payment-grid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-  
   .payment-button {
-    padding: 1rem;
-    min-height: 55px;
+    padding: 14px 20px;
+    font-size: 14px;
   }
   
-  .payment-info {
-    align-items: center;
-    text-align: center;
+  .payment-button i {
+    font-size: 1.1rem;
   }
   
-  .payment-amount {
-    font-size: 1rem;
+  .payment-method {
+    font-size: 14px;
   }
   
   .free-download {
@@ -157,22 +155,17 @@
   }
   
   .payment-button {
-    flex-direction: column;
-    padding: 0.75rem;
-    min-height: 50px;
-    gap: 0.5rem;
+    padding: 12px 16px;
+    font-size: 13px;
+    gap: 8px;
   }
   
   .payment-button i {
-    font-size: 1.1rem;
-  }
-  
-  .payment-info {
-    gap: 0.125rem;
+    font-size: 1rem;
   }
   
   .payment-method {
-    font-size: 0.8rem;
+    font-size: 13px;
   }
   
   .payment-amount {

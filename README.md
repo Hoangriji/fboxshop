@@ -88,10 +88,10 @@ Copy-Item .env.example .env.local
 # macOS / Linux (bash / zsh)
 cp .env.example .env.local
 
-# Add your API keys to .env.local
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-```
+> **⚠️ Bảo mật:** 
+> - Không bao giờ commit file `.env` hoặc `.env.local` lên Git
+> - File `.env.example` chỉ chứa tên biến, không chứa giá trị thực
+> - Các API keys và secrets phải được giữ bí mật
 
 4. **Start development server**
 ```bash
@@ -170,4 +170,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-Made with ❤️ by UdeSide Team
+Made with ❤️ by USide Team

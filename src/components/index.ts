@@ -15,3 +15,4 @@ export { AnimatedList } from './AnimatedList';
 export { LazySection } from './LazySection';
 export { SkeletonCarousel, SkeletonCard } from './Skeleton';
 export { default as Footer } from './Footer';
+export { Toast } from './Toast';
