@@ -110,6 +110,14 @@
   --transition-smooth: 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
+/* Smooth responsive transitions - Fix giật khi resize */
+* {
+  transition: font-size 0.3s ease,
+              padding 0.3s ease,
+              margin 0.3s ease,
+              gap 0.3s ease;
+}
+
 /* Light Theme Override */
 :root.light-theme {
   --theme-primary: var(--light-primary);

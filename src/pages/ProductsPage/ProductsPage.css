@@ -368,29 +368,24 @@
   justify-items: center;
 }
 
-/* Infinite Scroll */
-.infinite-scroll-trigger {
+/* Load More Button Container */
+.load-more-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 60px;
+  padding: 3rem 0;
   margin: 2rem 0;
 }
 
-.loading-indicator {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 2rem;
-  background: rgba(var(--accent-rgb), 0.1);
-  border: 2px solid var(--accent-primary);
-  border-radius: 50px;
-  color: var(--accent-primary);
-  font-weight: 500;
+.load-more-container button {
+  min-width: 240px;
+  font-size: 16px;
+  padding: 16px 32px;
 }
 
-.loading-indicator i {
-  font-size: 1.2rem;
+.load-more-container button i {
+  font-size: 18px;
+  margin-right: 8px;
 }
 
 /* No Products State */

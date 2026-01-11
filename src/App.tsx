@@ -39,9 +39,20 @@ const PageLoader = () => (
 
 const App: React.FC = () => {
   const location = useLocation();
-  const [currentAccentColor, setCurrentAccentColor] = useState('#00d2ff');
+  
+  // Load accent color from localStorage or use default
+  const [currentAccentColor, setCurrentAccentColor] = useState(() => {
+    const saved = localStorage.getItem('accentColor');
+    return saved || '#00d2ff';
+  });
+  
   const [wishlistCount, setWishlistCount] = useState(0);
   const { loadProducts } = useProductStore();
+
+  // Save accent color to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('accentColor', currentAccentColor);
+  }, [currentAccentColor]);
 
   // Check if current route is dashboard
   const isDashboardRoute = location.pathname.startsWith('/dashboard');

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useProductsPaginated } from '../../hooks/useProductsPaginated';
+import { useProductsLoadMore } from '../../hooks/useProductsLoadMore';
 import { useCategories } from '../../hooks/useCategories';
 import { SimpleProductCard } from '../../components/SimpleProductCard/SimpleProductCard';
 import Button from '../../components/Button/Button';
@@ -98,13 +98,13 @@ const ProductsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { 
-    products, 
+    displayedProducts: products, 
     loading: productsLoading, 
     loadingMore,
     hasMore,
     loadMore,
     error: productsError 
-  } = useProductsPaginated(); // Auto-calculate based on viewport
+  } = useProductsLoadMore();
   const { categories, loading: categoriesLoading } = useCategories();
   
   const categoryFromUrl = searchParams.get('category') || 'all';
@@ -151,39 +151,8 @@ const ProductsPage: React.FC = () => {
   // Sort dropdown state
   const [sortDropdownOpen, setSortDropdownOpen] = React.useState(false);
   
-  // Ref for infinite scroll observer
-  const loadMoreTriggerRef = React.useRef<HTMLDivElement>(null);
-  
   // Ref for sort dropdown to handle outside clicks
   const sortDropdownRef = React.useRef<HTMLDivElement>(null);
-
-  // Infinite scroll effect
-  React.useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // When the trigger element is visible and we have more data
-        if (entries[0].isIntersecting && hasMore && !loadingMore) {
-          loadMore();
-        }
-      },
-      {
-        root: null,
-        rootMargin: '200px', // Start loading 200px before reaching the trigger
-        threshold: 0.1,
-      }
-    );
-
-    const currentTrigger = loadMoreTriggerRef.current;
-    if (currentTrigger) {
-      observer.observe(currentTrigger);
-    }
-
-    return () => {
-      if (currentTrigger) {
-        observer.unobserve(currentTrigger);
-      }
-    };
-  }, [hasMore, loadingMore, loadMore]);
 
   // Close sort dropdown when clicking outside
   React.useEffect(() => {
@@ -2114,19 +2083,26 @@ const ProductsPage: React.FC = () => {
                 ))}
               </div>
               
-              {/* Infinite Scroll Trigger */}
+              {/* Load More Button */}
               {hasMore && (
-                <div 
-                  ref={loadMoreTriggerRef} 
-                  className="infinite-scroll-trigger"
-                  style={{ height: '20px', margin: '20px 0' }}
-                >
-                  {loadingMore && (
-                    <div className="loading-indicator">
-                      <i className="fas fa-spinner fa-spin"></i>
-                      <span>Đang tải thêm sản phẩm...</span>
-                    </div>
-                  )}
+                <div className="load-more-container">
+                  <Button
+                    variant="primary"
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                  >
+                    {loadingMore ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin"></i>
+                        Đang tải...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-chevron-down"></i>
+                        Xem thêm sản phẩm
+                      </>
+                    )}
+                  </Button>
                 </div>
               )}
             </>

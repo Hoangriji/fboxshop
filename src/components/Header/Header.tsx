@@ -36,6 +36,8 @@ const Header: React.FC<HeaderProps> = ({
   // Apply current accent color to CSS variables
   useEffect(() => {
     document.documentElement.style.setProperty('--accent-primary', currentAccentColor);
+    // Save to localStorage whenever color changes
+    localStorage.setItem('accentColor', currentAccentColor);
   }, [currentAccentColor]);
 
   // Set a CSS variable with the header height so pages can offset content accordingly
