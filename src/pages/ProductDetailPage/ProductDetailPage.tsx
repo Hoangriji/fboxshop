@@ -4,8 +4,8 @@ import { useProducts } from '../../hooks/useProducts';
 // import { useSiteConfig } from '../../hooks/useSiteConfig';
 import { WishlistButton } from '../../components/WishlistButton';
 import { RelatedProducts } from '../../components/RelatedProducts';
-import { Toast } from '../../components/Toast';
-import { openZaloChat, openZaloImmediate } from '../../utils/zaloHelper';
+import { ConfirmationModal } from '../../components/ConfirmationModal';
+import { openZaloImmediate } from '../../utils/zaloHelper';
 import './ProductDetailPage.css';
 
 const ProductDetailPage: React.FC = () => {
@@ -14,13 +14,12 @@ const ProductDetailPage: React.FC = () => {
   const { products } = useProducts();
   // const { config } = useSiteConfig();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [showToast, setShowToast] = useState(false);
-  const [redirectTimer, setRedirectTimer] = useState<number | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   // Tìm product trực tiếp từ database
   const product = products.find(p => p.id === id);
 
-  // Handle contact for purchase with optimized UX
+  // Handle contact for purchase - Copy info and show modal
   const handleZaloPurchase = async () => {
     if (!product) return;
     
@@ -36,38 +35,24 @@ const ProductDetailPage: React.FC = () => {
     try {
       await navigator.clipboard.writeText(messageTemplate);
       
-      // Hiển thị toast notification
-      setShowToast(true);
-      
-      // Auto redirect sau 3s
-      const timer = setTimeout(() => {
-        openZaloChat();
-        setShowToast(false);
-      }, 3000);
-      
-      setRedirectTimer(timer);
+      // Hiển thị modal confirmation
+      setShowModal(true);
     } catch (err) {
       console.error('Failed to copy:', err);
-      // Nếu không copy được, vẫn chuyển đến Zalo
-      openZaloChat();
+      // Nếu không copy được, vẫn hiện modal để user có thể mở Zalo
+      setShowModal(true);
     }
   };
 
-  // Handle open Zalo immediately
+  // Handle open Zalo immediately when user clicks button in modal
   const handleOpenZaloNow = () => {
-    if (redirectTimer) {
-      clearTimeout(redirectTimer);
-    }
     openZaloImmediate();
-    setShowToast(false);
+    setShowModal(false);
   };
 
-  // Handle close toast
-  const handleCloseToast = () => {
-    if (redirectTimer) {
-      clearTimeout(redirectTimer);
-    }
-    setShowToast(false);
+  // Handle close modal
+  const handleCloseModal = () => {
+    setShowModal(false);
   };
 
   // TEMPORARILY DISABLED - Discord/Coin payment
@@ -297,19 +282,18 @@ const ProductDetailPage: React.FC = () => {
         </div>
       )}
 
-      {/* Toast Notification */}
-      {showToast && (
-        <Toast
-          message="Đã copy thông tin sản phẩm vào clipboard!"
-          type="success"
-          duration={3000}
-          countdown={3}
-          showCountdown={true}
-          onClose={handleCloseToast}
-          onAction={handleOpenZaloNow}
-          actionLabel="Mở Zalo ngay"
-        />
-      )}
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showModal}
+        title="✓ Đã lưu thông tin sản phẩm!"
+        message="Thông tin đã được copy vào bộ nhớ tạm.
+Nhấn nút bên dưới để mở Zalo, sau đó dán (Ctrl+V) thông tin vào tin nhắn và gửi cho shop để được hỗ trợ ngay!"
+        icon="success"
+        primaryButtonLabel="Mở Zalo ngay"
+        secondaryButtonLabel="Đóng"
+        onPrimaryAction={handleOpenZaloNow}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 };
