@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useProducts } from '../../hooks/useProducts';
+import { useProductDetail } from '../../hooks/useProductDetail';
 // import { useSiteConfig } from '../../hooks/useSiteConfig';
 import { WishlistButton } from '../../components/WishlistButton';
 import { RelatedProducts } from '../../components/RelatedProducts';
@@ -11,13 +11,10 @@ import './ProductDetailPage.css';
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { products } = useProducts();
+  const { product, relatedProducts, loading, error } = useProductDetail(id);
   // const { config } = useSiteConfig();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showModal, setShowModal] = useState(false);
-
-  // Tìm product trực tiếp từ database
-  const product = products.find(p => p.id === id);
 
   // Handle contact for purchase - Copy info and show modal
   const handleZaloPurchase = async () => {
@@ -63,12 +60,44 @@ const ProductDetailPage: React.FC = () => {
   //   window.open(discordUrl, '_blank');
   // };
 
-  if (!product) {
+  // Loading state
+  if (loading) {
     return (
       <div className="product-detail-page">
         <div className="loading-container">
           <div className="loading-spinner"></div>
           <p>Đang tải thông tin sản phẩm...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="product-detail-page">
+        <div className="error-container">
+          <i className="fas fa-exclamation-triangle"></i>
+          <p>Không thể tải thông tin sản phẩm. Vui lòng thử lại!</p>
+          <button onClick={() => window.location.reload()} className="retry-button">
+            <i className="fas fa-redo"></i> Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Product not found
+  if (!product) {
+    return (
+      <div className="product-detail-page">
+        <div className="not-found-container">
+          <i className="fas fa-box-open"></i>
+          <h2>Không tìm thấy sản phẩm</h2>
+          <p>Sản phẩm bạn đang tìm không tồn tại hoặc đã bị xóa.</p>
+          <button onClick={() => navigate('/products')} className="back-to-products-button">
+            <i className="fas fa-arrow-left"></i> Quay lại trang sản phẩm
+          </button>
         </div>
       </div>
     );
@@ -231,52 +260,10 @@ const ProductDetailPage: React.FC = () => {
       </div>
 
       {/* Related Products Section */}
-      {product && products.length > 0 && (
+      {relatedProducts.length > 0 && (
         <div>
           <RelatedProducts
-            products={(() => {
-              const MIN_CARDS = 6;
-              const MAX_CARDS = 8;
-              
-              // 1. Lấy products cùng category/subcategory (ưu tiên cao nhất)
-              const sameCategoryProducts = products.filter(p => 
-                p.id !== product.id && 
-                (p.category === product.category || p.subcategory === product.subcategory)
-              );
-              
-              // Nếu đã đủ 6+ products cùng category → Chỉ hiển thị tối đa 8 products đó
-              if (sameCategoryProducts.length >= MIN_CARDS) {
-                return sameCategoryProducts.slice(0, MAX_CARDS);
-              }
-              
-              // 2. Nếu chưa đủ 6, thêm products có specific tags (không phải generic tags)
-              const genericTags = ['gaming', 'wireless', 'premium', 'pro', 'rgb'];
-              const productSpecificTags = product.tags.filter(tag => !genericTags.includes(tag));
-              
-              const relatedByTags = products.filter(p => {
-                if (p.id === product.id) return false;
-                if (sameCategoryProducts.some(sp => sp.id === p.id)) return false; // Đã có trong sameCategoryProducts
-                
-                return p.tags?.some(tag => 
-                  productSpecificTags.includes(tag) && !genericTags.includes(tag)
-                );
-              });
-              
-              const combined = [...sameCategoryProducts, ...relatedByTags];
-              
-              // Nếu vẫn chưa đủ 6, lấy thêm products bất kỳ (có chung generic tags)
-              if (combined.length < MIN_CARDS) {
-                const remaining = products.filter(p => 
-                  p.id !== product.id && 
-                  !combined.some(cp => cp.id === p.id)
-                );
-                
-                return [...combined, ...remaining].slice(0, Math.max(MIN_CARDS, MAX_CARDS));
-              }
-              
-              // Giới hạn tối đa 8 cards
-              return combined.slice(0, MAX_CARDS);
-            })()}
+            products={relatedProducts}
             currentProductId={String(product.id)}
           />
         </div>

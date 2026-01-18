@@ -1,10 +1,8 @@
-import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useProducts } from "../../hooks/useProducts";
-import { useProductStore } from "../../store/productStore";
+import { useFeaturedProducts } from "../../hooks/useFeaturedProducts";
 import ProductCarousel from "../../components/ProductCarousel/ProductCarousel";
 import { LazySection } from "../../components/LazySection";
-import { SkeletonCarousel, SkeletonCard } from "../../components/Skeleton";
+import { SkeletonCarousel } from "../../components/Skeleton";
 import { TechButton } from "../../components/TechButton";
 import Button from "../../components/Button";
 import { openZaloImmediate } from "../../utils/zaloHelper";
@@ -12,27 +10,7 @@ import "./HomePage.css";
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { products } = useProducts();
-  const { setProducts, getFeaturedProducts, getDigitalProducts } =
-    useProductStore();
-
-  // Load products in background (non-blocking)
-  useEffect(() => {
-    if (products.length > 0) {
-      setProducts(products);
-    }
-  }, [products, setProducts]);
-
-  // Memoize expensive computations
-  const featuredProducts = useMemo(() => {
-    if (products.length === 0) return [];
-    return getFeaturedProducts();
-  }, [products, getFeaturedProducts]);
-  
-  const digitalProducts = useMemo(() => {
-    if (products.length === 0) return [];
-    return getDigitalProducts().filter((p) => p.is_free);
-  }, [products, getDigitalProducts]);
+  const { featuredProducts, freeDigitalProducts } = useFeaturedProducts();
 
   const handleCategoryClick = (category: string) => {
     navigate(`/products?category=${category}`);
@@ -282,7 +260,7 @@ const HomePage = () => {
         }
       >
         <section className="digital-section">
-          {digitalProducts.length > 0 ? (
+          {freeDigitalProducts.length > 0 ? (
             <section className="content-section">
               <div className="section-header">
                 <h2 className="section-title">
@@ -295,7 +273,7 @@ const HomePage = () => {
               </div>
 
               <ProductCarousel
-                products={digitalProducts}
+                products={freeDigitalProducts}
                 slidesPerView={4}
                 spaceBetween={24}
                 showNavigation={true}
@@ -336,20 +314,6 @@ const HomePage = () => {
       <LazySection
         threshold={0.3}
         rootMargin="0px"
-        fallback={
-          <section id="contact" className="contact-section">
-            <div className="section-header">
-              <h2 className="section-title">
-                <i className="fas fa-comments"></i>
-                Liên Hệ & Thanh Toán
-              </h2>
-              <p className="section-description">
-                Chọn phương thức liên hệ phù hợp với bạn
-              </p>
-            </div>
-            <SkeletonCard count={2} />
-          </section>
-        }
       >
         <section id="contact" className="contact-section">
         <div className="section-header">

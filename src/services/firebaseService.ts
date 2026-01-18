@@ -96,7 +96,7 @@ export class ProductsService {
     })) as Product[];
   }
 
-  // Get single product
+  // Get single product by ID (optimized for detail page)
   static async getProduct(id: string): Promise<Product | null> {
     const docRef = doc(this.collection, id);
     const snapshot = await getDoc(docRef);
@@ -109,6 +109,149 @@ export class ProductsService {
     }
     
     return null;
+  }
+
+  // Get single product by ID (alias for clarity)
+  static async getProductById(id: string): Promise<Product | null> {
+    return this.getProduct(id);
+  }
+
+  // Get multiple products by IDs (for featured/related products)
+  static async getProductsByIds(ids: string[]): Promise<Product[]> {
+    if (ids.length === 0) return [];
+    
+    const promises = ids.map(id => this.getProductById(id));
+    const results = await Promise.all(promises);
+    
+    return results.filter((p): p is Product => p !== null);
+  }
+
+  // Get products by category (lightweight, no realtime)
+  static async getProductsByCategoryOptimized(
+    category: string,
+    limit_count: number = 20
+  ): Promise<Product[]> {
+    const q = query(
+      this.collection,
+      where('category', '==', category),
+      orderBy('created_at', 'desc'),
+      limit(limit_count)
+    );
+    const snapshot = await getDocs(q);
+    
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Product[];
+  }
+
+  // Get paginated products by category
+  static async getPaginatedProductsByCategory(
+    category: string,
+    pageSize: number = 12,
+    lastDoc?: QueryDocumentSnapshot<DocumentData>
+  ): Promise<{ products: Product[]; lastDoc: QueryDocumentSnapshot<DocumentData> | null }> {
+    // Query without orderBy to avoid index requirement
+    // Sort client-side instead
+    let q = query(
+      this.collection,
+      where('category', '==', category),
+      limit(pageSize * 2) // Get more to ensure enough after filtering
+    );
+    
+    if (lastDoc) {
+      q = query(
+        this.collection,
+        where('category', '==', category),
+        startAfter(lastDoc),
+        limit(pageSize * 2)
+      );
+    }
+    
+    const snapshot = await getDocs(q);
+    let products = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Product[];
+    
+    // Sort by created_at descending on client side
+    products = products.sort((a, b) => {
+      const dateA = new Date(a.created_at || 0).getTime();
+      const dateB = new Date(b.created_at || 0).getTime();
+      return dateB - dateA;
+    }).slice(0, pageSize);
+    
+    const lastVisible = snapshot.docs[Math.min(pageSize - 1, snapshot.docs.length - 1)] || null;
+    
+    return { products, lastDoc: lastVisible };
+  }
+
+  // Get product counts by category with real-time listener
+  static subscribeToProductCounts(callback: (counts: Record<string, number>, total: number) => void) {
+    const q = query(this.collection);
+    
+    return onSnapshot(q, (snapshot) => {
+      const counts: Record<string, number> = {};
+      
+      snapshot.docs.forEach(doc => {
+        const product = doc.data() as Product;
+        const category = product.category;
+        counts[category] = (counts[category] || 0) + 1;
+      });
+      
+      const total = snapshot.size;
+      callback(counts, total);
+    });
+  }
+
+  // Get product counts by category (one-time fetch)
+  static async getProductCountsByCategory(): Promise<Record<string, number>> {
+    const snapshot = await getDocs(this.collection);
+    const counts: Record<string, number> = {};
+    
+    snapshot.docs.forEach(doc => {
+      const product = doc.data() as Product;
+      const category = product.category;
+      counts[category] = (counts[category] || 0) + 1;
+    });
+    
+    return counts;
+  }
+
+  // Subscribe to products in a category with real-time updates
+  static subscribeToProductsByCategory(
+    category: string,
+    callback: (products: Product[]) => void,
+    limitCount: number = 100
+  ) {
+    let q;
+    if (category === 'all') {
+      q = query(this.collection, limit(limitCount));
+    } else {
+      q = query(this.collection, where('category', '==', category), limit(limitCount));
+    }
+    
+    return onSnapshot(q, (snapshot) => {
+      const products = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Product[];
+      
+      // Sort by created_at descending
+      products.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateB - dateA;
+      });
+      
+      callback(products);
+    });
+  }
+
+  // Get total products count
+  static async getTotalProductsCount(): Promise<number> {
+    const snapshot = await getDocs(this.collection);
+    return snapshot.size;
   }
 
   // Create product

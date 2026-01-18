@@ -97,18 +97,24 @@ const PRICE_RANGES: PriceRange[] = [
 const ProductsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  
+  const categoryFromUrl = searchParams.get('category') || 'all';
+  const [selectedCategory, setSelectedCategory] = React.useState<string>(categoryFromUrl);
+  
   const { 
     displayedProducts: products, 
     loading: productsLoading, 
     loadingMore,
     hasMore,
     loadMore,
-    error: productsError 
-  } = useProductsLoadMore();
+    error: productsError,
+    categoryCounts,
+    totalCount,
+    setCategory
+  } = useProductsLoadMore({ category: selectedCategory });
+  
   const { categories, loading: categoriesLoading } = useCategories();
   
-  const categoryFromUrl = searchParams.get('category') || 'all';
-  const [selectedCategory, setSelectedCategory] = React.useState<string>(categoryFromUrl);
   const [sortBy, setSortBy] = React.useState<string>('newest');
   const [selectedBrands, setSelectedBrands] = React.useState<string[]>([]);
   const [selectedPriceRange, setSelectedPriceRange] = React.useState<string>('');
@@ -173,8 +179,10 @@ const ProductsPage: React.FC = () => {
 
   React.useEffect(() => {
     const categoryParam = searchParams.get('category');
-    if (categoryParam) {
+    if (categoryParam && categoryParam !== selectedCategory) {
       setSelectedCategory(categoryParam);
+      setCategory(categoryParam); // Trigger reload with new category
+      
       // Reset filters when category changes
       setSelectedBrands([]);
       setSelectedPriceRange('');
@@ -204,9 +212,8 @@ const ProductsPage: React.FC = () => {
       setSelectedPriceRanges([]);
       setSelectedProductTypes([]);
       setSelectedMaterials([]);
-  
     }
-  }, [searchParams]);
+  }, [searchParams, selectedCategory, setCategory]);
 
   // Extract brands from products based on brand field or tags
   const availableBrands = React.useMemo(() => {
@@ -675,13 +682,6 @@ const ProductsPage: React.FC = () => {
     const subcategories = [...new Set(categoryProducts.map(p => p.subcategory))].filter(Boolean);
     return subcategories;
   }, [products, selectedCategory]);
-
-  React.useEffect(() => {
-    const categoryParam = searchParams.get('category');
-    if (categoryParam) {
-      setSelectedCategory(categoryParam);
-    }
-  }, [searchParams]);
 
   const filteredProducts = React.useMemo(() => {
     let filtered = selectedCategory === 'all' 
@@ -1255,12 +1255,20 @@ const ProductsPage: React.FC = () => {
   if (productsError) {
     return (
       <div className="products-page">
-        <div className="error-container">
-          <i className="fas fa-exclamation-triangle"></i>
-          <p>Không thể tải sản phẩm. Vui lòng thử lại!</p>
-          <button onClick={() => window.location.reload()} className="retry-button">
-            <i className="fas fa-redo"></i> Thử lại
-          </button>
+        <div className="products-container">
+          <div className="error-state">
+            <div className="error-icon-wrapper">
+              <i className="fas fa-exclamation-circle"></i>
+            </div>
+            <h2 className="error-title">Oops! Có lỗi xảy ra</h2>
+            <p className="error-message">Không thể tải sản phẩm. Vui lòng thử lại sau.</p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              variant="primary"
+            >
+              <i className="fas fa-sync-alt"></i> Tải lại trang
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -1317,18 +1325,22 @@ const ProductsPage: React.FC = () => {
             <div className="category-filters">
               <button
                 className={`filter-btn ${selectedCategory === 'all' ? 'active' : ''}`}
-                onClick={() => setSelectedCategory('all')}
+                onClick={() => {
+                  navigate('/products?category=all');
+                }}
               >
                 <i className="fas fa-th"></i>
-                Tất cả ({products.length})
+                Tất cả ({totalCount || 0})
               </button>
               {categories.map((category) => {
-                const count = products.filter(p => p.category === category.id).length;
+                const count = categoryCounts[category.id] || 0;
                 return (
                   <button
                     key={category.id}
                     className={`filter-btn ${selectedCategory === category.id ? 'active' : ''}`}
-                    onClick={() => setSelectedCategory(category.id)}
+                    onClick={() => {
+                      navigate(`/products?category=${category.id}`);
+                    }}
                   >
                     <i className={category.icon}></i>
                     {category.name} ({count})
