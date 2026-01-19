@@ -40,6 +40,24 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [features, setFeatures] = useState<string[]>(['']);
   const [specs, setSpecs] = useState<Array<{key: string; value: string}>>([{key: '', value: ''}]);
   
+  // Filter fields state
+  const [brand, setBrand] = useState('');
+  const [connectionTypes, setConnectionTypes] = useState<string[]>([]);
+  const [compatibility, setCompatibility] = useState<string[]>([]);
+  const [formFactor, setFormFactor] = useState('');
+  const [ledType, setLedType] = useState('');
+  
+  // Error modal state
+  const [errorModal, setErrorModal] = useState<{isOpen: boolean; title: string; message: string}>({isOpen: false, title: '', message: ''});
+  const [successModal, setSuccessModal] = useState<{isOpen: boolean; message: string}>({isOpen: false, message: ''});
+  
+  // Filter options
+  const BRAND_OPTIONS = ['Logitech', 'Razer', 'Corsair', 'SteelSeries', 'HyperX', 'Akko', 'Dareu', 'Keychron', 'Leopold', 'Filco', 'Asus', 'MSI', 'LG', 'Samsung', 'Dell', 'ViewSonic', 'BenQ', 'Acer', 'HP', 'Lenovo', 'Apple', 'Microsoft', 'Sandisk', 'Kingston', 'Samsung', 'WD', 'Seagate'];
+  const FORM_FACTOR_OPTIONS = ['Full-size (100%)', 'TKL (80%)', '75%', '65%', '60%', '40%', 'Compact', 'Ergonomic'];
+  const CONNECTION_OPTIONS = ['Wired', 'Wireless 2.4GHz', 'Bluetooth', 'USB-C', 'USB-A', 'PS/2', 'Dual Mode'];
+  const COMPATIBILITY_OPTIONS = ['Windows', 'MacOS', 'Linux', 'iOS', 'Android', 'PlayStation', 'Xbox', 'Nintendo Switch'];
+  const LED_OPTIONS = ['RGB', 'Single Color', 'White LED', 'No LED', 'Per-key RGB', 'Zone RGB'];
+  
   // Custom dropdown states
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
@@ -63,6 +81,13 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         ? Object.entries(product.specs).map(([key, value]) => ({key, value}))
         : [{key: '', value: ''}];
       setSpecs(specsArray);
+      
+      // Load filter fields
+      setBrand(product.brand || '');
+      setConnectionTypes(product.connection_types || []);
+      setCompatibility(product.compatibility || []);
+      setFormFactor(product.form_factor || '');
+      setLedType(product.led_type || '');
     } else {
       setFormData({
         name: '',
@@ -84,6 +109,11 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       setUploadedImages([]);
       setFeatures(['']);
       setSpecs([{key: '', value: ''}]);
+      setBrand('');
+      setConnectionTypes([]);
+      setCompatibility([]);
+      setFormFactor('');
+      setLedType('');
     }
   }, [product]);
 
@@ -108,6 +138,20 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+
+    // Validate file sizes (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    for (const file of Array.from(files)) {
+      if (file.size > maxSize) {
+        setErrorModal({
+          isOpen: true,
+          title: 'Kích thước ảnh vượt quá giới hạn',
+          message: `Ảnh "${file.name}" có kích thước ${(file.size / 1024 / 1024).toFixed(2)}MB, vượt quá giới hạn cho phép là 5MB. Vui lòng chọn ảnh nhỏ hơn hoặc nén ảnh trước khi tải lên.`
+        });
+        e.target.value = '';
+        return;
+      }
+    }
 
     setUploading(true);
     const uploadedUrls: string[] = [];
@@ -137,10 +181,14 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       }
 
       setUploadedImages(prev => [...prev, ...uploadedUrls]);
-      alert(`Đã tải lên thành công ${uploadedUrls.length} ảnh!`);
+      setSuccessModal({isOpen: true, message: `Đã tải lên thành công ${uploadedUrls.length} ảnh!`});
     } catch (error) {
       console.error('Error uploading images:', error);
-      alert(`Có lỗi xảy ra khi tải ảnh lên: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setErrorModal({
+        isOpen: true,
+        title: 'Lỗi tải ảnh lên',
+        message: `Có lỗi xảy ra khi tải ảnh lên: ${error instanceof Error ? error.message : 'Lỗi không xác định'}. Vui lòng thử lại.`
+      });
     } finally {
       setUploading(false);
       // Reset input
@@ -202,6 +250,25 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.name || !formData.name.trim()) {
+      setErrorModal({isOpen: true, title: 'Thiếu thông tin', message: 'Vui lòng nhập tên sản phẩm'});
+      return;
+    }
+    if (!formData.description || !formData.description.trim()) {
+      setErrorModal({isOpen: true, title: 'Thiếu thông tin', message: 'Vui lòng nhập mô tả sản phẩm'});
+      return;
+    }
+    if (!formData.category) {
+      setErrorModal({isOpen: true, title: 'Thiếu thông tin', message: 'Vui lòng chọn danh mục sản phẩm'});
+      return;
+    }
+    if (formData.price_vnd !== undefined && formData.price_vnd < 0) {
+      setErrorModal({isOpen: true, title: 'Dữ liệu không hợp lệ', message: 'Giá sản phẩm không được là số âm'});
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -211,6 +278,13 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       
       // Combine uploaded images and URL images
       const images = [...uploadedImages, ...urlImages];
+      
+      // Validate at least one image
+      if (images.length === 0) {
+        setErrorModal({isOpen: true, title: 'Thiếu hình ảnh', message: 'Vui lòng thêm ít nhất một hình ảnh sản phẩm'});
+        setLoading(false);
+        return;
+      }
 
       // Filter out empty features
       const filteredFeatures = features
@@ -227,17 +301,25 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         }
       });
 
-      await onSubmit({
+      // Build product data with filter fields
+      const productData: Partial<Product> = {
         ...formData,
         images,
         features: filteredFeatures.length > 0 ? filteredFeatures : undefined,
-        specs: Object.keys(specsObj).length > 0 ? specsObj : undefined
-      });
+        specs: Object.keys(specsObj).length > 0 ? specsObj : undefined,
+        brand: brand.trim() || undefined,
+        connection_types: connectionTypes.length > 0 ? connectionTypes : undefined,
+        compatibility: compatibility.length > 0 ? compatibility : undefined,
+        form_factor: formFactor.trim() || undefined,
+        led_type: ledType.trim() || undefined,
+      };
+
+      await onSubmit(productData);
       
       onClose();
     } catch (error) {
       console.error('Error submitting product:', error);
-      alert('Có lỗi xảy ra khi lưu sản phẩm');
+      setErrorModal({isOpen: true, title: 'Lỗi lưu sản phẩm', message: 'Có lỗi xảy ra khi lưu sản phẩm. Vui lòng thử lại.'});
     } finally {
       setLoading(false);
     }
@@ -363,7 +445,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
             </div>
           </div>
 
-          <div className="form-row form-row-2">
+          <div className="form-row">
             <div className="form-group">
               <label htmlFor="price_vnd">Giá (VNĐ) *</label>
               <input
@@ -373,18 +455,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 min="0"
                 value={formData.price_vnd}
                 onChange={(e) => setFormData({ ...formData, price_vnd: Number(e.target.value) })}
-                placeholder="0"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="price_virtual">Giá Virtual (UPoints)</label>
-              <input
-                id="price_virtual"
-                type="number"
-                min="0"
-                value={formData.price_virtual}
-                onChange={(e) => setFormData({ ...formData, price_virtual: Number(e.target.value) })}
                 placeholder="0"
               />
             </div>
@@ -463,7 +533,13 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="images">Hình ảnh sản phẩm *</label>
+              <label htmlFor="images">
+                Hình ảnh sản phẩm *
+                <span className="image-size-limit">
+                  <i className="fas fa-info-circle"></i>
+                  Giới hạn: 5MB/ảnh
+                </span>
+              </label>
               
               {/* Upload from device */}
               <div className="image-upload-section">
@@ -653,6 +729,111 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
             </div>
           </div>
 
+          {/* Filter Fields Section */}
+          <div className="form-section">
+            <h3 className="form-section-title highlighted-title">
+              <i className="fas fa-sliders-h"></i>
+              Thuộc tính bộ lọc
+              <span className="optional-badge">Tùy chọn - Giúp khách hàng lọc sản phẩm</span>
+            </h3>
+            
+            <div className="form-row form-row-2">
+              <div className="form-group">
+                <label htmlFor="brand">
+                  <i className="fas fa-tag"></i> Thương hiệu
+                </label>
+                <select
+                  id="brand"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                >
+                  <option value="">Chọn thương hiệu</option>
+                  {BRAND_OPTIONS.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="form_factor">
+                  <i className="fas fa-ruler"></i> Kích thước / Form Factor
+                </label>
+                <select
+                  id="form_factor"
+                  value={formFactor}
+                  onChange={(e) => setFormFactor(e.target.value)}
+                >
+                  <option value="">Chọn kích thước</option>
+                  {FORM_FACTOR_OPTIONS.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="form-row form-row-2">
+              <div className="form-group">
+                <label htmlFor="connection_types">
+                  <i className="fas fa-plug"></i> Loại kết nối
+                </label>
+                <select
+                  id="connection_types"
+                  multiple
+                  value={connectionTypes}
+                  onChange={(e) => {
+                    const selected = Array.from(e.target.selectedOptions, option => option.value);
+                    setConnectionTypes(selected);
+                  }}
+                  size={5}
+                >
+                  {CONNECTION_OPTIONS.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+                <small>Giữ Ctrl (hoặc Cmd) để chọn nhiều</small>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="compatibility">
+                  <i className="fas fa-check-double"></i> Tương thích
+                </label>
+                <select
+                  id="compatibility"
+                  multiple
+                  value={compatibility}
+                  onChange={(e) => {
+                    const selected = Array.from(e.target.selectedOptions, option => option.value);
+                    setCompatibility(selected);
+                  }}
+                  size={5}
+                >
+                  {COMPATIBILITY_OPTIONS.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+                <small>Giữ Ctrl (hoặc Cmd) để chọn nhiều</small>
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="led_type">
+                  <i className="fas fa-lightbulb"></i> Loại đèn LED
+                </label>
+                <select
+                  id="led_type"
+                  value={ledType}
+                  onChange={(e) => setLedType(e.target.value)}
+                >
+                  <option value="">Chọn loại LED</option>
+                  {LED_OPTIONS.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
           <div className="form-row form-checkboxes">
             <div className="form-checkbox">
               <input
@@ -699,6 +880,52 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           </div>
         </form>
       </div>
+
+      {/* Error Modal */}
+      {errorModal.isOpen && (
+        <div className="notification-modal-overlay" onClick={() => setErrorModal({isOpen: false, title: '', message: ''})}>
+          <div className="notification-modal error" onClick={(e) => e.stopPropagation()}>
+            <div className="notification-modal-header">
+              <i className="fas fa-exclamation-circle"></i>
+              <h3>{errorModal.title}</h3>
+            </div>
+            <div className="notification-modal-body">
+              <p>{errorModal.message}</p>
+            </div>
+            <div className="notification-modal-footer">
+              <button 
+                className="btn-primary" 
+                onClick={() => setErrorModal({isOpen: false, title: '', message: ''})}
+              >
+                <i className="fas fa-check"></i> Đã hiểu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {successModal.isOpen && (
+        <div className="notification-modal-overlay" onClick={() => setSuccessModal({isOpen: false, message: ''})}>
+          <div className="notification-modal success" onClick={(e) => e.stopPropagation()}>
+            <div className="notification-modal-header">
+              <i className="fas fa-check-circle"></i>
+              <h3>Thành công</h3>
+            </div>
+            <div className="notification-modal-body">
+              <p>{successModal.message}</p>
+            </div>
+            <div className="notification-modal-footer">
+              <button 
+                className="btn-primary" 
+                onClick={() => setSuccessModal({isOpen: false, message: ''})}
+              >
+                <i className="fas fa-check"></i> OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

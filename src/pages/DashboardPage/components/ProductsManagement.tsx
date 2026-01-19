@@ -11,11 +11,13 @@ const ProductsManagement: React.FC = () => {
   const [searchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'price_high' | 'price_low' | 'name_asc' | 'name_desc'>('newest');
+  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
   const categoryDropdownRef = React.useRef<HTMLDivElement>(null);
   const sortDropdownRef = React.useRef<HTMLDivElement>(null);
 
@@ -31,6 +33,11 @@ const ProductsManagement: React.FC = () => {
 
     if (selectedCategory) {
       filtered = filtered.filter(p => p.category === selectedCategory);
+    }
+
+    // Filter by featured status
+    if (showFeaturedOnly) {
+      filtered = filtered.filter(p => p.featured);
     }
 
     // Sort products
@@ -54,7 +61,7 @@ const ProductsManagement: React.FC = () => {
     });
 
     setFilteredProducts(sorted);
-  }, [products, searchQuery, selectedCategory, sortBy]);
+  }, [products, searchQuery, selectedCategory, sortBy, showFeaturedOnly]);
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
@@ -98,12 +105,29 @@ const ProductsManagement: React.FC = () => {
 
   const handleToggleFeatured = async (product: Product) => {
     try {
-      const currentFeaturedCount = products.filter(p => p.featured).length;
-      
-      // Kiểm tra giới hạn 8 sản phẩm featured
-      if (!product.featured && currentFeaturedCount >= 8) {
-        alert('Chỉ được chọn tối đa 8 sản phẩm nổi bật cho carousel!');
-        return;
+      if (!product.featured) {
+        // Kiểm tra giới hạn khi bật featured
+        if (product.type === 'digital') {
+          // Digital products
+          const currentDigitalFeaturedCount = products.filter(p => 
+            p.featured && p.type === 'digital'
+          ).length;
+          
+          if (currentDigitalFeaturedCount >= 8) {
+            setErrorModal({ show: true, message: 'Chỉ được chọn tối đa 8 sản phẩm Digital nổi bật cho carousel!' });
+            return;
+          }
+        } else {
+          // Physical products
+          const currentPhysicalFeaturedCount = products.filter(p => 
+            p.featured && p.type !== 'digital'
+          ).length;
+          
+          if (currentPhysicalFeaturedCount >= 8) {
+            setErrorModal({ show: true, message: 'Chỉ được chọn tối đa 8 sản phẩm vật lý nổi bật cho carousel!' });
+            return;
+          }
+        }
       }
       
       await ProductsService.updateProduct(product.id, {
@@ -112,7 +136,7 @@ const ProductsManagement: React.FC = () => {
       mutate(); // Refresh data
     } catch (error) {
       console.error('Error toggling featured:', error);
-      alert('Có lỗi xảy ra khi cập nhật trạng thái nổi bật');
+      setErrorModal({ show: true, message: 'Có lỗi xảy ra khi cập nhật trạng thái nổi bật' });
     }
   };
 
@@ -125,7 +149,7 @@ const ProductsManagement: React.FC = () => {
         ).length;
         
         if (currentFreeDigitalCount >= 8) {
-          alert('Chỉ được chọn tối đa 8 sản phẩm digital miễn phí cho carousel!');
+          setErrorModal({ show: true, message: 'Chỉ được chọn tối đa 8 sản phẩm Digital Miễn phí cho carousel!' });
           return;
         }
       }
@@ -292,6 +316,23 @@ const ProductsManagement: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Featured Products Filter Checkbox */}
+        <div className="featured-filter-checkbox">
+          <label className="custom-checkbox">
+            <input
+              type="checkbox"
+              checked={showFeaturedOnly}
+              onChange={(e) => setShowFeaturedOnly(e.target.checked)}
+            />
+            <span className="checkmark">
+              <i className="fas fa-check"></i>
+            </span>
+            <span className="checkbox-label">
+              Chỉ hiển thị sản phẩm nổi bật
+            </span>
+          </label>
+        </div>
       </div>
 
       <div className="products-table-wrapper">
@@ -299,7 +340,10 @@ const ProductsManagement: React.FC = () => {
           <div className="empty-state">
             <i className="fas fa-box-open"></i>
             <p>Chưa có sản phẩm nào{searchQuery || selectedCategory ? ' phù hợp với bộ lọc' : ''}.</p>
-            {!searchQuery && !selectedCategory && (
+            {showFeaturedOnly && (
+              <small>Đánh dấu sản phẩm là <strong>"Nổi bật"</strong> bằng cách chỉnh sửa sản phẩm và bật tùy chọn Featured</small>
+            )}
+            {!searchQuery && !selectedCategory && !showFeaturedOnly && (
               <button className="btn-primary" onClick={handleAddProduct}>
                 <i className="fas fa-plus"></i> <span>Thêm sản phẩm đầu tiên</span>
               </button>
@@ -367,6 +411,25 @@ const ProductsManagement: React.FC = () => {
         product={editingProduct}
         categories={categories}
       />
+
+      {/* Error Modal */}
+      {errorModal.show && (
+        <div className="notification-modal-overlay" onClick={() => setErrorModal({ show: false, message: '' })}>
+          <div className="notification-modal error" onClick={(e) => e.stopPropagation()}>
+            <div className="notification-icon">
+              <i className="fas fa-exclamation-circle"></i>
+            </div>
+            <h3>Thông báo</h3>
+            <p>{errorModal.message}</p>
+            <button 
+              className="btn-modal-close"
+              onClick={() => setErrorModal({ show: false, message: '' })}
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
