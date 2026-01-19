@@ -549,9 +549,10 @@
     font-size: 0.875rem;
   }
   
-  
-  
-  
+  .filter-btn.active {
+    padding: 0.7rem 0.95rem;
+    font-size: 0.875rem;
+  }
   
   .products-grid {
     grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
@@ -633,9 +634,10 @@
     font-size: 0.85rem;
   }
   
-  
-  
-  
+  .filter-btn.active {
+    padding: 0.65rem 0.9rem;
+    font-size: 0.85rem;
+  }
   
   .products-grid {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -725,7 +727,10 @@
     font-size: 0.825rem;
   }
   
-  
+  .filter-btn.active {
+    padding: 0.6rem 0.85rem;
+    font-size: 0.825rem;
+  }
   
   .products-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -821,7 +826,10 @@
     font-size: 0.8rem;
   }
   
-  
+  .filter-btn.active {
+    padding: 0.55rem 0.75rem;
+    font-size: 0.8rem;
+  }
   
   .products-grid {
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -938,9 +946,10 @@
     font-size: 0.75rem;
   }
   
-  
-  
-  
+  .filter-btn.active {
+    padding: 0.5rem 0.625rem;
+    font-size: 0.75rem;
+  }
   
   .products-grid {
     grid-template-columns: 1fr;
@@ -1092,9 +1101,11 @@
     border-radius: 8px;
   }
   
-  
-  
-  
+  .filter-btn.active {
+    padding: 0.45rem 0.5rem;
+    font-size: 0.7rem;
+    border-radius: 8px;
+  }
   
   .products-grid {
     gap: 1.25rem;
@@ -1245,9 +1256,11 @@
     border-radius: 7px;
   }
   
-  
-  
-  
+  .filter-btn.active {
+    padding: 0.4rem 0.45rem;
+    font-size: 0.65rem;
+    border-radius: 7px;
+  }
   
   .products-grid {
     gap: 1rem;

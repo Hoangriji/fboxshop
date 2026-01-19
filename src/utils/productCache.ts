@@ -30,11 +30,9 @@ class ProductCache {
   private loadFromStorage(): void {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      console.log('📦 Loading cache from localStorage...');
       
       if (stored) {
         const parsed = JSON.parse(stored) as CategoryCache;
-        let loadedCount = 0;
         
         Object.entries(parsed).forEach(([key, value]) => {
           // Only load if not expired
@@ -43,16 +41,8 @@ class ProductCache {
               ...value,
               lastDoc: null // Can't serialize Firestore docs
             });
-            loadedCount++;
-            console.log(`  ✓ Loaded ${value.products.length} products for ${key}`);
-          } else {
-            console.log(`Skipped expired cache for ${key}`);
           }
         });
-        
-        console.log(`Total categories loaded: ${loadedCount}`);
-      } else {
-        console.log('No cache in localStorage');
       }
     } catch (err) {
       console.error('Error loading cache from storage:', err);
@@ -92,15 +82,11 @@ class ProductCache {
     const cached = this.memoryCache.get(category);
     
     if (!cached) {
-      console.log(`No cache for ${category}`);
       return null;
     }
     
-    console.log(`Cache check for ${category}: ${cached.products.length} products, age: ${Math.round((Date.now() - cached.timestamp) / 1000)}s`);
-    
     // Check if expired
     if (Date.now() - cached.timestamp > CACHE_TTL) {
-      console.log(`Cache expired for ${category}`);
       this.memoryCache.delete(category);
       return null;
     }
@@ -110,7 +96,6 @@ class ProductCache {
     const availableProducts = cached.products.slice(offset, offset + limit);
     
     if (availableProducts.length === 0) {
-      console.log(`No products at offset ${offset} for ${category}`);
       return null;
     }
 

@@ -98,7 +98,7 @@ export const useProductsOptimized = (
             );
             setPrefetchedData(nextBatch);
           } catch (err) {
-            console.warn('Prefetch failed:', err);
+            // Silently fail prefetch
           }
         }, 100);
       }
@@ -135,7 +135,7 @@ export const useProductsOptimized = (
               );
               setPrefetchedData(nextBatch);
             } catch (err) {
-              console.warn('Prefetch failed:', err);
+              // Silently fail prefetch
             }
           }, 100);
         }
@@ -163,7 +163,7 @@ export const useProductsOptimized = (
               );
               setPrefetchedData(nextBatch);
             } catch (err) {
-              console.warn('Prefetch failed:', err);
+              // Silently fail prefetch
             }
           }, 100);
         }

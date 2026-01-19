@@ -29,7 +29,7 @@ const DashboardOverview: React.FC = () => {
 
   useEffect(() => {
     if (products) {
-      const digitalFree = products.filter((p: Product) => p.type === 'digital' && p.is_free).length;
+      const digitalFeatured = products.filter((p: Product) => p.type === 'digital' && p.featured).length;
       const recent = products.filter((p: Product) => {
         const createdAt = new Date(p.created_at);
         const weekAgo = new Date();
@@ -39,7 +39,7 @@ const DashboardOverview: React.FC = () => {
 
       setStats({
         totalProducts: products.length,
-        digitalFreeProducts: digitalFree,
+        digitalFreeProducts: digitalFeatured,
         totalCategories: categories?.length || 0,
         recentProducts: recent
       });

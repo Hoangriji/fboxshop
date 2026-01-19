@@ -48,22 +48,26 @@ export const useFeaturedProducts = (): UseFeaturedProductsResult => {
         return;
       }
 
-      // Load featured products (only those marked as featured)
-      const featured = await ProductsService.getFeaturedProducts();
+      // Load all featured products
+      const allFeatured = await ProductsService.getFeaturedProducts();
       
-      // Load free digital products
-      const allProducts = await ProductsService.getPaginatedProducts(50);
-      const freeDigital = allProducts.products.filter(
-        p => p.category === 'digital' && p.is_free === true
-      );
+      // Separate Physical (non-digital) featured products for carousel 1
+      const physicalFeatured = allFeatured
+        .filter(p => p.type !== 'digital')
+        .slice(0, 8);
+      
+      // Separate Digital featured products for carousel 2
+      const digitalFeatured = allFeatured
+        .filter(p => p.type === 'digital')
+        .slice(0, 8);
 
       // Update cache
-      cachedFeaturedProducts = featured;
-      cachedFreeProducts = freeDigital;
+      cachedFeaturedProducts = physicalFeatured;
+      cachedFreeProducts = digitalFeatured;
       cacheTimestamp = Date.now();
 
-      setFeaturedProducts(featured);
-      setFreeDigitalProducts(freeDigital);
+      setFeaturedProducts(physicalFeatured);
+      setFreeDigitalProducts(digitalFeatured);
     } catch (err) {
       setError(err as Error);
       console.error('Error loading featured products:', err);

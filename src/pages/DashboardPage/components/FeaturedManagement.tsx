@@ -112,9 +112,8 @@ const FeaturedManagement: React.FC = () => {
             </div>
           ) : (
             <div className="featured-products-grid">
-              {featuredProducts.map((product, index) => (
+              {featuredProducts.map((product) => (
                 <div key={product.id} className="featured-product-card">
-                  <div className="card-order-badge">#{index + 1}</div>
                   <div className="card-image">
                     <img src={product.images[0]} alt={product.name} />
                   </div>
@@ -169,9 +168,8 @@ const FeaturedManagement: React.FC = () => {
             </div>
           ) : (
             <div className="featured-products-grid">
-              {freeDigitalProducts.map((product, index) => (
+              {freeDigitalProducts.map((product) => (
                 <div key={product.id} className="featured-product-card digital">
-                  <div className="card-order-badge">#{index + 1}</div>
                   <div className="card-image">
                     <img src={product.images[0]} alt={product.name} />
                     <div className="free-badge">

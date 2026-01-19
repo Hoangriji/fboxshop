@@ -52,12 +52,8 @@ export const useProductsLoadMore = (
   
   // Load category counts with REAL-TIME updates
   useEffect(() => {
-    console.log('Setting up real-time category counts listener...');
-    
     // Subscribe to real-time updates
     const unsubscribe = ProductsService.subscribeToProductCounts((counts, total) => {
-      console.log('REAL-TIME: Category counts updated!', counts);
-      
       // Update state
       setCategoryCounts(counts);
       setTotalCount(total);
@@ -68,15 +64,12 @@ export const useProductsLoadMore = (
     
     // Cleanup listener on unmount
     return () => {
-      console.log('Cleaning up category counts listener');
       unsubscribe();
     };
   }, []);
 
   // Load products with REAL-TIME sync
   useEffect(() => {
-    console.log(`Setting up real-time listener for category: ${currentCategory}`);
-    
     let productsUnsubscribe: (() => void) | null = null;
     
     const setupRealtimeSync = () => {
@@ -86,7 +79,6 @@ export const useProductsLoadMore = (
       // Check cache first for instant display
       const cached = productCache.get(currentCategory, 0, PRODUCTS_PER_PAGE);
       if (cached) {
-        console.log(`Showing ${cached.products.length} cached products instantly`);
         setDisplayedProducts(cached.products);
         setLoading(false);
       }
@@ -95,8 +87,6 @@ export const useProductsLoadMore = (
       productsUnsubscribe = ProductsService.subscribeToProductsByCategory(
         currentCategory,
         (allProducts) => {
-          console.log(`REAL-TIME UPDATE: ${allProducts.length} products for ${currentCategory}`);
-          
           // Update cache with ALL products from Firebase
           productCache.set(currentCategory, allProducts, null);
           
@@ -125,7 +115,6 @@ export const useProductsLoadMore = (
     // Cleanup listener when category changes
     return () => {
       if (productsUnsubscribe) {
-        console.log(`Cleaning up listener for ${currentCategory}`);
         productsUnsubscribe();
       }
     };
