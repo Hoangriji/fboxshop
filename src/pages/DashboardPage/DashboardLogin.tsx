@@ -67,7 +67,7 @@ const DashboardLogin: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
+          <div className="form-grouplg">
             <label htmlFor="username">
               <i className="fas fa-user"></i>
               Tên đăng nhập
@@ -83,7 +83,7 @@ const DashboardLogin: React.FC = () => {
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-grouplg">
             <label htmlFor="password">
               <i className="fas fa-lock"></i>
               Mật khẩu

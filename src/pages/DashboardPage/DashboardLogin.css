@@ -61,26 +61,27 @@
   text-align: left;
 }
 
-.form-group {
+.form-grouplg {
   margin-bottom: 20px;
 }
 
-.form-group label {
+.form-grouplg label {
   display: flex;
   align-items: center;
   font-weight: 600;
   color: var(--theme-text-primary);
   margin-bottom: 8px;
   font-size: 14px;
+  justify-content: start;
 }
 
-.form-group label i {
+.form-grouplg label i {
   margin-right: 8px;
   color: var(--accent-primary);
   width: 16px;
 }
 
-.form-group input {
+.form-grouplg input {
   width: 100%;
   padding: 12px 16px;
   background: var(--theme-bg-secondary);
@@ -96,7 +97,7 @@
     inset 2px 2px 4px var(--theme-shadow-light);
 }
 
-.form-group input:focus {
+.form-grouplg input:focus {
   outline: none;
   border-color: var(--accent-primary);
   box-shadow: 
@@ -105,7 +106,7 @@
     inset 2px 2px 4px var(--theme-shadow-light);
 }
 
-.form-group input:disabled {
+.form-grouplg input:disabled {
   background-color: var(--theme-surface);
   opacity: 0.6;
   cursor: not-allowed;

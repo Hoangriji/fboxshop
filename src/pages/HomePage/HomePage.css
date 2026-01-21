@@ -1244,4 +1244,8 @@ hr.line {
   .about-description p {
     font-size: 15px;
   }
+
+  .hero-title{
+    margin-top: 1rem;
+  }
 }

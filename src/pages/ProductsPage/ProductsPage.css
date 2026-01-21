@@ -1699,3 +1699,20 @@
     min-width: auto;
   }
 }
+
+
+@media (max-width: 576px) {
+  .dropdown-filter-btn {
+    padding: 0.5rem 0.625rem;
+    font-size: 0.75rem;
+  }
+  
+  .clear-all-filters-btn {
+    padding: 0.5rem 0.625rem;
+    font-size: 0.75rem;
+  }
+
+  .header-content{
+    margin-top: 1rem;
+  }
+}
