@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { SpeedInsights } from '@vercel/speed-insights/react';
-import { AuthProvider } from '../../contexts/AuthContext';
 import { useAuth } from '../../hooks/useAuth';
+import { useAuthStore } from '../../store/authStore';
 import DashboardLogin from './DashboardLogin';
 import DashboardLayout from './DashboardLayout';
 import DashboardOverview from './components/DashboardOverview.tsx';
@@ -73,13 +73,18 @@ const DashboardRoutes: React.FC = () => {
 
 // Main Dashboard App Component
 const DashboardApp: React.FC = () => {
+  const checkSession = useAuthStore((state) => state.checkSession);
+
+  // Check session on mount
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
+
   return (
-    <AuthProvider>
-      <div className="dashboard-app">
-        <DashboardRoutes />
-        <SpeedInsights />
-      </div>
-    </AuthProvider>
+    <div className="dashboard-app">
+      <DashboardRoutes />
+      <SpeedInsights />
+    </div>
   );
 };
 
