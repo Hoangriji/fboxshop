@@ -1,35 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { useProducts } from '../../../hooks/useProducts';
 import { useCategories } from '../../../hooks/useCategories';
-import { ActivityLogsService } from '../../../services/activityLogsService';
-import { AnimatedList } from '../../../components/AnimatedList';
-import type { Product, Category, ActivityLog } from '../../../types';
+import { Pie, Column } from '@ant-design/plots';
+import type { Product, Category } from '../../../types';
 
-interface CategoryDistribution {
+interface CategoryStats {
   name: string;
   count: number;
+  value: number;
   color: string;
-  percentage: number;
-  icon: string;
 }
 
 const DashboardOverview: React.FC = () => {
   const { products } = useProducts();
   const { categories } = useCategories();
-  const [hoveredSegment, setHoveredSegment] = useState<CategoryDistribution | null>(null);
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [stats, setStats] = useState({
     totalProducts: 0,
-    digitalFreeProducts: 0,
-    totalCategories: 0,
+    totalInvoiceValue: 0,
+    outOfStockProducts: 0,
     recentProducts: 0
   });
 
-  const [categoryDistribution, setCategoryDistribution] = useState<CategoryDistribution[]>([]);
+  const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
 
   useEffect(() => {
-    if (products) {
-      const digitalFeatured = products.filter((p: Product) => p.type === 'digital' && p.featured).length;
+    if (products && categories) {
+      // Calculate total inventory value (physical products only)
+      const totalValue = products
+        .filter((p: Product) => p.type === 'physical')
+        .reduce((sum: number, p: Product) => sum + (p.price_vnd || 0), 0);
+      
+      const outOfStock = products.filter((p: Product) => p.type === 'physical' && p.stock_status === 'out_of_stock').length;
       const recent = products.filter((p: Product) => {
         const createdAt = new Date(p.created_at);
         const weekAgo = new Date();
@@ -39,78 +40,34 @@ const DashboardOverview: React.FC = () => {
 
       setStats({
         totalProducts: products.length,
-        digitalFreeProducts: digitalFeatured,
-        totalCategories: categories?.length || 0,
+        totalInvoiceValue: totalValue,
+        outOfStockProducts: outOfStock,
         recentProducts: recent
       });
 
-      // Calculate category distribution
-      if (categories) {
-        const colors = [
-          '#00d2ff', '#a855f7', '#ec4899', '#10b981', 
-          '#f59e0b', '#ef4444', '#14b8a6', '#6366f1'
-        ];
+      // Calculate category statistics
+      const colors = [
+        '#00d2ff', '#a855f7', '#ec4899', '#10b981', 
+        '#f59e0b', '#ef4444', '#14b8a6', '#6366f1',
+        '#22d3ee', '#fb923c', '#e879f9', '#a3e635'
+      ];
+      
+      const catStats = categories.map((cat: Category, index: number) => {
+        const categoryProducts = products.filter((p: Product) => p.category === cat.id);
+        const count = categoryProducts.length;
+        const value = categoryProducts.reduce((sum: number, p: Product) => sum + (p.price_vnd || 0), 0);
         
-        const distribution = categories.map((cat: Category, index: number) => {
-          const count = products.filter((p: Product) => p.category === cat.id).length;
-          const percentage = products.length > 0 ? (count / products.length) * 100 : 0;
-          
-          return {
-            name: cat.name,
-            count,
-            color: colors[index % colors.length],
-            percentage,
-            icon: cat.icon || 'fa-box'
-          };
-        }).filter((cat) => cat.count > 0);
+        return {
+          name: cat.name,
+          count,
+          value,
+          color: colors[index % colors.length]
+        };
+      }).filter(cat => cat.count > 0);
 
-        setCategoryDistribution(distribution);
-      }
+      setCategoryStats(catStats);
     }
   }, [products, categories]);
-
-  // Subscribe to activity logs
-  useEffect(() => {
-    const unsubscribe = ActivityLogsService.subscribeToLogs(100, (logs) => {
-      setActivityLogs(logs);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  // Helper function to get activity icon and color
-  const getActivityStyle = (action: ActivityLog['action']) => {
-    switch (action) {
-      case 'create':
-        return { icon: 'fa-plus-circle', color: '#10b981', text: 'Thêm mới' };
-      case 'update':
-        return { icon: 'fa-edit', color: '#00d2ff', text: 'Cập nhật' };
-      case 'delete':
-        return { icon: 'fa-trash', color: '#ef4444', text: 'Xóa' };
-      case 'feature':
-        return { icon: 'fa-star', color: '#f59e0b', text: 'Đặt nổi bật' };
-      case 'unfeature':
-        return { icon: 'fa-star-half-alt', color: '#6b7280', text: 'Bỏ nổi bật' };
-      default:
-        return { icon: 'fa-circle', color: '#6b7280', text: 'Khác' };
-    }
-  };
-
-  // Format timestamp
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return 'Vừa xong';
-    if (minutes < 60) return `${minutes} phút trước`;
-    if (hours < 24) return `${hours} giờ trước`;
-    if (days < 7) return `${days} ngày trước`;
-    return date.toLocaleDateString('vi-VN');
-  };
 
   return (
     <div className="dashboard-overview">
@@ -145,133 +102,88 @@ const DashboardOverview: React.FC = () => {
         
         <div className="stat-card stat-card-accent">
           <div className="stat-icon">
-            <i className="fas fa-gift"></i>
+            <i className="fas fa-file-invoice-dollar"></i>
           </div>
           <div className="stat-content">
-            <h3 className="stat-label">Digital miễn phí</h3>
-            <p className="stat-number">{stats.digitalFreeProducts}</p>
+            <h3 className="stat-label">Tổng giá trị hóa đơn</h3>
+            <p className="stat-number">{(stats.totalInvoiceValue / 1000000).toFixed(1)}M</p>
             <span className="stat-change">
+              {stats.totalProducts > 0 ? (stats.totalInvoiceValue / stats.totalProducts).toLocaleString('vi-VN') : 0}đ/sp trung bình
             </span>
           </div>
           <div className="stat-bg-icon">
-            <i className="fas fa-gift"></i>
+            <i className="fas fa-file-invoice-dollar"></i>
           </div>
         </div>
         
         <div className="stat-card stat-card-purple">
           <div className="stat-icon">
-            <i className="fas fa-layer-group"></i>
+            <i className="fas fa-exclamation-triangle"></i>
           </div>
           <div className="stat-content">
-            <h3 className="stat-label">Danh mục</h3>
-            <p className="stat-number">{stats.totalCategories}</p>
-            <span className="stat-change">
-              {categoryDistribution.length} có sản phẩm
+            <h3 className="stat-label">Hết hàng</h3>
+            <p className="stat-number">{stats.outOfStockProducts}</p>
+            <span className="stat-change" style={{ color: stats.outOfStockProducts > 0 ? '#ef4444' : '#10b981' }}>
+              {stats.outOfStockProducts > 0 ? 'Cần nhập thêm' : 'Kho đầy đủ'}
             </span>
           </div>
           <div className="stat-bg-icon">
-            <i className="fas fa-layer-group"></i>
+            <i className="fas fa-exclamation-triangle"></i>
           </div>
         </div>
       </div>
 
       {/* Charts Row */}
       <div className="charts-row">
-        {/* Category Distribution Donut Chart */}
+        {/* Category Distribution Pie Chart */}
         <div className="chart-card">
           <div className="chart-header">
             <h3 className="chart-title">
               <i className="fas fa-chart-pie"></i>
-              Phân bố theo danh mục
+              Phân bố sản phẩm theo danh mục
             </h3>
-            <span className="chart-badge">{stats.totalProducts} sản phẩm</span>
+            <span className="chart-badge">{categoryStats.length} danh mục</span>
           </div>
           <div className="chart-content">
-            {categoryDistribution.length > 0 ? (
-              <>
-                <div className="donut-chart">
-                  <svg viewBox="0 0 240 240" className="donut-svg">
-                    {/* Background circle */}
-                    <circle 
-                      cx="120" 
-                      cy="120" 
-                      r="80" 
-                      fill="none" 
-                      stroke="var(--theme-bg-tertiary)" 
-                      strokeWidth="40" 
-                    />
-                    {/* Category segments */}
-                    {categoryDistribution.reduce((acc, cat) => {
-                      const total = categoryDistribution.reduce((sum, c) => sum + c.percentage, 0);
-                      const normalizedPercentage = (cat.percentage / total) * 100;
-                      const circumference = 2 * Math.PI * 80;
-                      const offset = acc.offset;
-                      const strokeDasharray = `${(normalizedPercentage / 100) * circumference} ${circumference}`;
-                      
-                      acc.elements.push(
-                        <g key={cat.name}>
-                          <circle
-                            cx="120"
-                            cy="120"
-                            r="80"
-                            fill="none"
-                            stroke={cat.color}
-                            strokeWidth="42"
-                            strokeDasharray={strokeDasharray}
-                            strokeDashoffset={-offset}
-                            transform="rotate(-90 120 120)"
-                            className="donut-segment"
-                            style={{ 
-                              filter: `drop-shadow(0 0 6px ${cat.color}60)`,
-                              cursor: 'pointer',
-                              transition: 'all 0.3s ease'
-                            }}
-                            onMouseEnter={() => setHoveredSegment(cat)}
-                            onMouseLeave={() => setHoveredSegment(null)}
-                          />
-                        </g>
-                      );
-                      
-                      acc.offset += (normalizedPercentage / 100) * circumference;
-                      return acc;
-                    }, { elements: [] as React.ReactNode[], offset: 0 }).elements}
-                  </svg>
-                  <div className="donut-center">
-                    {hoveredSegment ? (
-                      <>
-                        <i className={`fas ${hoveredSegment.icon} donut-icon`} style={{ color: hoveredSegment.color }}></i>
-                        <span className="donut-category">{hoveredSegment.name}</span>
-                        <span className="donut-count">{hoveredSegment.count}</span>
-                        <span className="donut-percentage">{hoveredSegment.percentage.toFixed(1)}%</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="donut-total">{stats.totalProducts}</span>
-                        <span className="donut-label">SẢN PHẨM</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                {/* Chart Legend */}
-                <div className="chart-legend">
-                  {categoryDistribution.map((cat) => (
-                    <div 
-                      key={cat.name} 
-                      className="legend-item"
-                      onMouseEnter={() => setHoveredSegment(cat)}
-                      onMouseLeave={() => setHoveredSegment(null)}
-                    >
-                      <div className="legend-color" style={{ backgroundColor: cat.color }}>
-                        <i className={`fas ${cat.icon}`}></i>
-                      </div>
-                      <div className="legend-info">
-                        <span className="legend-name">{cat.name}</span>
-                        <span className="legend-stats">{cat.count} sản phẩm ({cat.percentage.toFixed(1)}%)</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
+            {categoryStats.length > 0 ? (
+              <div className="ant-chart-wrapper">
+                <Pie
+                  data={categoryStats.map(cat => ({
+                    type: cat.name,
+                    value: cat.count,
+                  }))}
+                  angleField="value"
+                  colorField="type"
+                  radius={0.75}
+                  innerRadius={0.55}
+                  height={400}
+                  label={{
+                    type: 'outer',
+                    content: '{name}: {value}',
+                  }}
+                  legend={{
+                    position: 'bottom' as const,
+                  }}
+                  statistic={{
+                    title: {
+                      content: 'Tổng',
+                    },
+                    content: {
+                      content: stats.totalProducts.toString(),
+                    },
+                  }}
+                  color={categoryStats.map(cat => cat.color)}
+                  tooltip={{
+                    formatter: (datum: any) => {
+                      const percentage = ((datum.value / stats.totalProducts) * 100).toFixed(1);
+                      return {
+                        name: datum.type,
+                        value: `${datum.value} sản phẩm (${percentage}%)`,
+                      };
+                    },
+                  }}
+                />
+              </div>
             ) : (
               <div className="empty-chart">
                 <i className="fas fa-chart-pie"></i>
@@ -281,57 +193,62 @@ const DashboardOverview: React.FC = () => {
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="chart-card activity-card">
+        {/* Category Value Column Chart */}
+        <div className="chart-card">
           <div className="chart-header">
             <h3 className="chart-title">
-              <i className="fas fa-bell"></i>
-              Hoạt động gần đây
+              <i className="fas fa-chart-bar"></i>
+              Giá trị kho theo danh mục
             </h3>
-            <span className="chart-badge">{activityLogs.length} thông báo</span>
+            <span className="chart-badge">{(stats.totalInvoiceValue / 1000000).toFixed(1)}M tổng</span>
           </div>
           <div className="chart-content">
-            <div className="activity-list">
-              {activityLogs && activityLogs.length > 0 ? (
-                <AnimatedList<ActivityLog>
-                  items={activityLogs}
-                  showGradients={true}
-                  enableArrowNavigation={false}
-                  displayScrollbar={true}
-                  itemClassName="dashboard-activity-item"
-                  renderItem={(log: ActivityLog) => {
-                    const style = getActivityStyle(log.action);
-                    return (
-                      <div className="activity-notification">
-                        <div className="activity-icon-wrapper" style={{ backgroundColor: `${style.color}20` }}>
-                          <i className={`fas ${style.icon}`} style={{ color: style.color }}></i>
-                        </div>
-                        <div className="activity-details">
-                          <div className="activity-header">
-                            <span className="activity-action" style={{ color: style.color }}>
-                              {style.text}
-                            </span>
-                            <span className="activity-time">{formatTimestamp(log.timestamp)}</span>
-                          </div>
-                          <p className="activity-product-name">{log.productName}</p>
-                          {log.details && <span className="activity-description">{log.details}</span>}
-                          {log.category && (
-                            <span className="activity-category-badge">
-                              <i className="fas fa-tag"></i> {log.category}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
+            {categoryStats.length > 0 ? (
+              <div className="ant-chart-wrapper">
+                <Column
+                  data={categoryStats.map(cat => ({
+                    category: cat.name,
+                    value: cat.value / 1000000,
+                  }))}
+                  xField="category"
+                  yField="value"
+                  height={400}
+                  color={categoryStats.map(cat => cat.color)}
+                  label={{
+                    position: 'top',
+                    formatter: (datum: any) => `${datum.value.toFixed(1)}M`,
+                  }}
+                  yAxis={{
+                    title: {
+                      text: 'Giá trị (Triệu đồng)',
+                    },
+                  }}
+                  xAxis={{
+                    label: {
+                      autoRotate: true,
+                      autoHide: false,
+                    },
+                  }}
+                  tooltip={{
+                    formatter: (datum: any) => {
+                      const cat = categoryStats.find(c => c.name === datum.category);
+                      return {
+                        name: datum.category,
+                        value: `${datum.value.toFixed(2)}M đồng (${cat?.count || 0} sản phẩm)`,
+                      };
+                    },
+                  }}
+                  columnStyle={{
+                    radius: [8, 8, 0, 0],
                   }}
                 />
-              ) : (
-                <div className="empty-chart">
-                  <i className="fas fa-inbox"></i>
-                  <p>Chưa có hoạt động nào</p>
-                </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="empty-chart">
+                <i className="fas fa-chart-bar"></i>
+                <p>Chưa có dữ liệu</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

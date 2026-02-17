@@ -44,7 +44,9 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
         stockStatus: databaseProduct.stock_status,
         specs: databaseProduct.specs,
         features: databaseProduct.features,
-        brand: databaseProduct.brand
+        brand: databaseProduct.brand,
+        hasVariants: databaseProduct.has_variants,
+        variantCount: databaseProduct.variants?.length
       }} 
       onViewDetails={onViewDetails}
     />

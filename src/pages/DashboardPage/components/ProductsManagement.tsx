@@ -3,6 +3,7 @@ import { useProducts } from '../../../hooks/useProducts';
 import { useCategories } from '../../../hooks/useCategories';
 import { ProductsService } from '../../../services/firebaseService';
 import ProductFormModal from './ProductFormModal';
+import { ConfirmationModal } from '../../../components/ConfirmationModal/ConfirmationModal';
 import type { Product } from '../../../types';
 
 const ProductsManagement: React.FC = () => {
@@ -18,6 +19,15 @@ const ProductsManagement: React.FC = () => {
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [errorModal, setErrorModal] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
+  const [successModal, setSuccessModal] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ show: boolean; product: Product | null }>({ show: false, product: null });
+  const [deleting, setDeleting] = useState(false);
+  
+  // Bulk selection and delete states
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [bulkDeleteConfirmation, setBulkDeleteConfirmation] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  
   const categoryDropdownRef = React.useRef<HTMLDivElement>(null);
   const sortDropdownRef = React.useRef<HTMLDivElement>(null);
 
@@ -88,18 +98,86 @@ const ProductsManagement: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteProduct = async (product: Product) => {
-    if (!confirm(`Bạn có chắc muốn xóa sản phẩm "${product.name}"?`)) {
-      return;
-    }
+  const handleDeleteProduct = (product: Product) => {
+    setDeleteConfirmation({ show: true, product });
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (!deleteConfirmation.product) return;
+
+    const productName = deleteConfirmation.product.name;
+    
+    // Đóng modal xác nhận và hiện loading ngay
+    setDeleteConfirmation({ show: false, product: null });
+    setDeleting(true);
 
     try {
-      await ProductsService.deleteProduct(product.id);
+      await ProductsService.deleteProduct(deleteConfirmation.product.id);
       mutate(); // Refresh data
-      alert('Xóa sản phẩm thành công!');
+      setDeleting(false);
+      setSuccessModal({ show: true, message: `Đã xóa sản phẩm "${productName}" thành công!` });
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Có lỗi xảy ra khi xóa sản phẩm');
+      setDeleting(false);
+      setErrorModal({ show: true, message: 'Có lỗi xảy ra khi xóa sản phẩm. Vui lòng thử lại!' });
+    }
+  };
+
+  // Bulk selection handlers
+  const handleSelectProduct = (productId: string) => {
+    setSelectedProducts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedProducts.size === filteredProducts.length) {
+      setSelectedProducts(new Set());
+    } else {
+      setSelectedProducts(new Set(filteredProducts.map(p => p.id)));
+    }
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedProducts(new Set());
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedProducts.size === 0) return;
+    setBulkDeleteConfirmation(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    if (selectedProducts.size === 0) return;
+
+    const count = selectedProducts.size;
+    setBulkDeleteConfirmation(false);
+    setBulkDeleting(true);
+
+    try {
+      const results = await ProductsService.deleteProducts(Array.from(selectedProducts));
+      mutate(); // Refresh data
+      setBulkDeleting(false);
+      setSelectedProducts(new Set());
+
+      if (results.failed.length === 0) {
+        setSuccessModal({ show: true, message: `Đã xóa thành công ${count} sản phẩm!` });
+      } else {
+        setSuccessModal({ 
+          show: true, 
+          message: `Đã xóa ${results.success.length} sản phẩm. ${results.failed.length} sản phẩm xóa thất bại.` 
+        });
+      }
+    } catch (error) {
+      console.error('Error bulk deleting products:', error);
+      setBulkDeleting(false);
+      setErrorModal({ show: true, message: 'Có lỗi xảy ra khi xóa sản phẩm. Vui lòng thử lại!' });
     }
   };
 
@@ -142,6 +220,8 @@ const ProductsManagement: React.FC = () => {
 
   const handleSubmitProduct = async (productData: Partial<Product>) => {
     try {
+      console.log('ProductsManagement - Saving product:', productData);
+      
       // Kiểm tra giới hạn sản phẩm digital free
       if (productData.type === 'digital' && productData.is_free) {
         const currentFreeDigitalCount = products.filter(
@@ -156,17 +236,20 @@ const ProductsManagement: React.FC = () => {
       
       if (editingProduct) {
         // Update existing product
+        console.log('Updating product:', editingProduct.id);
         await ProductsService.updateProduct(editingProduct.id, productData);
-        alert('Cập nhật sản phẩm thành công!');
+        setSuccessModal({ show: true, message: '✓ Cập nhật sản phẩm thành công!' });
       } else {
         // Create new product
+        console.log('Creating new product');
         await ProductsService.createProduct(productData as Omit<Product, 'id'>);
-        alert('Thêm sản phẩm mới thành công!');
+        setSuccessModal({ show: true, message: '✓ Thêm sản phẩm mới thành công!' });
       }
       mutate(); // Refresh data
       setIsModalOpen(false);
     } catch (error) {
       console.error('Error saving product:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       throw error;
     }
   };
@@ -336,6 +419,44 @@ const ProductsManagement: React.FC = () => {
       </div>
 
       <div className="products-table-wrapper">
+        {filteredProducts.length > 0 && (
+          <div className="products-list-header">
+            <label className="select-all-checkbox">
+              <input
+                type="checkbox"
+                checked={selectedProducts.size === filteredProducts.length && filteredProducts.length > 0}
+                onChange={handleSelectAll}
+              />
+              <span className="checkmark">
+                <i className="fas fa-check"></i>
+              </span>
+              <span className="checkbox-label">
+                Chọn tất cả ({filteredProducts.length})
+              </span>
+            </label>
+          </div>
+        )}
+
+        {/* Bulk Action Bar */}
+        {selectedProducts.size > 0 && (
+          <div className="bulk-action-bar">
+            <div className="bulk-info">
+              <i className="fas fa-check-circle"></i>
+              <span>Đã chọn {selectedProducts.size} sản phẩm</span>
+            </div>
+            <div className="bulk-actions">
+              <button className="btn-deselect" onClick={handleDeselectAll}>
+                <i className="fas fa-times"></i>
+                Bỏ chọn tất cả
+              </button>
+              <button className="btn-bulk-delete" onClick={handleBulkDelete}>
+                <i className="fas fa-trash-alt"></i>
+                Xóa ({selectedProducts.size})
+              </button>
+            </div>
+          </div>
+        )}
+        
         {filteredProducts.length === 0 ? (
           <div className="empty-state">
             <i className="fas fa-box-open"></i>
@@ -345,7 +466,8 @@ const ProductsManagement: React.FC = () => {
             )}
             {!searchQuery && !selectedCategory && !showFeaturedOnly && (
               <button className="btn-primary" onClick={handleAddProduct}>
-                <i className="fas fa-plus"></i> <span>Thêm sản phẩm đầu tiên</span>
+                <i className="fas fa-plus"></i>
+                <span>Thêm sản phẩm đầu tiên</span>
               </button>
             )}
           </div>
@@ -353,8 +475,19 @@ const ProductsManagement: React.FC = () => {
           <div className="products-list">
             {filteredProducts.map((product) => {
               const category = categories.find(c => c.id === product.category);
+              const isSelected = selectedProducts.has(product.id);
               return (
-                <div key={product.id} className="product-list-item">
+                <div key={product.id} className={`product-list-item ${isSelected ? 'selected' : ''}`}>
+                  <label className="product-checkbox" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => handleSelectProduct(product.id)}
+                    />
+                    <span className="checkmark">
+                      <i className="fas fa-check"></i>
+                    </span>
+                  </label>
                   <div className="product-image-small">
                     <img src={product.images[0]} alt={product.name} />
                   </div>
@@ -427,6 +560,77 @@ const ProductsManagement: React.FC = () => {
             >
               Đóng
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {successModal.show && (
+        <div className="notification-modal-overlay" onClick={() => setSuccessModal({ show: false, message: '' })}>
+          <div className="notification-modal success" onClick={(e) => e.stopPropagation()}>
+            <div className="notification-icon">
+              <i className="fas fa-check-circle"></i>
+            </div>
+            <h3>Thành công!</h3>
+            <p>{successModal.message}</p>
+            <button 
+              className="btn-modal-close"
+              onClick={() => setSuccessModal({ show: false, message: '' })}
+            >
+              <i className="fas fa-check"></i> Đã hiểu
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteConfirmation.show}
+        title="Xác nhận xóa sản phẩm"
+        message={`Bạn có chắc muốn xóa sản phẩm "${deleteConfirmation.product?.name}"?`}
+        warningText="Hành động này không thể hoàn tác!"
+        icon="warning"
+        primaryButtonLabel="Xóa"
+        secondaryButtonLabel="Hủy"
+        onPrimaryAction={confirmDeleteProduct}
+        onClose={() => setDeleteConfirmation({ show: false, product: null })}
+      />
+
+      {/* Bulk Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={bulkDeleteConfirmation}
+        title="Xác nhận xóa nhiều sản phẩm"
+        message={`Bạn có chắc muốn xóa ${selectedProducts.size} sản phẩm đã chọn?`}
+        warningText="Hành động này không thể hoàn tác!"
+        icon="warning"
+        primaryButtonLabel={`Xóa ${selectedProducts.size} sản phẩm`}
+        secondaryButtonLabel="Hủy"
+        onPrimaryAction={confirmBulkDelete}
+        onClose={() => setBulkDeleteConfirmation(false)}
+      />
+
+      {/* Loading Overlay khi đang xóa */}
+      {deleting && (
+        <div className="deleting-overlay">
+          <div className="deleting-spinner-container">
+            <div className="deleting-spinner">
+              <i className="fas fa-trash-alt"></i>
+            </div>
+            <h3>Đang xóa sản phẩm...</h3>
+            <p>Vui lòng đợi trong giây lát</p>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Overlay khi đang xóa nhiều sản phẩm */}
+      {bulkDeleting && (
+        <div className="deleting-overlay">
+          <div className="deleting-spinner-container">
+            <div className="deleting-spinner">
+              <i className="fas fa-trash-alt"></i>
+            </div>
+            <h3>Đang xóa {selectedProducts.size} sản phẩm...</h3>
+            <p>Vui lòng đợi trong giây lát</p>
           </div>
         </div>
       )}

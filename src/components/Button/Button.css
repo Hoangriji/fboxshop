@@ -12,89 +12,6 @@
   cursor: not-allowed;
 }
 
-.btn-primary {
-  padding: 14px 28px;
-  font-size: 14px;
-  font-weight: 600;
-  color: white;
-  background: var(--accent-primary);
-  letter-spacing: 0.5px;
-  box-shadow:
-    inset -6px -6px 12px rgba(0, 0, 0, 0.3),
-    inset 6px 6px 12px rgba(255, 255, 255, 0.1),
-    0 0 15px var(--accent-glow);
-  border: 1px solid var(--accent-border);
-}
-
-:root:not(.light-theme) .btn-primary {
-  box-shadow:
-    inset -8px -8px 16px rgba(0, 0, 0, 0.5),
-    inset 6px 6px 12px rgba(255, 255, 255, 0.2),
-    0 8px 25px rgba(0, 0, 0, 0.4),
-    0 0 20px var(--accent-glow);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: inset -8px -8px 16px rgba(0, 0, 0, 0.4), inset 6px 6px 12px rgba(255, 255, 255, 0.15), 0 0 25px var(--accent-glow);
-}
-
-:root:not(.light-theme) .btn-primary:hover:not(:disabled) {
-  box-shadow:
-    inset -10px -10px 20px rgba(0, 0, 0, 0.6),
-    inset 8px 8px 16px rgba(255, 255, 255, 0.25),
-    0 15px 35px rgba(0, 0, 0, 0.5),
-    0 0 35px var(--accent-glow);
-}
-
-.btn-primary:active:not(:disabled) {
-  transform: translateY(-1px) scale(1.02);
-}
-
-.btn-secondary {
-  padding: 14px 28px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #a8b3cf;
-  background: var(--theme-surface);
-  border: 1px solid var(--theme-border);
-  box-shadow:
-    inset -6px -6px 12px var(--theme-shadow-dark),
-    inset 6px 6px 12px var(--theme-shadow-light);
-}
-
-:root:not(.light-theme) .btn-secondary {
-  color: #c4c9d4;
-  background: rgba(30, 30, 46, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    inset -8px -8px 16px rgba(0, 0, 0, 0.6),
-    inset 6px 6px 12px rgba(255, 255, 255, 0.08),
-    0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  color: var(--theme-text-primary);
-  border-color: var(--accent-border);
-  box-shadow: inset -8px -8px 16px var(--theme-shadow-dark), inset 6px 6px 12px var(--theme-shadow-light), 0 0 15px var(--accent-glow);
-}
-
-:root:not(.light-theme) .btn-secondary:hover:not(:disabled) {
-  color: var(--accent-primary);
-  border-color: var(--accent-primary);
-  box-shadow:
-    inset -10px -10px 20px rgba(0, 0, 0, 0.7),
-    inset 8px 8px 16px rgba(255, 255, 255, 0.12),
-    0 8px 25px rgba(0, 0, 0, 0.4),
-    0 0 20px var(--accent-glow);
-}
-
-.btn-secondary:active:not(:disabled) {
-  transform: translateY(0) scale(0.98);
-}
-
 .btn-ghost {
   padding: 14px 28px;
   font-size: 14px;
@@ -119,27 +36,4 @@
   transform: translateY(1px) scale(0.98);
 }
 
-.btn-icon {
-  width: 50px;
-  height: 50px;
-  font-size: 18px;
-  color: var(--accent-primary);
-  background: var(--theme-surface);
-  border: 2px solid var(--theme-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow:
-    10px 10px 20px var(--theme-shadow-dark),
-    -10px -10px 20px var(--theme-shadow-light);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.btn-icon:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.1);
-  box-shadow: 15px 15px 30px var(--theme-shadow-dark), -15px -15px 30px var(--theme-shadow-light), 0 0 25px var(--accent-glow);
-}
-
-.btn-icon:active:not(:disabled) {
-  transform: translateY(-1px) scale(1.05);
-}
+/* Note: .btn-icon is defined in global.css */

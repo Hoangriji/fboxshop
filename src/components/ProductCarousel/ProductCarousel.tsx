@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, FreeMode } from 'swiper/modules';
+import { Navigation, Pagination, FreeMode, Autoplay } from 'swiper/modules';
 import { SimpleProductCard } from '../SimpleProductCard/SimpleProductCard';
 import type { Product } from '../../types';
 import { useRef, memo, useCallback } from 'react';
@@ -11,6 +11,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/free-mode';
+import 'swiper/css/autoplay';
 import './ProductCarousel.css';
 
 interface ProductCarouselProps {
@@ -21,6 +22,22 @@ interface ProductCarouselProps {
   showPagination?: boolean;
   loop?: boolean;
 }
+
+// Coming Soon Placeholder Card Component
+const PlaceholderCard = () => (
+  <div className="coming-soon-card">
+    <div className="coming-soon-image">
+      <div className="coming-soon-content">
+        <i className="fas fa-clock"></i>
+        <span>Coming Soon</span>
+      </div>
+    </div>
+    <div className="coming-soon-info">
+      <h3>Sản phẩm sắp ra mắt</h3>
+      <p>Đang cập nhật</p>
+    </div>
+  </div>
+);
 
 const ProductCarousel: React.FC<ProductCarouselProps> = memo(({
   products,
@@ -46,69 +63,100 @@ const ProductCarousel: React.FC<ProductCarouselProps> = memo(({
   }, []);
 
   return (
-    <div className="product-carousel">
-      {/* Custom Navigation Buttons */}
-      {showNavigation && (
-        <>
-          <button className="nav-button prev" onClick={handlePrev}>
-            <i className="fas fa-chevron-left"></i>
-          </button>
-          <button className="nav-button next" onClick={handleNext}>
-            <i className="fas fa-chevron-right"></i>
-          </button>
-        </>
-      )}
-      
-      <Swiper
-        ref={swiperRef}
-        modules={[Navigation, Pagination, FreeMode]}
-        spaceBetween={spaceBetween}
-        slidesPerView={1}
-        pagination={showPagination ? { clickable: true } : false}
-        loop={loop && products.length > slidesPerView}
-        freeMode={false}
-        grabCursor={true}
-        slidesPerGroup={1} 
-        speed={400} 
-        breakpoints={{
-          // Mobile
-          320: {
-            slidesPerView: 1.2,
-            spaceBetween: 16,
-            navigation: false,
-            centeredSlides: false,
-          },
-          // Tablet
-          640: {
-            slidesPerView: 2,
-            spaceBetween: 20,
-            navigation: false,
-            centeredSlides: false,
-          },
-          // Small Desktop
-          1024: {
-            slidesPerView: 3,
-            spaceBetween: 24,
-            centeredSlides: false,
-          },
-          // Large Desktop
-          1280: {
-            slidesPerView: slidesPerView,
-            spaceBetween: spaceBetween,
-            centeredSlides: false, 
-          },
-        }}
-        className="product-swiper"
-      >
-        {products.map((product) => (
-          <SwiperSlide key={product.id}>
-            <SimpleProductCard
-              product={product}
-              onViewDetails={(id: string | number) => navigate(`/product/${id}`)}
-            />
-          </SwiperSlide>
-        ))}
-      </Swiper>
+    <div className="product-carousel-wrapper">
+      <div className="product-carousel-container">
+        {/* Custom Navigation Buttons */}
+        {showNavigation && (
+          <>
+            <button 
+              className="carousel-nav-btn carousel-prev" 
+              onClick={handlePrev}
+              aria-label="Previous slide"
+            >
+              <i className="fas fa-chevron-left"></i>
+            </button>
+            <button 
+              className="carousel-nav-btn carousel-next" 
+              onClick={handleNext}
+              aria-label="Next slide"
+            >
+              <i className="fas fa-chevron-right"></i>
+            </button>
+          </>
+        )}
+        
+        <Swiper
+          ref={swiperRef}
+          modules={[Navigation, Pagination, FreeMode, Autoplay]}
+          spaceBetween={spaceBetween}
+          slidesPerView={1}
+          pagination={showPagination ? { 
+            clickable: true,
+            dynamicBullets: true,
+          } : false}
+          loop={loop && products.length >= slidesPerView}
+          grabCursor={true}
+          slidesPerGroup={1}
+          speed={600}
+          autoplay={{
+            delay: 5000,
+            disableOnInteraction: false,
+            pauseOnMouseEnter: true,
+          }}
+          breakpoints={{
+            // Mobile small - show 1 card with peek
+            320: {
+              slidesPerView: 1.2,
+              spaceBetween: 16,
+              centeredSlides: false,
+            },
+            // Mobile large - show 2 cards
+            480: {
+              slidesPerView: 2,
+              spaceBetween: 16,
+              centeredSlides: false,
+            },
+            // Tablet portrait - show 2.5 cards
+            640: {
+              slidesPerView: 2.5,
+              spaceBetween: 20,
+              centeredSlides: false,
+            },
+            // Tablet landscape - show 3 cards
+            768: {
+              slidesPerView: 3,
+              spaceBetween: 20,
+              centeredSlides: false,
+            },
+            // Small desktop - show 3.5 cards
+            1024: {
+              slidesPerView: 3.5,
+              spaceBetween: 24,
+              centeredSlides: false,
+            },
+            // Desktop - show full slidesPerView
+            1280: {
+              slidesPerView: slidesPerView,
+              spaceBetween: spaceBetween,
+              centeredSlides: false,
+            },
+          }}
+          className="product-swiper"
+        >
+          {products.map((product: any) => (
+            <SwiperSlide key={product.id}>
+              {product.isPlaceholder ? (
+                <PlaceholderCard />
+              ) : (
+                <SimpleProductCard
+                  product={product}
+                  onViewDetails={(id: string | number) => navigate(`/product/${id}`)}
+                />
+              )}
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
     </div>
   );
 });

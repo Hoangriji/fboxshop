@@ -25,9 +25,10 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('../../assets/Bg-Hero_section.webp');
+  background-image: url('../../assets/Bg-Hero_section.jpg');
+  background-position: top center;
   background-size: cover;
-  filter: brightness(0.7) contrast(0.8);
+  filter: brightness(0.6) contrast(0.95);
   pointer-events: none;
   z-index: -1;
 }
@@ -61,12 +62,12 @@
 .hero-title {
   font-size: 3.5rem;
   font-weight: 700;
-  color: var(--accent-primary);
+  color: var(--dark-text-primary);
   line-height: 1.2;
   margin: 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  text-shadow: 0 0 10px var(--accent-glow);
+  text-shadow: 0 0 12px var(--accent-primary);
 }
 
 .hero-subtitle {
@@ -77,7 +78,7 @@
 }
 
 .hero-description {
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: var(--theme-text-secondary);
   line-height: 1.5;
   margin: 0;
@@ -310,9 +311,9 @@ hr.line {
   color: #0084ff;
 }
 
-.contact-card.discord .contact-icon {
+/* .contact-card.discord .contact-icon {
   color: #5865f2;
-}
+} */
 
 .contact-card:hover .contact-icon {
   transform: scale(1.1) rotateY(360deg);
@@ -325,11 +326,11 @@ hr.line {
   box-shadow: 0 0 25px rgba(0, 132, 255, 0.5);
 }
 
-.contact-card.discord:hover .contact-icon {
+/* .contact-card.discord:hover .contact-icon {
   background: #5865f2;
   color: white;
   box-shadow: 0 0 25px rgba(88, 101, 242, 0.5);
-}
+} */
 
 .contact-card h3 {
   font-size: 1.25rem;
@@ -1168,15 +1169,7 @@ hr.line {
 }
 
 .about-title .highlight {
-  background: linear-gradient(
-    135deg,
-    var(--accent-primary) 0%,
-    var(--accent-secondary) 100%
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  position: relative;
+  color: var(--accent-primary);
 }
 
 .about-description {

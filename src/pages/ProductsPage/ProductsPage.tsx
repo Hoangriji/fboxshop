@@ -684,6 +684,11 @@ const ProductsPage: React.FC = () => {
   }, [products, selectedCategory]);
 
   const filteredProducts = React.useMemo(() => {
+    // Handle empty products array gracefully
+    if (!products || products.length === 0) {
+      return [];
+    }
+    
     let filtered = selectedCategory === 'all' 
       ? products 
       : products.filter(product => product.category === selectedCategory);
@@ -1275,15 +1280,42 @@ const ProductsPage: React.FC = () => {
   }
   
   // Guard: Ensure products array exists before rendering
+  // Only show empty state if there's NO search query or filters active
   if (!products || products.length === 0) {
-    return (
-      <div className="products-page">
-        <div className="empty-container">
-          <i className="fas fa-box-open"></i>
-          <p>Chưa có sản phẩm nào.</p>
+    const hasSearchQuery = searchParams.get('search');
+    const hasActiveFilters = 
+      selectedBrands.length > 0 || 
+      selectedConnectionTypes.length > 0 || 
+      selectedCompatibility.length > 0 || 
+      selectedPriceRanges.length > 0 ||
+      selectedCategory !== 'all';
+    
+    // If user is searching/filtering, let the page render normally
+    // so it can show "No results found" instead of "No products yet"
+    if (!hasSearchQuery && !hasActiveFilters) {
+      return (
+        <div className="products-page">
+          <div className="empty-state-container">
+            <div className="empty-state-content">
+              <div className="empty-icon-wrapper">
+                <i className="fas fa-box-open"></i>
+              </div>
+              <h2 className="empty-title">Chưa Có Sản Phẩm Nào</h2>
+              <p className="empty-description">
+                Hiện tại chúng tôi chưa có sản phẩm nào trong danh mục này.<br />
+                Vui lòng quay lại sau hoặc khám phá các danh mục khác.
+              </p>
+              <div className="empty-actions">
+                <a href="/" className="btn-back-home">
+                  <i className="fas fa-home"></i>
+                  <span>Về Trang Chủ</span>
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
   }
 
   return (
@@ -2119,20 +2151,47 @@ const ProductsPage: React.FC = () => {
               )}
             </>
           ) : (
-            <div className="no-products">
-              <i className="fas fa-box-open"></i>
-              <h3>Không tìm thấy sản phẩm</h3>
-              <p>Thử thay đổi bộ lọc hoặc tìm kiếm khác</p>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setSelectedCategory('all');
-                  clearAllFilters();
-                }}
-              >
-                <i className="fas fa-refresh"></i>
-                Xem tất cả sản phẩm
-              </Button>
+            <div className="no-results-container">
+              <div className="no-results-content">
+                <div className="no-results-icon-wrapper">
+                  <i className="fas fa-search"></i>
+                </div>
+                <h2 className="no-results-title">Không Tìm Thấy Sản Phẩm</h2>
+                <p className="no-results-description">
+                  {searchParams.get('search') ? (
+                    <>
+                      Không tìm thấy sản phẩm nào phù hợp với từ khóa <strong>"{searchParams.get('search')}"</strong>.<br />
+                      Vui lòng thử lại với từ khóa khác hoặc điều chỉnh bộ lọc.
+                    </>
+                  ) : (
+                    <>
+                      Không có sản phẩm nào phù hợp với các tiêu chí lọc đã chọn.<br />
+                      Vui lòng điều chỉnh bộ lọc hoặc xóa một số tiêu chí.
+                    </>
+                  )}
+                </p>
+                <div className="no-results-actions">
+                  {searchParams.get('search') && (
+                    <button 
+                      className="btn-clear-search"
+                      onClick={() => navigate('/products')}
+                    >
+                      <i className="fas fa-times"></i>
+                      <span>Xóa tìm kiếm</span>
+                    </button>
+                  )}
+                  <button 
+                    className="btn-clear-filters"
+                    onClick={() => {
+                      setSelectedCategory('all');
+                      clearAllFilters();
+                    }}
+                  >
+                    <i className="fas fa-filter"></i>
+                    <span>Xóa tất cả bộ lọc</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

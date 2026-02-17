@@ -56,18 +56,40 @@ export const useFeaturedProducts = (): UseFeaturedProductsResult => {
         .filter(p => p.type !== 'digital')
         .slice(0, 8);
       
+      // Fill với placeholders nếu < 8
+      const physicalWithPlaceholders = [...physicalFeatured];
+      while (physicalWithPlaceholders.length < 8) {
+        physicalWithPlaceholders.push({
+          id: `placeholder-physical-${physicalWithPlaceholders.length}`,
+          isPlaceholder: true,
+          name: 'Coming Soon',
+          category: 'Đang cập nhật',
+        } as any);
+      }
+      
       // Separate Digital featured products for carousel 2
       const digitalFeatured = allFeatured
         .filter(p => p.type === 'digital')
         .slice(0, 8);
+      
+      // Fill với placeholders nếu < 8
+      const digitalWithPlaceholders = [...digitalFeatured];
+      while (digitalWithPlaceholders.length < 8) {
+        digitalWithPlaceholders.push({
+          id: `placeholder-digital-${digitalWithPlaceholders.length}`,
+          isPlaceholder: true,
+          name: 'Coming Soon',
+          category: 'Đang cập nhật',
+        } as any);
+      }
 
       // Update cache
-      cachedFeaturedProducts = physicalFeatured;
-      cachedFreeProducts = digitalFeatured;
+      cachedFeaturedProducts = physicalWithPlaceholders;
+      cachedFreeProducts = digitalWithPlaceholders;
       cacheTimestamp = Date.now();
 
-      setFeaturedProducts(physicalFeatured);
-      setFreeDigitalProducts(digitalFeatured);
+      setFeaturedProducts(physicalWithPlaceholders);
+      setFreeDigitalProducts(digitalWithPlaceholders);
     } catch (err) {
       setError(err as Error);
       console.error('Error loading featured products:', err);

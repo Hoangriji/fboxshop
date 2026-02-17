@@ -137,6 +137,12 @@
 }
 
 .product-card-tag-product {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.product-card-tag-product .tag {
   width: fit-content;
   padding: 4px 8px;
   color: var(--accent-primary);
@@ -145,6 +151,17 @@
   font-size: 12px;
   font-weight: 900;
   text-transform: capitalize;
+}
+
+.product-card-tag-product .tag-variant {
+  background: rgba(var(--accent-rgb), 0.1);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.product-card-tag-product .tag-variant i {
+  font-size: 10px;
 }
 
 .card-title-container {

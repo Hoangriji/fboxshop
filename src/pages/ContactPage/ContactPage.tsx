@@ -105,7 +105,7 @@ const ContactPage: React.FC = () => {
               <div className="faq-list">
                 <div className="faq-item">
                   <h4>Làm sao để thanh toán?</h4>
-                  <p>Bạn có thể thanh toán bằng tiền mặt (VND) qua Zalo.</p>
+                  <p>Bạn có thể thanh toán chuyển khoản (VND) qua Zalo.</p>
                 </div>
                 <div className="faq-item">
                   <h4>Thời gian giao hàng bao lâu?</h4>

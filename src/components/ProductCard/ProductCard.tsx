@@ -18,6 +18,8 @@ interface Product {
   specs?: Record<string, string>;
   brand?: string;
   features?: string[];
+  hasVariants?: boolean;
+  variantCount?: number;
 }
 
 interface ProductCardProps {
@@ -84,6 +86,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onViewDetails
           <div className="card-content">
             <div className="product-card-tag-product">
               <span className="tag">{product.category}</span>
+              {product.hasVariants && product.variantCount && (
+                <span className="tag tag-variant">
+                  <i className="fas fa-layer-group"></i> {product.variantCount} phiên bản
+                </span>
+              )}
             </div>
 
             <div className="card-title-container">

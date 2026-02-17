@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import type { Product, Category } from '../../../types';
+import type { Product, Category, VariantAttribute, ProductVariant } from '../../../types';
 import { cloudinaryConfig } from '../../../config/cloudinary';
+import { VariantEditor } from './VariantEditor';
+import { generateSKUFromName } from '../../../utils/variantHelpers';
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -46,17 +48,88 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [compatibility, setCompatibility] = useState<string[]>([]);
   const [formFactor, setFormFactor] = useState('');
   const [ledType, setLedType] = useState('');
+  const [dpi, setDpi] = useState('');
+  const [sensor, setSensor] = useState('');
+  const [buttons, setButtons] = useState('');
+  const [driverSize, setDriverSize] = useState('');
+  const [frequency, setFrequency] = useState('');
+  const [impedance, setImpedance] = useState('');
+  const [productFeatures, setProductFeatures] = useState<string[]>([]);
   
   // Error modal state
   const [errorModal, setErrorModal] = useState<{isOpen: boolean; title: string; message: string}>({isOpen: false, title: '', message: ''});
   const [successModal, setSuccessModal] = useState<{isOpen: boolean; message: string}>({isOpen: false, message: ''});
   
-  // Filter options
-  const BRAND_OPTIONS = ['Logitech', 'Razer', 'Corsair', 'SteelSeries', 'HyperX', 'Akko', 'Dareu', 'Keychron', 'Leopold', 'Filco', 'Asus', 'MSI', 'LG', 'Samsung', 'Dell', 'ViewSonic', 'BenQ', 'Acer', 'HP', 'Lenovo', 'Apple', 'Microsoft', 'Sandisk', 'Kingston', 'Samsung', 'WD', 'Seagate'];
+  // Variant fields state
+  const [hasVariants, setHasVariants] = useState(false);
+  const [baseSKU, setBaseSKU] = useState('');
+  const [basePrice, setBasePrice] = useState(0);
+  const [variantAttributes, setVariantAttributes] = useState<VariantAttribute[]>([]);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  
+  const CATEGORY_FILTERS: Record<string, {
+    brand?: boolean;
+    formFactor?: boolean;
+    connection?: boolean;
+    compatibility?: boolean;
+    led?: boolean;
+    driverSize?: boolean;
+    frequency?: boolean;
+    impedance?: boolean;
+    dpi?: boolean;
+    sensor?: boolean;
+    buttons?: boolean;
+    features?: boolean;
+  }> = {
+    'keyboard': {
+      brand: true,
+      formFactor: true,
+      connection: true,
+      compatibility: true,
+      led: true
+    },
+    'mouse': {
+      brand: true,
+      dpi: true,
+      sensor: true,
+      buttons: true,
+      connection: true,
+      led: true
+    },
+    'headset': {
+      brand: true,
+      connection: true,
+      driverSize: true,
+      frequency: true,
+      impedance: true,
+      compatibility: true
+    },
+    'monitor': {
+      brand: true,
+      features: true
+    },
+    'usb': {
+      brand: true,
+      connection: true
+    },
+    'digital': {
+      brand: true
+    },
+    'other': {
+      brand: true
+    }
+  };
+  
+  const BRAND_OPTIONS = ['Logitech', 'Razer', 'Corsair', 'SteelSeries', 'HyperX', 'Akko', 'Dareu', 'Keychron', 'Leopold', 'Filco', 'Asus', 'MSI', 'LG', 'Samsung', 'Dell', 'ViewSonic', 'BenQ', 'Acer', 'HP', 'Lenovo', 'Apple', 'Microsoft', 'Sandisk', 'Kingston', 'WD', 'Seagate'];
   const FORM_FACTOR_OPTIONS = ['Full-size (100%)', 'TKL (80%)', '75%', '65%', '60%', '40%', 'Compact', 'Ergonomic'];
   const CONNECTION_OPTIONS = ['Wired', 'Wireless 2.4GHz', 'Bluetooth', 'USB-C', 'USB-A', 'PS/2', 'Dual Mode'];
   const COMPATIBILITY_OPTIONS = ['Windows', 'MacOS', 'Linux', 'iOS', 'Android', 'PlayStation', 'Xbox', 'Nintendo Switch'];
   const LED_OPTIONS = ['RGB', 'Single Color', 'White LED', 'No LED', 'Per-key RGB', 'Zone RGB'];
+  const DPI_OPTIONS = ['800', '1600', '3200', '6400', '12800', '16000', '25600'];
+  const SENSOR_OPTIONS = ['Optical', 'Laser', 'Infrared'];
+  const BUTTONS_OPTIONS = ['3', '5', '6', '7', '8', '10+'];
+  const DRIVER_SIZE_OPTIONS = ['30mm', '40mm', '50mm', '53mm'];
+  const FEATURES_OPTIONS = ['Tích hợp webcam', 'Tích hợp loa', 'Màn hình cong', 'Chống nhìn trộm', 'Màn hình cảm ứng'];
   
   // Custom dropdown states
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
@@ -88,6 +161,13 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       setCompatibility(product.compatibility || []);
       setFormFactor(product.form_factor || '');
       setLedType(product.led_type || '');
+      
+      // Load variant fields
+      setHasVariants(product.has_variants || false);
+      setBaseSKU(product.sku || '');
+      setBasePrice(product.base_price || product.price_vnd || 0);
+      setVariantAttributes(product.variant_attributes || []);
+      setVariants(product.variants || []);
     } else {
       setFormData({
         name: '',
@@ -114,10 +194,68 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       setCompatibility([]);
       setFormFactor('');
       setLedType('');
+      
+      // Reset variant fields
+      setHasVariants(false);
+      setBaseSKU('');
+      setBasePrice(0);
+      setVariantAttributes([]);
+      setVariants([]);
     }
-  }, [product]);
+  }, [product, isOpen]); // Add isOpen to dependencies
 
-  // Close dropdowns when clicking outside
+  // Reset all state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      // Reset form data
+      setFormData({
+        name: '',
+        description: '',
+        category: '',
+        price_vnd: 0,
+        price_virtual: 0,
+        stock_status: 'in_stock',
+        featured: false,
+        type: 'physical',
+        is_free: false,
+        images: [],
+        tags: [],
+        subcategory: '',
+        features: [],
+        specs: {}
+      });
+      setImageUrls(['']);
+      setUploadedImages([]);
+      setFeatures(['']);
+      setSpecs([{key: '', value: ''}]);
+      setBrand('');
+      setConnectionTypes([]);
+      setCompatibility([]);
+      setFormFactor('');
+      setLedType('');
+      setDpi('');
+      setSensor('');
+      setButtons('');
+      setDriverSize('');
+      setFrequency('');
+      setImpedance('');
+      setProductFeatures([]);
+      
+      // Reset variant fields
+      setHasVariants(false);
+      setBaseSKU('');
+      setBasePrice(0);
+      setVariantAttributes([]);
+      setVariants([]);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (hasVariants && formData.name && !product) {
+      setBaseSKU(generateSKUFromName(formData.name));
+    }
+  }, [formData.name, hasVariants, product]);
+
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
@@ -313,7 +451,45 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         form_factor: formFactor.trim() || undefined,
         led_type: ledType.trim() || undefined,
       };
+      
+      // Add variant data if enabled
+      if (hasVariants) {
+        productData.has_variants = true;
+        productData.sku = baseSKU.trim();
+        productData.base_price = basePrice;
+        productData.variant_attributes = variantAttributes;
+        productData.variants = variants;
+        
+        // Validate variant data
+        if (!productData.sku) {
+          setErrorModal({isOpen: true, title: 'Thiếu thông tin', message: 'Vui lòng nhập SKU cơ sở cho sản phẩm có biến thể'});
+          setLoading(false);
+          return;
+        }
+        if (!productData.base_price || productData.base_price <= 0) {
+          setErrorModal({isOpen: true, title: 'Dữ liệu không hợp lệ', message: 'Giá cơ sở phải lớn hơn 0'});
+          setLoading(false);
+          return;
+        }
+        if (!variantAttributes || variantAttributes.length === 0) {
+          setErrorModal({isOpen: true, title: 'Thiếu thông tin', message: 'Vui lòng thêm ít nhất một thuộc tính biến thể'});
+          setLoading(false);
+          return;
+        }
+        if (!variants || variants.length === 0) {
+          setErrorModal({isOpen: true, title: 'Thiếu thông tin', message: 'Vui lòng tạo ít nhất một biến thể sản phẩm'});
+          setLoading(false);
+          return;
+        }
+      } else {
+        productData.has_variants = false;
+        productData.sku = undefined;
+        productData.base_price = undefined;
+        productData.variant_attributes = undefined;
+        productData.variants = undefined;
+      }
 
+      console.log('Submitting product data:', productData);
       await onSubmit(productData);
       
       onClose();
@@ -730,108 +906,247 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           </div>
 
           {/* Filter Fields Section */}
-          <div className="form-section">
-            <h3 className="form-section-title highlighted-title">
+          <div className="product-form-filter-section">
+            <h3 className="product-form-filter-title">
               <i className="fas fa-sliders-h"></i>
               Thuộc tính bộ lọc
-              <span className="optional-badge">Tùy chọn - Giúp khách hàng lọc sản phẩm</span>
+              <span className="product-form-filter-badge">Tùy chọn - Giúp khách hàng lọc sản phẩm</span>
             </h3>
             
-            <div className="form-row form-row-2">
-              <div className="form-group">
-                <label htmlFor="brand">
-                  <i className="fas fa-tag"></i> Thương hiệu
-                </label>
-                <select
-                  id="brand"
-                  value={brand}
-                  onChange={(e) => setBrand(e.target.value)}
-                >
-                  <option value="">Chọn thương hiệu</option>
-                  {BRAND_OPTIONS.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
+            {!formData.category ? (
+              <div className="product-form-filter-placeholder">
+                <i className="fas fa-info-circle"></i>
+                <p>Vui lòng chọn danh mục sản phẩm trước</p>
               </div>
+            ) : (() => {
+              const categoryFilter = CATEGORY_FILTERS[formData.category as string];
+              if (!categoryFilter) {
+                return (
+                  <div className="product-form-filter-placeholder">
+                    <i className="fas fa-info-circle"></i>
+                    <p>Danh mục này chưa có bộ lọc thuộc tính</p>
+                  </div>
+                );
+              }
+              
+              return (
+                <>
+                  {categoryFilter.brand && (
+                    <div className="product-form-filter-row">
+                      <div className="product-form-filter-field">
+                        <label className="product-form-filter-label" htmlFor="brand">
+                          <i className="fas fa-tag"></i> Thương hiệu
+                        </label>
+                        <select className="product-form-filter-select" id="brand" value={brand} onChange={(e) => setBrand(e.target.value)}>
+                          <option value="">Chọn thương hiệu</option>
+                          {BRAND_OPTIONS.map(option => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
 
-              <div className="form-group">
-                <label htmlFor="form_factor">
-                  <i className="fas fa-ruler"></i> Kích thước / Form Factor
-                </label>
-                <select
-                  id="form_factor"
-                  value={formFactor}
-                  onChange={(e) => setFormFactor(e.target.value)}
-                >
-                  <option value="">Chọn kích thước</option>
-                  {FORM_FACTOR_OPTIONS.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+                  <div className="product-form-filter-row product-form-filter-row-grid">
+                    {categoryFilter.formFactor && (
+                      <div className="product-form-filter-field">
+                        <label className="product-form-filter-label" htmlFor="form_factor">
+                          <i className="fas fa-ruler"></i> Kích thước / Form Factor
+                        </label>
+                        <select className="product-form-filter-select" id="form_factor" value={formFactor} onChange={(e) => setFormFactor(e.target.value)}>
+                          <option value="">Chọn kích thước</option>
+                          {FORM_FACTOR_OPTIONS.map(option => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
-            <div className="form-row form-row-2">
-              <div className="form-group">
-                <label htmlFor="connection_types">
-                  <i className="fas fa-plug"></i> Loại kết nối
-                </label>
-                <select
-                  id="connection_types"
-                  multiple
-                  value={connectionTypes}
-                  onChange={(e) => {
-                    const selected = Array.from(e.target.selectedOptions, option => option.value);
-                    setConnectionTypes(selected);
-                  }}
-                  size={5}
-                >
-                  {CONNECTION_OPTIONS.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-                <small>Giữ Ctrl (hoặc Cmd) để chọn nhiều</small>
-              </div>
+                    {categoryFilter.dpi && (
+                      <div className="product-form-filter-field">
+                        <label className="product-form-filter-label" htmlFor="dpi">
+                          <i className="fas fa-crosshairs"></i> DPI
+                        </label>
+                        <select className="product-form-filter-select" id="dpi" value={dpi} onChange={(e) => setDpi(e.target.value)}>
+                          <option value="">Chọn DPI</option>
+                          {DPI_OPTIONS.map(option => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
-              <div className="form-group">
-                <label htmlFor="compatibility">
-                  <i className="fas fa-check-double"></i> Tương thích
-                </label>
-                <select
-                  id="compatibility"
-                  multiple
-                  value={compatibility}
-                  onChange={(e) => {
-                    const selected = Array.from(e.target.selectedOptions, option => option.value);
-                    setCompatibility(selected);
-                  }}
-                  size={5}
-                >
-                  {COMPATIBILITY_OPTIONS.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-                <small>Giữ Ctrl (hoặc Cmd) để chọn nhiều</small>
-              </div>
-            </div>
+                    {categoryFilter.sensor && (
+                      <div className="product-form-filter-field">
+                        <label className="product-form-filter-label" htmlFor="sensor">
+                          <i className="fas fa-microchip"></i> Loại cảm biến
+                        </label>
+                        <select className="product-form-filter-select" id="sensor" value={sensor} onChange={(e) => setSensor(e.target.value)}>
+                          <option value="">Chọn cảm biến</option>
+                          {SENSOR_OPTIONS.map(option => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="led_type">
-                  <i className="fas fa-lightbulb"></i> Loại đèn LED
-                </label>
-                <select
-                  id="led_type"
-                  value={ledType}
-                  onChange={(e) => setLedType(e.target.value)}
-                >
-                  <option value="">Chọn loại LED</option>
-                  {LED_OPTIONS.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+                    {categoryFilter.buttons && (
+                      <div className="product-form-filter-field">
+                        <label className="product-form-filter-label" htmlFor="buttons">
+                          <i className="fas fa-hand-pointer"></i> Số nút
+                        </label>
+                        <select className="product-form-filter-select" id="buttons" value={buttons} onChange={(e) => setButtons(e.target.value)}>
+                          <option value="">Chọn số nút</option>
+                          {BUTTONS_OPTIONS.map(option => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {categoryFilter.driverSize && (
+                      <div className="product-form-filter-field">
+                        <label className="product-form-filter-label" htmlFor="driver_size">
+                          <i className="fas fa-compact-disc"></i> Kích thước driver
+                        </label>
+                        <select className="product-form-filter-select" id="driver_size" value={driverSize} onChange={(e) => setDriverSize(e.target.value)}>
+                          <option value="">Chọn kích thước</option>
+                          {DRIVER_SIZE_OPTIONS.map(option => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {categoryFilter.frequency && (
+                      <div className="product-form-filter-field">
+                        <label className="product-form-filter-label" htmlFor="frequency">
+                          <i className="fas fa-wave-square"></i> Dải tần số
+                        </label>
+                        <input
+                          className="product-form-filter-input"
+                          id="frequency"
+                          type="text"
+                          value={frequency}
+                          onChange={(e) => setFrequency(e.target.value)}
+                          placeholder="VD: 20Hz - 20kHz"
+                        />
+                      </div>
+                    )}
+
+                    {categoryFilter.impedance && (
+                      <div className="product-form-filter-field">
+                        <label className="product-form-filter-label" htmlFor="impedance">
+                          <i className="fas fa-bolt"></i> Trở kháng
+                        </label>
+                        <input
+                          className="product-form-filter-input"
+                          id="impedance"
+                          type="text"
+                          value={impedance}
+                          onChange={(e) => setImpedance(e.target.value)}
+                          placeholder="VD: 32Ω"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {categoryFilter.connection && (
+                    <div className="product-form-filter-row">
+                      <div className="product-form-filter-field">
+                        <label className="product-form-filter-label" htmlFor="connection_types">
+                          <i className="fas fa-plug"></i> Loại kết nối
+                        </label>
+                        <select
+                          className="product-form-filter-select-multiple"
+                          id="connection_types"
+                          multiple
+                          value={connectionTypes}
+                          onChange={(e) => {
+                            const selected = Array.from(e.target.selectedOptions, option => option.value);
+                            setConnectionTypes(selected);
+                          }}
+                          size={5}
+                        >
+                          {CONNECTION_OPTIONS.map(option => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                        <small className="product-form-filter-hint">Giữ Ctrl (hoặc Cmd) để chọn nhiều</small>
+                      </div>
+                    </div>
+                  )}
+
+                  {categoryFilter.compatibility && (
+                    <div className="product-form-filter-row">
+                      <div className="product-form-filter-field">
+                        <label className="product-form-filter-label" htmlFor="compatibility">
+                          <i className="fas fa-check-double"></i> Tương thích
+                        </label>
+                        <select
+                          className="product-form-filter-select-multiple"
+                          id="compatibility"
+                          multiple
+                          value={compatibility}
+                          onChange={(e) => {
+                            const selected = Array.from(e.target.selectedOptions, option => option.value);
+                            setCompatibility(selected);
+                          }}
+                          size={5}
+                        >
+                          {COMPATIBILITY_OPTIONS.map(option => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                        <small className="product-form-filter-hint">Giữ Ctrl (hoặc Cmd) để chọn nhiều</small>
+                      </div>
+                    </div>
+                  )}
+
+                  {categoryFilter.led && (
+                    <div className="product-form-filter-row">
+                      <div className="product-form-filter-field">
+                        <label className="product-form-filter-label" htmlFor="led_type">
+                          <i className="fas fa-lightbulb"></i> Loại đèn LED
+                        </label>
+                        <select className="product-form-filter-select" id="led_type" value={ledType} onChange={(e) => setLedType(e.target.value)}>
+                          <option value="">Chọn loại LED</option>
+                          {LED_OPTIONS.map(option => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {categoryFilter.features && (
+                    <div className="product-form-filter-row">
+                      <div className="product-form-filter-field">
+                        <label className="product-form-filter-label" htmlFor="product_features">
+                          <i className="fas fa-star"></i> Tiện ích
+                        </label>
+                        <select
+                          className="product-form-filter-select-multiple"
+                          id="product_features"
+                          multiple
+                          value={productFeatures}
+                          onChange={(e) => {
+                            const selected = Array.from(e.target.selectedOptions, option => option.value);
+                            setProductFeatures(selected);
+                          }}
+                          size={5}
+                        >
+                          {FEATURES_OPTIONS.map(option => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                        <small className="product-form-filter-hint">Giữ Ctrl (hoặc Cmd) để chọn nhiều</small>
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
 
           <div className="form-row form-checkboxes">
@@ -860,7 +1175,44 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 </label>
               </div>
             )}
+            
+            {formData.type === 'physical' && (
+              <div className="form-checkbox">
+                <input
+                  id="has_variants"
+                  type="checkbox"
+                  checked={hasVariants}
+                  onChange={(e) => {
+                    const enabled = e.target.checked;
+                    setHasVariants(enabled);
+                    if (enabled && !baseSKU && formData.name) {
+                      setBaseSKU(generateSKUFromName(formData.name));
+                    }
+                    if (enabled && !basePrice && formData.price_vnd) {
+                      setBasePrice(formData.price_vnd);
+                    }
+                  }}
+                />
+                <label htmlFor="has_variants">
+                  <i className="fas fa-layer-group"></i> Sản phẩm có biến thể
+                </label>
+              </div>
+            )}
           </div>
+
+          {hasVariants && formData.type === 'physical' && (
+            <VariantEditor
+              baseSKU={baseSKU}
+              basePrice={basePrice}
+              variantAttributes={variantAttributes}
+              variants={variants}
+              onChange={(attrs, vars) => {
+                console.log('VariantEditor onChange:', { attrs, vars });
+                setVariantAttributes(attrs);
+                setVariants(vars);
+              }}
+            />
+          )}
 
           <div className="modal-footer">
             <button type="button" className="btn-secondary" onClick={onClose} disabled={loading}>

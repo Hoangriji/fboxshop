@@ -17,3 +17,4 @@ export { SkeletonCarousel, SkeletonCard } from './Skeleton';
 export { default as Footer } from './Footer';
 export { Toast } from './Toast';
 export { ConfirmationModal } from './ConfirmationModal';
+export { VariantSelector } from './VariantSelector';

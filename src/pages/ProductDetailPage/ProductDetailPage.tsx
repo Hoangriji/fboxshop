@@ -1,31 +1,129 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useProductDetail } from '../../hooks/useProductDetail';
 // import { useSiteConfig } from '../../hooks/useSiteConfig';
 import { WishlistButton } from '../../components/WishlistButton';
 import { RelatedProducts } from '../../components/RelatedProducts';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
+import { VariantSelector } from '../../components/VariantSelector';
 import { openZaloImmediate } from '../../utils/zaloHelper';
+import type { ProductVariant } from '../../types';
 import './ProductDetailPage.css';
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { product, relatedProducts, loading, error } = useProductDetail(id);
   // const { config } = useSiteConfig();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showModal, setShowModal] = useState(false);
+  
+  // Variant selection state
+  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
+
+  // Initialize variant selection from URL params
+  useEffect(() => {
+    if (!product?.has_variants || !product.variant_attributes) return;
+    
+    const urlAttributes: Record<string, string> = {};
+    product.variant_attributes.forEach(attr => {
+      const paramValue = searchParams.get(attr.name);
+      if (paramValue && attr.values.includes(paramValue)) {
+        urlAttributes[attr.name] = paramValue;
+      }
+    });
+    
+    if (Object.keys(urlAttributes).length > 0) {
+      setSelectedAttributes(urlAttributes);
+    }
+  }, [product, searchParams]);
+
+  // Find current variant based on selected attributes
+  const currentVariant = useMemo((): ProductVariant | undefined => {
+    if (!product?.has_variants || !product.variants) return undefined;
+    
+    // Check if all required attributes are selected
+    const allAttributesSelected = product.variant_attributes?.every(
+      attr => selectedAttributes[attr.name]
+    );
+    
+    if (!allAttributesSelected) return undefined;
+    
+    // Find matching variant
+    return product.variants.find(variant => {
+      return Object.entries(selectedAttributes).every(
+        ([key, value]) => variant.attributes[key] === value
+      );
+    });
+  }, [product, selectedAttributes]);
+
+  // Calculate current price (base + variant adjustment)
+  const currentPrice = useMemo(() => {
+    if (!product) return 0;
+    if (!product.has_variants) return product.price_vnd || 0;
+    
+    const basePrice = product.base_price || product.price_vnd;
+    const adjustment = currentVariant?.price_adjustment || 0;
+    return basePrice + adjustment;
+  }, [product, currentVariant]);
+
+  // Calculate stock status
+  const stockStatus = useMemo(() => {
+    if (!product) return 'in_stock';
+    if (product.has_variants && currentVariant) {
+      const stock = currentVariant.stock;
+      if (stock === 0 || !currentVariant.is_available) return 'out_of_stock';
+      if (stock <= 5) return 'low_stock';
+      return 'in_stock';
+    }
+    return product.stock_status || 'in_stock';
+  }, [product, currentVariant]);
+
+  // Calculate original price for variants
+  const originalPrice = useMemo(() => {
+    if (!product) return undefined;
+    if (product.has_variants && product.base_price && product.original_price_vnd) {
+      // If product had original price, apply same discount to variant
+      const discount = product.original_price_vnd - product.base_price;
+      return currentPrice + discount;
+    }
+    return product.original_price_vnd;
+  }, [product, currentPrice]);
+
+  // Handle variant attribute change
+  const handleAttributeChange = (attributeName: string, value: string) => {
+    const newAttributes = { ...selectedAttributes, [attributeName]: value };
+    setSelectedAttributes(newAttributes);
+    
+    // Update URL params
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set(attributeName, value);
+    setSearchParams(newParams, { replace: true });
+  };
 
   // Handle contact for purchase - Copy info and show modal
   const handleZaloPurchase = async () => {
     if (!product) return;
     
+    // Prepare variant info if applicable
+    let variantInfo = '';
+    if (product.has_variants && currentVariant) {
+      const variantDetails = Object.entries(selectedAttributes)
+        .map(([key, value]) => {
+          const attr = product.variant_attributes?.find(a => a.name === key);
+          return `  - ${attr?.display_name || key}: ${value}`;
+        })
+        .join('\n');
+      variantInfo = `\nPhiên bản:\n${variantDetails}\n• SKU: ${currentVariant.sku}`;
+    }
+    
     // Tạo message template với thông tin sản phẩm
     const productUrl = window.location.href;
     const messageTemplate = `Tôi muốn mua sản phẩm:
 • Mã SP: ${product.id}
-• Tên: ${product.name}
-• Giá: ${product.price_vnd.toLocaleString('vi-VN')} VNĐ
+• Tên: ${product.name}${variantInfo}
+• Giá: ${currentPrice.toLocaleString('vi-VN')} VNĐ
 • Link: ${productUrl}`;
     
     // Copy message template vào clipboard
@@ -103,8 +201,6 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  const stockStatus = product.stock_status;
-
   return (
     <div className="product-detail-page">
       <div className="product-detail-page-container">
@@ -151,14 +247,25 @@ const ProductDetailPage: React.FC = () => {
             <h1 className="detail-name">{product.name}</h1>
 
             <div className="detail-price-section">
-              <div className="detail-current-price">{product.price_vnd.toLocaleString()}đ</div>
-              {product.original_price_vnd && (
-                <div className="detail-original-price">{product.original_price_vnd.toLocaleString()}đ</div>
+              <div className="detail-current-price">{currentPrice.toLocaleString()}đ</div>
+              {originalPrice && (
+                <div className="detail-original-price">{originalPrice.toLocaleString()}đ</div>
               )}
-              {product.discount && product.original_price_vnd && (
-                <div className="detail-savings">Tiết kiệm: {(product.original_price_vnd - product.price_vnd).toLocaleString()}đ</div>
+              {product.discount && originalPrice && (
+                <div className="detail-savings">Tiết kiệm: {(originalPrice - currentPrice).toLocaleString()}đ</div>
               )}
             </div>
+
+            {/* Variant Selector */}
+            {product.has_variants && product.variant_attributes && product.variants && (
+              <VariantSelector
+                variantAttributes={product.variant_attributes}
+                variants={product.variants}
+                selectedAttributes={selectedAttributes}
+                onAttributeChange={handleAttributeChange}
+                currentVariant={currentVariant}
+              />
+            )}
 
             <div className="detail-stock-status">
               {stockStatus === 'in_stock' ? (
@@ -214,7 +321,7 @@ const ProductDetailPage: React.FC = () => {
                   product={{
                     id: product.id,
                     name: product.name,
-                    price: product.price_vnd,
+                    price: currentPrice,
                     image: product.images?.[0] || '',
                     category: product.category,
                     description: product.description,

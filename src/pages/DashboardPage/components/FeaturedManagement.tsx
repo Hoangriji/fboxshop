@@ -19,13 +19,32 @@ const FeaturedManagement: React.FC = () => {
       const featured = products
         .filter(p => p.featured && p.type !== 'digital')
         .slice(0, 8);
-      // Lấy 8 sản phẩm Digital featured đầu tiên (có thể free hoặc không free)
+      
+      // Fill thiếu với Coming Soon placeholders
+      const featuredWithPlaceholders = [...featured];
+      while (featuredWithPlaceholders.length < 8) {
+        featuredWithPlaceholders.push({
+          id: `placeholder-${featuredWithPlaceholders.length}`,
+          isPlaceholder: true,
+        } as any);
+      }
+      
+      // Lấy 8 sản phẩm Digital featured đầu tiên
       const freeDigital = products
         .filter(p => p.type === 'digital' && p.featured)
         .slice(0, 8);
       
-      setFeaturedProducts(featured);
-      setFreeDigitalProducts(freeDigital);
+      // Fill thiếu với Coming Soon placeholders  
+      const freeDigitalWithPlaceholders = [...freeDigital];
+      while (freeDigitalWithPlaceholders.length < 8) {
+        freeDigitalWithPlaceholders.push({
+          id: `placeholder-digital-${freeDigitalWithPlaceholders.length}`,
+          isPlaceholder: true,
+        } as any);
+      }
+      
+      setFeaturedProducts(featuredWithPlaceholders);
+      setFreeDigitalProducts(freeDigitalWithPlaceholders);
     }
   }, [products]);
 
@@ -101,7 +120,7 @@ const FeaturedManagement: React.FC = () => {
                 8 sản phẩm Vật lý (Featured) đầu tiên sẽ hiển thị trong carousel Homepage
               </p>
             </div>
-            <span className="count-badge">{featuredProducts.length}/8 sản phẩm</span>
+            <span className="count-badge">{featuredProducts.filter((p: any) => !p.isPlaceholder).length}/8 sản phẩm</span>
           </div>
           
           {featuredProducts.length === 0 ? (
@@ -112,38 +131,59 @@ const FeaturedManagement: React.FC = () => {
             </div>
           ) : (
             <div className="featured-products-grid">
-              {featuredProducts.map((product) => (
-                <div key={product.id} className="featured-product-card">
-                  <div className="card-image">
-                    <img src={product.images[0]} alt={product.name} />
-                  </div>
-                  <div className="card-content">
-                    <h4 className="card-title">{product.name}</h4>
-                    <div className="card-meta">
-                      <span className="card-category">{product.category}</span>
-                      <span className="card-price">
-                        {product.price_vnd.toLocaleString('vi-VN')}₫
-                      </span>
+              {featuredProducts.map((product: any) => {
+                if (product.isPlaceholder) {
+                  return (
+                    <div key={product.id} className="featured-product-card coming-soon">
+                      <div className="card-image">
+                        <div className="coming-soon-content">
+                          <i className="fas fa-clock"></i>
+                          <span>Coming Soon</span>
+                        </div>
+                      </div>
+                      <div className="card-content">
+                        <h4 className="card-title">Sản phẩm sắp ra mắt</h4>
+                        <div className="card-meta">
+                          <span className="card-category">Đang cập nhật</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="card-actions">
-                      <button 
-                        className="btn-card-action btn-edit" 
-                        onClick={() => handleEditProduct(product)}
-                        title="Chỉnh sửa"
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button 
-                        className="btn-card-action btn-toggle-featured" 
-                        onClick={() => handleToggleFeatured(product)}
-                        title="Bỏ khỏi Featured"
-                      >
-                        <i className="fas fa-star"></i>
-                      </button>
+                  );
+                }
+                
+                return (
+                  <div key={product.id} className="featured-product-card">
+                    <div className="card-image">
+                      <img src={product.images[0]} alt={product.name} />
+                    </div>
+                    <div className="card-content">
+                      <h4 className="card-title">{product.name}</h4>
+                      <div className="card-meta">
+                        <span className="card-category">{product.category}</span>
+                        <span className="card-price">
+                          {product.price_vnd.toLocaleString('vi-VN')}₫
+                        </span>
+                      </div>
+                      <div className="card-actions">
+                        <button 
+                          className="btn-card-action btn-edit" 
+                          onClick={() => handleEditProduct(product)}
+                          title="Chỉnh sửa"
+                        >
+                          <i className="fas fa-edit"></i>
+                        </button>
+                        <button 
+                          className="btn-card-action btn-toggle-featured" 
+                          onClick={() => handleToggleFeatured(product)}
+                          title="Bỏ khỏi Featured"
+                        >
+                          <i className="fas fa-star"></i>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -157,7 +197,7 @@ const FeaturedManagement: React.FC = () => {
                 8 sản phẩm Digital (Featured) đầu tiên sẽ hiển thị trong carousel Homepage
               </p>
             </div>
-            <span className="count-badge">{freeDigitalProducts.length}/8 sản phẩm</span>
+            <span className="count-badge">{freeDigitalProducts.filter((p: any) => !p.isPlaceholder).length}/8 sản phẩm</span>
           </div>
           
           {freeDigitalProducts.length === 0 ? (
@@ -168,41 +208,62 @@ const FeaturedManagement: React.FC = () => {
             </div>
           ) : (
             <div className="featured-products-grid">
-              {freeDigitalProducts.map((product) => (
-                <div key={product.id} className="featured-product-card digital">
-                  <div className="card-image">
-                    <img src={product.images[0]} alt={product.name} />
-                    <div className="free-badge">
-                      <i className="fas fa-gift"></i> FREE
+              {freeDigitalProducts.map((product: any) => {
+                if (product.isPlaceholder) {
+                  return (
+                    <div key={product.id} className="featured-product-card digital coming-soon">
+                      <div className="card-image">
+                        <div className="coming-soon-content">
+                          <i className="fas fa-clock"></i>
+                          <span>Coming Soon</span>
+                        </div>
+                      </div>
+                      <div className="card-content">
+                        <h4 className="card-title">Digital sắp ra mắt</h4>
+                        <div className="card-meta">
+                          <span className="card-category">Đang cập nhật</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div key={product.id} className="featured-product-card digital">
+                    <div className="card-image">
+                      <img src={product.images[0]} alt={product.name} />
+                      <div className="free-badge">
+                        <i className="fas fa-gift"></i> FREE
+                      </div>
+                    </div>
+                    <div className="card-content">
+                      <h4 className="card-title">{product.name}</h4>
+                      <div className="card-meta">
+                        <span className="card-category">{product.category}</span>
+                        <span className="card-size">
+                          <i className="fas fa-file"></i> {product.file_size || 'N/A'}
+                        </span>
+                      </div>
+                      <div className="card-actions">
+                        <button 
+                          className="btn-card-action btn-edit" 
+                          onClick={() => handleEditProduct(product)}
+                          title="Chỉnh sửa"
+                        >
+                          <i className="fas fa-edit"></i>
+                        </button>
+                        <button 
+                          className="btn-card-action btn-toggle-free" 
+                          onClick={() => handleToggleFree(product)}
+                          title="Bỏ khỏi Free"
+                        >
+                          <i className="fas fa-gift"></i>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div className="card-content">
-                    <h4 className="card-title">{product.name}</h4>
-                    <div className="card-meta">
-                      <span className="card-category">{product.category}</span>
-                      <span className="card-size">
-                        <i className="fas fa-file"></i> {product.file_size || 'N/A'}
-                      </span>
-                    </div>
-                    <div className="card-actions">
-                      <button 
-                        className="btn-card-action btn-edit" 
-                        onClick={() => handleEditProduct(product)}
-                        title="Chỉnh sửa"
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button 
-                        className="btn-card-action btn-toggle-free" 
-                        onClick={() => handleToggleFree(product)}
-                        title="Bỏ khỏi Free"
-                      >
-                        <i className="fas fa-gift"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

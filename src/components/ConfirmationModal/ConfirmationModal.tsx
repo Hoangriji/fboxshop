@@ -5,6 +5,7 @@ interface ConfirmationModalProps {
   isOpen: boolean;
   title: string;
   message: string;
+  warningText?: string; // Text cảnh báo nổi bật
   icon?: 'success' | 'info' | 'warning';
   primaryButtonLabel: string;
   secondaryButtonLabel?: string;
@@ -17,6 +18,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   isOpen,
   title,
   message,
+  warningText,
   icon = 'success',
   primaryButtonLabel,
   secondaryButtonLabel = 'Đóng',
@@ -51,6 +53,12 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
         <h3 className="confirmation-modal-title">{title}</h3>
         <p className="confirmation-modal-message">{message}</p>
+        {warningText && (
+          <p className="confirmation-modal-warning">
+            <i className="fas fa-exclamation-circle"></i>
+            {warningText}
+          </p>
+        )}
 
         <div className="confirmation-modal-actions">
           <button 

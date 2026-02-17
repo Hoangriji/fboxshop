@@ -11,6 +11,8 @@
     "import-data": "tsx src/scripts/import-firebase-data.ts"
   },
   "dependencies": {
+    "@ant-design/charts": "^2.6.7",
+    "@ant-design/plots": "^2.6.8",
     "@types/react-router-dom": "^5.3.3",
     "@vercel/speed-insights": "^1.2.0",
     "firebase": "^12.4.0",

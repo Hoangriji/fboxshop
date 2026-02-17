@@ -44,11 +44,11 @@ const Footer: React.FC = () => {
               Liên Kết Nhanh
             </h3>
             <ul className="footer-links">
-              <li><a href="/">Trang Chủ</a></li>
-              <li><a href="/products">Sản Phẩm</a></li>
-              <li><a href="/products?category=digital">Digital Products</a></li>
-              <li><a href="/wishlist">Yêu Thích</a></li>
-              <li><a href="/contact">Liên Hệ</a></li>
+              <li><a href="/"><i className="fa-solid fa-arrow-right"></i>Trang Chủ</a></li>
+              <li><a href="/products"><i className="fa-solid fa-arrow-right"></i>Sản Phẩm</a></li>
+              <li><a href="/products?category=digital"><i className="fa-solid fa-arrow-right"></i> Digital Products</a></li>
+              <li><a href="/wishlist"><i className="fa-solid fa-arrow-right"></i>Yêu Thích</a></li>
+              <li><a href="/contact"><i className="fa-solid fa-arrow-right"></i>Liên Hệ</a></li>
             </ul>
           </div>
 
@@ -59,12 +59,12 @@ const Footer: React.FC = () => {
               Danh Mục
             </h3>
             <ul className="footer-links">
-              <li><a href="/products?category=keyboard">Bàn Phím Gaming</a></li>
-              <li><a href="/products?category=mouse">Chuột Gaming</a></li>
-              <li><a href="/products?category=headset">Tai Nghe Gaming</a></li>
-              <li><a href="/products?category=monitor">Màn Hình Gaming</a></li>
-              <li><a href="/products?category=usb">Phụ Kiện USB</a></li>
-              <li><a href="/products?category=other">Sản Phẩm Khác</a></li>
+              <li><a href="/products?category=keyboard"><i className="fa-solid fa-arrow-right"></i> Bàn Phím </a></li>
+              <li><a href="/products?category=mouse"><i className="fa-solid fa-arrow-right"></i> Chuột </a></li>
+              <li><a href="/products?category=headset"><i className="fa-solid fa-arrow-right"></i> Tai Nghe </a></li>
+              <li><a href="/products?category=monitor"><i className="fa-solid fa-arrow-right"></i> Màn Hình </a></li>
+              <li><a href="/products?category=usb"><i className="fa-solid fa-arrow-right"></i> Phụ Kiện USB</a></li>
+              <li><a href="/products?category=other"><i className="fa-solid fa-arrow-right"></i> Sản Phẩm Khác</a></li>
             </ul>
           </div>
 

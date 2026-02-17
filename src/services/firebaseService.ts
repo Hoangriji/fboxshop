@@ -256,46 +256,74 @@ export class ProductsService {
 
   // Create product
   static async createProduct(product: Omit<Product, 'id'>): Promise<string> {
-    const docRef = await addDoc(this.collection, {
-      ...product,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    });
+    console.log('FirebaseService - Creating product:', product);
     
-    // Log activity
-    await ActivityLogsService.addLog({
-      action: 'create',
-      productId: docRef.id,
-      productName: product.name,
-      timestamp: new Date().toISOString(),
-      category: product.category,
-      details: `Đã thêm sản phẩm mới`
-    });
-    
-    return docRef.id;
+    try {
+      // Remove undefined fields (Firebase doesn't accept undefined)
+      const cleanedProduct = Object.fromEntries(
+        Object.entries({
+          ...product,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }).filter(([_, value]) => value !== undefined)
+      );
+      
+      const docRef = await addDoc(this.collection, cleanedProduct);
+      
+      console.log('FirebaseService - Product created with ID:', docRef.id);
+      
+      // Log activity
+      await ActivityLogsService.addLog({
+        action: 'create',
+        productId: docRef.id,
+        productName: product.name,
+        timestamp: new Date().toISOString(),
+        category: product.category,
+        details: `Đã thêm sản phẩm mới`
+      });
+      
+      return docRef.id;
+    } catch (error) {
+      console.error('FirebaseService - Error creating product:', error);
+      throw error;
+    }
   }
 
   // Update product
   static async updateProduct(id: string, updates: Partial<Product>): Promise<void> {
-    const docRef = doc(this.collection, id);
+    console.log('FirebaseService - Updating product:', id, updates);
     
-    // Get product name for logging
-    const productDoc = await getDoc(docRef);
-    const productName = productDoc.exists() ? (productDoc.data() as Product).name : 'Unknown';
-    
-    await updateDoc(docRef, {
-      ...updates,
-      updated_at: new Date().toISOString()
-    });
-    
-    // Log activity
-    await ActivityLogsService.addLog({
-      action: 'update',
-      productId: id,
-      productName,
-      timestamp: new Date().toISOString(),
-      details: `Đã cập nhật sản phẩm`
-    });
+    try {
+      const docRef = doc(this.collection, id);
+      
+      // Get product name for logging
+      const productDoc = await getDoc(docRef);
+      const productName = productDoc.exists() ? (productDoc.data() as Product).name : 'Unknown';
+      
+      // Remove undefined fields (Firebase doesn't accept undefined)
+      const cleanedUpdates = Object.fromEntries(
+        Object.entries({
+          ...updates,
+          updated_at: new Date().toISOString()
+        }).filter(([_, value]) => value !== undefined)
+      );
+      
+      await updateDoc(docRef, cleanedUpdates);
+      
+      console.log('FirebaseService - Product updated successfully');
+      
+      // Log activity
+      await ActivityLogsService.addLog({
+        action: 'update',
+        productId: id,
+        productName,
+        timestamp: new Date().toISOString(),
+        details: `Đã cập nhật sản phẩm`
+      });
+    } catch (error) {
+      console.error('FirebaseService - Error updating product:', error);
+      throw error;
+    }
   }
 
   // Delete product
@@ -318,6 +346,26 @@ export class ProductsService {
       category,
       details: `Đã xóa sản phẩm`
     });
+  }
+
+  // Bulk delete products
+  static async deleteProducts(ids: string[]): Promise<{ success: string[], failed: string[] }> {
+    const results = { success: [] as string[], failed: [] as string[] };
+    
+    // Delete products in parallel
+    await Promise.all(
+      ids.map(async (id) => {
+        try {
+          await this.deleteProduct(id);
+          results.success.push(id);
+        } catch (error) {
+          console.error(`Failed to delete product ${id}:`, error);
+          results.failed.push(id);
+        }
+      })
+    );
+    
+    return results;
   }
 
   // Upload product images
