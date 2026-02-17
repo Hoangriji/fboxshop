@@ -14,7 +14,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // ✅ STRATEGY 1: React + React ecosystem in ONE chunk (critical)
           // This prevents "Cannot read properties of undefined" errors
           if (id.includes('node_modules/react') || 
               id.includes('node_modules/react-dom') ||
@@ -22,8 +21,6 @@ export default defineConfig({
               id.includes('node_modules/scheduler')) {
             return 'react-vendor';
           }
-          
-          // ✅ STRATEGY 2: Heavy libraries that DON'T depend on React internals
           
           // Firebase - can be safely separated (doesn't use React internals)
           if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) {
@@ -44,8 +41,7 @@ export default defineConfig({
           if (id.includes('node_modules/gsap') || id.includes('node_modules/motion')) {
             return 'animation-vendor';
           }
-          
-          // ✅ STRATEGY 3: Lightweight utilities - safe to separate
+
           if (id.includes('node_modules/swr')) {
             return 'swr-vendor';
           }
@@ -53,8 +49,7 @@ export default defineConfig({
           if (id.includes('node_modules/zustand')) {
             return 'zustand-vendor';
           }
-          
-          // ✅ STRATEGY 4: Application code splitting by route
+        
           // Dashboard pages
           if (id.includes('/src/pages/DashboardPage/components/DashboardOverview')) {
             return 'dashboard-overview';
@@ -91,7 +86,6 @@ export default defineConfig({
             return 'components';
           }
           
-          // ✅ STRATEGY 5: Catch-all for other node_modules
           // This ensures compatibility and prevents orphaned modules
           if (id.includes('node_modules/')) {
             return 'vendor';
