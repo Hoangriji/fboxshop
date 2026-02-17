@@ -1,12 +1,37 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import { compression } from 'vite-plugin-compression2'
+import type { Plugin } from 'vite'
+
+// Plugin to ensure React loads before other chunks
+const reorderChunks = (): Plugin => ({
+  name: 'reorder-chunks',
+  transformIndexHtml(html) {
+    // Move react-vendor modulepreload to the top
+    const reactPreloadRegex = /(<link rel="modulepreload"[^>]*react-vendor[^>]*>)/
+    const match = html.match(reactPreloadRegex)
+    
+    if (match) {
+      const reactPreload = match[1]
+      // Remove from current position
+      html = html.replace(reactPreloadRegex, '')
+      // Insert right after the main script tag
+      html = html.replace(
+        /(<script type="module" crossorigin src="[^"]*"><\/script>)/,
+        `$1\n    ${reactPreload}`
+      )
+    }
+    
+    return html
+  }
+})
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     compression(),
+    reorderChunks(),
   ],
   build: {
     chunkSizeWarningLimit: 1000,
@@ -14,7 +39,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // React ecosystem
+          // React ecosystem - MUST BE FIRST for dependency resolution
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router')) {
             return 'react-vendor';
           }
@@ -22,8 +47,8 @@ export default defineConfig({
           if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) {
             return 'firebase-vendor';
           }
-          // UI Libraries
-          if (id.includes('node_modules/swiper')) {
+          // UI Libraries (Swiper, etc.)
+          if (id.includes('node_modules/swiper') || id.includes('node_modules/gsap') || id.includes('node_modules/motion')) {
             return 'ui-vendor';
           }
           // Dashboard Pages
