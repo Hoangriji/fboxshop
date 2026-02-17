@@ -9,61 +9,53 @@ export default defineConfig({
     compression(),
   ],
   build: {
-    chunkSizeWarningLimit: 600, // Reduce to catch large chunks earlier
+    chunkSizeWarningLimit: 600,
     minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Core React ecosystem (always needed)
-          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
-            return 'react-core';
+          // ✅ STRATEGY 1: React + React ecosystem in ONE chunk (critical)
+          // This prevents "Cannot read properties of undefined" errors
+          if (id.includes('node_modules/react') || 
+              id.includes('node_modules/react-dom') ||
+              id.includes('node_modules/react-router') ||
+              id.includes('node_modules/scheduler')) {
+            return 'react-vendor';
           }
           
-          // React Router (separate from core React)
-          if (id.includes('node_modules/react-router')) {
-            return 'react-router';
+          // ✅ STRATEGY 2: Heavy libraries that DON'T depend on React internals
+          
+          // Firebase - can be safely separated (doesn't use React internals)
+          if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) {
+            return 'firebase-vendor';
           }
           
-          // Firebase - split into smaller chunks
-          if (id.includes('node_modules/firebase/')) {
-            if (id.includes('firestore')) return 'firebase-firestore';
-            if (id.includes('storage')) return 'firebase-storage';
-            if (id.includes('auth')) return 'firebase-auth';
-            return 'firebase-core';
-          }
-          if (id.includes('node_modules/@firebase')) {
-            return 'firebase-core';
-          }
-          
-          // Ant Design Charts - Very heavy, separate chunk
+          // Charts - Heavy but isolated (lazy loaded only in dashboard)
           if (id.includes('node_modules/@ant-design') || id.includes('node_modules/@antv')) {
             return 'charts-vendor';
           }
           
-          // UI Animation Libraries
+          // Swiper - Heavy UI library (lazy loaded)
           if (id.includes('node_modules/swiper')) {
             return 'swiper-vendor';
           }
+          
+          // Animation libraries (GSAP, Motion)
           if (id.includes('node_modules/gsap') || id.includes('node_modules/motion')) {
             return 'animation-vendor';
           }
           
-          // SWR for data fetching
+          // ✅ STRATEGY 3: Lightweight utilities - safe to separate
           if (id.includes('node_modules/swr')) {
             return 'swr-vendor';
           }
           
-          // Zustand for state management
           if (id.includes('node_modules/zustand')) {
             return 'zustand-vendor';
           }
           
-          // Other heavy node_modules
-          if (id.includes('node_modules/')) {
-            return 'vendor';
-          }
-          
-          // Dashboard Pages - split by route
+          // ✅ STRATEGY 4: Application code splitting by route
+          // Dashboard pages
           if (id.includes('/src/pages/DashboardPage/components/DashboardOverview')) {
             return 'dashboard-overview';
           }
@@ -77,7 +69,7 @@ export default defineConfig({
             return 'dashboard-core';
           }
           
-          // Other Pages
+          // Other pages
           if (id.includes('/src/pages/ProductsPage/')) {
             return 'page-products';
           }
@@ -97,6 +89,12 @@ export default defineConfig({
           // Components
           if (id.includes('/src/components/')) {
             return 'components';
+          }
+          
+          // ✅ STRATEGY 5: Catch-all for other node_modules
+          // This ensures compatibility and prevents orphaned modules
+          if (id.includes('node_modules/')) {
+            return 'vendor';
           }
         },
         assetFileNames: (assetInfo) => {
