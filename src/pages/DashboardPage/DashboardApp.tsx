@@ -1,14 +1,24 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthStore } from '../../store/authStore';
-import DashboardLogin from './DashboardLogin';
-import DashboardLayout from './DashboardLayout';
-import DashboardOverview from './components/DashboardOverview.tsx';
-import ProductsManagement from './components/ProductsManagement.tsx';
-import FeaturedManagement from './components/FeaturedManagement.tsx';
 import './DashboardApp.css';
+
+// Lazy load all dashboard components for better code splitting
+const DashboardLogin = lazy(() => import('./DashboardLogin'));
+const DashboardLayout = lazy(() => import('./DashboardLayout'));
+const DashboardOverview = lazy(() => import('./components/DashboardOverview.tsx'));
+const ProductsManagement = lazy(() => import('./components/ProductsManagement.tsx'));
+const FeaturedManagement = lazy(() => import('./components/FeaturedManagement.tsx'));
+
+// Loading fallback for dashboard components
+const DashboardLoader = () => (
+  <div className="dashboard-loading">
+    <div className="loading-spinner"></div>
+    <p>Đang tải...</p>
+  </div>
+);
 
 // Route Guard Component
 const DashboardRouteGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -40,34 +50,38 @@ const DashboardRouteGuard: React.FC<{ children: React.ReactNode }> = ({ children
 // Dashboard Routes Component
 const DashboardRoutes: React.FC = () => {
   return (
-    <Routes>
-      {/* Login Route */}
-      <Route path="/dashboard" element={<DashboardLogin />} />
-      
-      {/* Protected Dashboard Routes */}
-      <Route path="/dashboard/*" element={
-        <DashboardRouteGuard>
-          <Routes>
-            <Route path="overview" element={
-              <DashboardLayout>
-                <DashboardOverview />
-              </DashboardLayout>
-            } />
-            <Route path="products" element={
-              <DashboardLayout>
-                <ProductsManagement />
-              </DashboardLayout>
-            } />
-            <Route path="featured" element={
-              <DashboardLayout>
-                <FeaturedManagement />
-              </DashboardLayout>
-            } />
-            <Route path="*" element={<Navigate to="/dashboard/overview" replace />} />
-          </Routes>
-        </DashboardRouteGuard>
-      } />
-    </Routes>
+    <Suspense fallback={<DashboardLoader />}>
+      <Routes>
+        {/* Login Route */}
+        <Route path="/dashboard" element={<DashboardLogin />} />
+        
+        {/* Protected Dashboard Routes */}
+        <Route path="/dashboard/*" element={
+          <DashboardRouteGuard>
+            <Suspense fallback={<DashboardLoader />}>
+              <Routes>
+                <Route path="overview" element={
+                  <DashboardLayout>
+                    <DashboardOverview />
+                  </DashboardLayout>
+                } />
+                <Route path="products" element={
+                  <DashboardLayout>
+                    <ProductsManagement />
+                  </DashboardLayout>
+                } />
+                <Route path="featured" element={
+                  <DashboardLayout>
+                    <FeaturedManagement />
+                  </DashboardLayout>
+                } />
+                <Route path="*" element={<Navigate to="/dashboard/overview" replace />} />
+              </Routes>
+            </Suspense>
+          </DashboardRouteGuard>
+        } />
+      </Routes>
+    </Suspense>
   );
 };
 
