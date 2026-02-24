@@ -7,7 +7,7 @@
 [![Vite](https://img.shields.io/badge/Vite-7.1.9-646CFF.svg)](https://vitejs.dev/)
 [![Firebase](https://img.shields.io/badge/Firebase-Latest-orange.svg)](https://firebase.google.com/)
 
-## 🚀 Features
+## Features
 
 ### **Modern UI/UX Design**
 - **Neumorphic Dark Theme** với custom accent colors
@@ -32,7 +32,7 @@
 - **Zustand** state management
 - **Font Awesome Icons**
 
-## 📱 Pages & Navigation
+## Pages & Navigation
 
 - ** Home Page** - Featured products & promotions
 - ** Products Page** - Product catalog với filtering
