@@ -60,3 +60,7 @@ tmp/
 sample/
 scripts/
 fix-products-page.ps1
+data/
+
+
+.firebaserc

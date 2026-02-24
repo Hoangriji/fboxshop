@@ -11,6 +11,8 @@ const DashboardLayout = lazy(() => import('./DashboardLayout'));
 const DashboardOverview = lazy(() => import('./components/DashboardOverview.tsx'));
 const ProductsManagement = lazy(() => import('./components/ProductsManagement.tsx'));
 const FeaturedManagement = lazy(() => import('./components/FeaturedManagement.tsx'));
+const HeroImageManagement = lazy(() => import('./components/HeroImageManagement.tsx'));
+const ProductImport = lazy(() => import('./components/ProductImport.tsx'));
 
 // Loading fallback for dashboard components
 const DashboardLoader = () => (
@@ -73,6 +75,16 @@ const DashboardRoutes: React.FC = () => {
                 <Route path="featured" element={
                   <DashboardLayout>
                     <FeaturedManagement />
+                  </DashboardLayout>
+                } />
+                <Route path="hero-image" element={
+                  <DashboardLayout>
+                    <HeroImageManagement />
+                  </DashboardLayout>
+                } />
+                <Route path="import" element={
+                  <DashboardLayout>
+                    <ProductImport />
                   </DashboardLayout>
                 } />
                 <Route path="*" element={<Navigate to="/dashboard/overview" replace />} />

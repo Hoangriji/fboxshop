@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useProducts } from '../../../hooks/useProducts';
 import { useCategories } from '../../../hooks/useCategories';
 import { ProductsService } from '../../../services/firebaseService';
@@ -9,7 +10,14 @@ import type { Product } from '../../../types';
 const ProductsManagement: React.FC = () => {
   const { products, loading, mutate } = useProducts();
   const { categories } = useCategories();
-  const [searchQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') ?? '');
+
+  // Sync search query with URL param (e.g. when navigated from header search)
+  useEffect(() => {
+    const urlSearch = searchParams.get('search') ?? '';
+    setSearchQuery(urlSearch);
+  }, [searchParams]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'price_high' | 'price_low' | 'name_asc' | 'name_desc'>('newest');
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
@@ -19,7 +27,6 @@ const ProductsManagement: React.FC = () => {
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [errorModal, setErrorModal] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
-  const [successModal, setSuccessModal] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ show: boolean; product: Product | null }>({ show: false, product: null });
   const [deleting, setDeleting] = useState(false);
   
@@ -35,9 +42,14 @@ const ProductsManagement: React.FC = () => {
     let filtered = products;
 
     if (searchQuery) {
-      filtered = filtered.filter(p => 
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchQuery.toLowerCase())
+      const lq = searchQuery.toLowerCase();
+      filtered = filtered.filter(p =>
+        p.name.toLowerCase().includes(lq) ||
+        p.description.toLowerCase().includes(lq) ||
+        p.id.toLowerCase().includes(lq) ||
+        (p.sku ?? '').toLowerCase().includes(lq) ||
+        (p.brand ?? '').toLowerCase().includes(lq) ||
+        (p.tags ?? []).some(t => t.toLowerCase().includes(lq))
       );
     }
 
@@ -105,8 +117,6 @@ const ProductsManagement: React.FC = () => {
   const confirmDeleteProduct = async () => {
     if (!deleteConfirmation.product) return;
 
-    const productName = deleteConfirmation.product.name;
-    
     // Đóng modal xác nhận và hiện loading ngay
     setDeleteConfirmation({ show: false, product: null });
     setDeleting(true);
@@ -115,7 +125,6 @@ const ProductsManagement: React.FC = () => {
       await ProductsService.deleteProduct(deleteConfirmation.product.id);
       mutate(); // Refresh data
       setDeleting(false);
-      setSuccessModal({ show: true, message: `Đã xóa sản phẩm "${productName}" thành công!` });
     } catch (error) {
       console.error('Error deleting product:', error);
       setDeleting(false);
@@ -156,7 +165,6 @@ const ProductsManagement: React.FC = () => {
   const confirmBulkDelete = async () => {
     if (selectedProducts.size === 0) return;
 
-    const count = selectedProducts.size;
     setBulkDeleteConfirmation(false);
     setBulkDeleting(true);
 
@@ -166,13 +174,8 @@ const ProductsManagement: React.FC = () => {
       setBulkDeleting(false);
       setSelectedProducts(new Set());
 
-      if (results.failed.length === 0) {
-        setSuccessModal({ show: true, message: `Đã xóa thành công ${count} sản phẩm!` });
-      } else {
-        setSuccessModal({ 
-          show: true, 
-          message: `Đã xóa ${results.success.length} sản phẩm. ${results.failed.length} sản phẩm xóa thất bại.` 
-        });
+      if (results.failed.length > 0) {
+        setErrorModal({ show: true, message: `Đã xóa ${results.success.length} sản phẩm. ${results.failed.length} sản phẩm xóa thất bại.` });
       }
     } catch (error) {
       console.error('Error bulk deleting products:', error);
@@ -220,8 +223,6 @@ const ProductsManagement: React.FC = () => {
 
   const handleSubmitProduct = async (productData: Partial<Product>) => {
     try {
-      console.log('ProductsManagement - Saving product:', productData);
-      
       // Kiểm tra giới hạn sản phẩm digital free
       if (productData.type === 'digital' && productData.is_free) {
         const currentFreeDigitalCount = products.filter(
@@ -235,21 +236,14 @@ const ProductsManagement: React.FC = () => {
       }
       
       if (editingProduct) {
-        // Update existing product
-        console.log('Updating product:', editingProduct.id);
         await ProductsService.updateProduct(editingProduct.id, productData);
-        setSuccessModal({ show: true, message: '✓ Cập nhật sản phẩm thành công!' });
       } else {
-        // Create new product
-        console.log('Creating new product');
         await ProductsService.createProduct(productData as Omit<Product, 'id'>);
-        setSuccessModal({ show: true, message: '✓ Thêm sản phẩm mới thành công!' });
       }
-      mutate(); // Refresh data
+      mutate();
       setIsModalOpen(false);
     } catch (error) {
       console.error('Error saving product:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
       throw error;
     }
   };
@@ -477,7 +471,11 @@ const ProductsManagement: React.FC = () => {
               const category = categories.find(c => c.id === product.category);
               const isSelected = selectedProducts.has(product.id);
               return (
-                <div key={product.id} className={`product-list-item ${isSelected ? 'selected' : ''}`}>
+                <div
+                  key={product.id}
+                  className={`product-list-item ${isSelected ? 'selected' : ''}`}
+                  onClick={() => handleSelectProduct(product.id)}
+                >
                   <label className="product-checkbox" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
@@ -504,12 +502,11 @@ const ProductsManagement: React.FC = () => {
                         {product.price_vnd.toLocaleString('vi-VN')}₫
                       </span>
                       <span className={`status-badge ${product.stock_status}`}>
-                        {product.stock_status === 'in_stock' ? 'Còn hàng' : 
-                         product.stock_status === 'low_stock' ? 'Sắp hết' : 'Hết hàng'}
+                        {product.stock_status === 'out_of_stock' ? 'Liên hệ' : 'Còn hàng'}
                       </span>
                     </div>
                   </div>
-                  <div className="product-actions">
+                  <div className="product-actions" onClick={(e) => e.stopPropagation()}>
                     {product.featured ? (
                       <span className="featured-badge active" onClick={() => handleToggleFeatured(product)}>
                         <i className="fas fa-star"></i>
@@ -559,25 +556,6 @@ const ProductsManagement: React.FC = () => {
               onClick={() => setErrorModal({ show: false, message: '' })}
             >
               Đóng
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Success Modal */}
-      {successModal.show && (
-        <div className="notification-modal-overlay" onClick={() => setSuccessModal({ show: false, message: '' })}>
-          <div className="notification-modal success" onClick={(e) => e.stopPropagation()}>
-            <div className="notification-icon">
-              <i className="fas fa-check-circle"></i>
-            </div>
-            <h3>Thành công!</h3>
-            <p>{successModal.message}</p>
-            <button 
-              className="btn-modal-close"
-              onClick={() => setSuccessModal({ show: false, message: '' })}
-            >
-              <i className="fas fa-check"></i> Đã hiểu
             </button>
           </div>
         </div>

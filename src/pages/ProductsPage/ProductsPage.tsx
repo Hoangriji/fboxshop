@@ -102,11 +102,8 @@ const ProductsPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = React.useState<string>(categoryFromUrl);
   
   const { 
-    displayedProducts: products, 
+    allProducts: products,
     loading: productsLoading, 
-    loadingMore,
-    hasMore,
-    loadMore,
     error: productsError,
     categoryCounts,
     totalCount,
@@ -116,6 +113,8 @@ const ProductsPage: React.FC = () => {
   const { categories, loading: categoriesLoading } = useCategories();
   
   const [sortBy, setSortBy] = React.useState<string>('newest');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const PRODUCTS_PER_PAGE = 12;
   const [selectedBrands, setSelectedBrands] = React.useState<string[]>([]);
   const [selectedPriceRange, setSelectedPriceRange] = React.useState<string>('');
   const [selectedSubcategories, setSelectedSubcategories] = React.useState<string[]>([]);
@@ -933,8 +932,32 @@ const ProductsPage: React.FC = () => {
     }
   }, [products, selectedCategory, selectedBrands, selectedConnectionTypes, selectedCompatibility, selectedFormFactors, selectedLedTypes, selectedFeatures, selectedHeadsetTypes, selectedUseCases, selectedScreenSizes, selectedRefreshRates, selectedResolutions, selectedResponseTimes, selectedPanelTypes, selectedMonitorFeatures, selectedStorageCapacities, selectedUsbTypes, selectedReadSpeeds, selectedWriteSpeeds, selectedMemoryCardTypes, selectedContentTypes, selectedFormatTypes, selectedLicenseTypes, selectedSoftwareCompatibility, selectedPriceRanges, selectedProductTypes, selectedMaterials, selectedSubcategories, selectedPriceRange, sortBy, searchParams]);
 
-  // For display - show all filtered products (pagination happens at Firebase level)
-  const displayedProducts = filteredProducts;
+  // For display - client-side pagination on filtered products
+  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * PRODUCTS_PER_PAGE,
+    currentPage * PRODUCTS_PER_PAGE
+  );
+
+  // Reset to page 1 whenever filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredProducts.length, selectedCategory]);
+
+  // Helper: build page number range with ellipsis
+  const getPageRange = (current: number, total: number): (number | '...')[] => {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages: (number | '...')[] = [];
+    const delta = 2;
+    const left = Math.max(2, current - delta);
+    const right = Math.min(total - 1, current + delta);
+    pages.push(1);
+    if (left > 2) pages.push('...');
+    for (let i = left; i <= right; i++) pages.push(i);
+    if (right < total - 1) pages.push('...');
+    pages.push(total);
+    return pages;
+  };
 
   const handleBrandToggle = (brand: string) => {
     setSelectedBrands(prev =>
@@ -2103,22 +2126,10 @@ const ProductsPage: React.FC = () => {
 
         {/* Products Grid */}
         <div className="products-content">
-          {/* Results Info */}
-          <div className="results-info">
-            <p>
-              Hiển thị {displayedProducts.length} / {filteredProducts.length} sản phẩm
-              {selectedCategory !== 'all' && (
-                <span className="category-info">
-                  {" "}trong danh mục {categories.find(c => c.id === selectedCategory)?.name}
-                </span>
-              )}
-            </p>
-          </div>
-
           {filteredProducts.length > 0 ? (
             <>
               <div className="products-grid">
-                {displayedProducts.map((product) => (
+                {paginatedProducts.map((product) => (
                   <SimpleProductCard
                     key={product.id}
                     product={product}
@@ -2126,27 +2137,41 @@ const ProductsPage: React.FC = () => {
                   />
                 ))}
               </div>
-              
-              {/* Load More Button */}
-              {hasMore && (
-                <div className="load-more-container">
-                  <Button
-                    variant="primary"
-                    onClick={loadMore}
-                    disabled={loadingMore}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="pagination">
+                  <button
+                    className="pagination-btn pagination-arrow"
+                    onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    disabled={currentPage === 1}
+                    aria-label="Trang trước"
                   >
-                    {loadingMore ? (
-                      <>
-                        <i className="fas fa-spinner fa-spin"></i>
-                        Đang tải...
-                      </>
+                    <i className="fas fa-chevron-left"></i>
+                  </button>
+
+                  {getPageRange(currentPage, totalPages).map((page, idx) =>
+                    page === '...' ? (
+                      <span key={`ellipsis-${idx}`} className="pagination-ellipsis">...</span>
                     ) : (
-                      <>
-                        <i className="fas fa-chevron-down"></i>
-                        Xem thêm sản phẩm
-                      </>
-                    )}
-                  </Button>
+                      <button
+                        key={page}
+                        className={`pagination-btn${currentPage === page ? ' active' : ''}`}
+                        onClick={() => { setCurrentPage(page as number); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      >
+                        {page}
+                      </button>
+                    )
+                  )}
+
+                  <button
+                    className="pagination-btn pagination-arrow"
+                    onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    disabled={currentPage === totalPages}
+                    aria-label="Trang sau"
+                  >
+                    <i className="fas fa-chevron-right"></i>
+                  </button>
                 </div>
               )}
             </>

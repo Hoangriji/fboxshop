@@ -109,11 +109,9 @@ export default defineConfig({
       'react', 
       'react-dom', 
       'react-router-dom',
+      'color-string',
+      'eventemitter3', 
     ],
-    exclude: [
-      '@ant-design/plots', // Heavy charts, load on demand
-      '@ant-design/charts',
-    ]
   },
   // Enable better tree-shaking
   esbuild: {

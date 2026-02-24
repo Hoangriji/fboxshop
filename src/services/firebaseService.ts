@@ -256,8 +256,6 @@ export class ProductsService {
 
   // Create product
   static async createProduct(product: Omit<Product, 'id'>): Promise<string> {
-    console.log('FirebaseService - Creating product:', product);
-    
     try {
       // Remove undefined fields (Firebase doesn't accept undefined)
       const cleanedProduct = Object.fromEntries(
@@ -265,12 +263,10 @@ export class ProductsService {
           ...product,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        }).filter(([_, value]) => value !== undefined)
+        }).filter(([, value]) => value !== undefined)
       );
       
       const docRef = await addDoc(this.collection, cleanedProduct);
-      
-      console.log('FirebaseService - Product created with ID:', docRef.id);
       
       // Log activity
       await ActivityLogsService.addLog({
@@ -291,8 +287,6 @@ export class ProductsService {
 
   // Update product
   static async updateProduct(id: string, updates: Partial<Product>): Promise<void> {
-    console.log('FirebaseService - Updating product:', id, updates);
-    
     try {
       const docRef = doc(this.collection, id);
       
@@ -305,12 +299,10 @@ export class ProductsService {
         Object.entries({
           ...updates,
           updated_at: new Date().toISOString()
-        }).filter(([_, value]) => value !== undefined)
+        }).filter(([, value]) => value !== undefined)
       );
       
       await updateDoc(docRef, cleanedUpdates);
-      
-      console.log('FirebaseService - Product updated successfully');
       
       // Log activity
       await ActivityLogsService.addLog({
@@ -364,6 +356,50 @@ export class ProductsService {
         }
       })
     );
+    
+    return results;
+  }
+
+  // Bulk create products (for import)
+  static async bulkCreateProducts(
+    products: Omit<Product, 'id'>[], 
+    onProgress?: (current: number, total: number) => void
+  ): Promise<{ success: string[], failed: Array<{ index: number, error: string }> }> {
+    const results = { 
+      success: [] as string[], 
+      failed: [] as Array<{ index: number, error: string }> 
+    };
+    
+    // Process products sequentially to avoid rate limiting
+    for (let i = 0; i < products.length; i++) {
+      try {
+        const productId = await this.createProduct(products[i]);
+        results.success.push(productId);
+        
+        if (onProgress) {
+          onProgress(i + 1, products.length);
+        }
+      } catch (error) {
+        console.error(`Failed to create product at index ${i}:`, error);
+        results.failed.push({ 
+          index: i, 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        });
+        
+        if (onProgress) {
+          onProgress(i + 1, products.length);
+        }
+      }
+    }
+    
+    // Log bulk import activity
+    await ActivityLogsService.addLog({
+      action: 'create',
+      productId: 'bulk_import',
+      productName: `Bulk Import (${results.success.length} products)`,
+      timestamp: new Date().toISOString(),
+      details: `Imported ${results.success.length} products successfully, ${results.failed.length} failed`
+    });
     
     return results;
   }
@@ -551,28 +587,17 @@ export class AdminAuthService {
   // Validate admin credentials
   static async validateCredentials(username: string, password: string): Promise<boolean> {
     try {
-      // Temporary hardcoded credentials for development
-      const defaultUsername = 'admin';
-      const defaultPassword = 'admin123';
-      
-      // Check hardcoded credentials first
-      if (username === defaultUsername && password === defaultPassword) {
-        return true;
-      }
-      
-      // Then check Firebase if needed
       const snapshot = await getDoc(this.docRef);
-      
+
       if (snapshot.exists()) {
         const adminData = snapshot.data();
         return adminData.username === username && adminData.password === password;
       }
-      
+
       return false;
     } catch (error) {
       console.error('Error validating credentials:', error);
-      // Fallback to hardcoded credentials if Firebase fails
-      return username === 'admin' && password === 'admin123';
+      return false;
     }
   }
 

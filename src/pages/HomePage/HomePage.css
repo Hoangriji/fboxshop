@@ -25,12 +25,25 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('../../assets/Bg-Hero_section.jpg');
+  /* Use CSS variable if set (from Cloudinary), otherwise fallback to default */
+  background-image: var(--hero-bg-image, url('../../assets/Bg-Hero_section.jpg'));
   background-position: top center;
   background-size: cover;
   filter: brightness(0.6) contrast(0.95);
   pointer-events: none;
   z-index: -1;
+  transition: filter 0.5s ease-out, opacity 0.5s ease-out;
+}
+
+/* Progressive loading states */
+.hero-section.hero-loading::before {
+  filter: brightness(0.6) contrast(0.95) blur(20px);
+  opacity: 0.7;
+}
+
+.hero-section.hero-loaded::before {
+  filter: brightness(0.6) contrast(0.95) blur(0);
+  opacity: 1;
 }
 
 .hero-wrapper {

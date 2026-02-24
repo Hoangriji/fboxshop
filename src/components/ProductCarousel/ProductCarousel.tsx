@@ -3,6 +3,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, FreeMode, Autoplay } from 'swiper/modules';
 import { SimpleProductCard } from '../SimpleProductCard/SimpleProductCard';
 import type { Product } from '../../types';
+import type { PlaceholderProduct } from '../../hooks/useFeaturedProducts';
 import { useRef, memo, useCallback } from 'react';
 import type { SwiperRef } from 'swiper/react';
 
@@ -15,7 +16,7 @@ import 'swiper/css/autoplay';
 import './ProductCarousel.css';
 
 interface ProductCarouselProps {
-  products: Product[];
+  products: (Product | PlaceholderProduct)[];
   slidesPerView?: number;
   spaceBetween?: number;
   showNavigation?: boolean;
@@ -143,13 +144,13 @@ const ProductCarousel: React.FC<ProductCarouselProps> = memo(({
           }}
           className="product-swiper"
         >
-          {products.map((product: any) => (
+          {products.map((product) => (
             <SwiperSlide key={product.id}>
-              {product.isPlaceholder ? (
+              {'isPlaceholder' in product && product.isPlaceholder ? (
                 <PlaceholderCard />
               ) : (
                 <SimpleProductCard
-                  product={product}
+                  product={product as Product}
                   onViewDetails={(id: string | number) => navigate(`/product/${id}`)}
                 />
               )}

@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import type { Product, Category, VariantAttribute, ProductVariant } from '../../../types';
+import type { Product, Category } from '../../../types';
 import { cloudinaryConfig } from '../../../config/cloudinary';
-import { VariantEditor } from './VariantEditor';
-import { generateSKUFromName } from '../../../utils/variantHelpers';
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -58,14 +56,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   
   // Error modal state
   const [errorModal, setErrorModal] = useState<{isOpen: boolean; title: string; message: string}>({isOpen: false, title: '', message: ''});
-  const [successModal, setSuccessModal] = useState<{isOpen: boolean; message: string}>({isOpen: false, message: ''});
-  
-  // Variant fields state
-  const [hasVariants, setHasVariants] = useState(false);
-  const [baseSKU, setBaseSKU] = useState('');
-  const [basePrice, setBasePrice] = useState(0);
-  const [variantAttributes, setVariantAttributes] = useState<VariantAttribute[]>([]);
-  const [variants, setVariants] = useState<ProductVariant[]>([]);
   
   const CATEGORY_FILTERS: Record<string, {
     brand?: boolean;
@@ -161,13 +151,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       setCompatibility(product.compatibility || []);
       setFormFactor(product.form_factor || '');
       setLedType(product.led_type || '');
-      
-      // Load variant fields
-      setHasVariants(product.has_variants || false);
-      setBaseSKU(product.sku || '');
-      setBasePrice(product.base_price || product.price_vnd || 0);
-      setVariantAttributes(product.variant_attributes || []);
-      setVariants(product.variants || []);
     } else {
       setFormData({
         name: '',
@@ -194,13 +177,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       setCompatibility([]);
       setFormFactor('');
       setLedType('');
-      
-      // Reset variant fields
-      setHasVariants(false);
-      setBaseSKU('');
-      setBasePrice(0);
-      setVariantAttributes([]);
-      setVariants([]);
     }
   }, [product, isOpen]); // Add isOpen to dependencies
 
@@ -240,21 +216,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       setFrequency('');
       setImpedance('');
       setProductFeatures([]);
-      
-      // Reset variant fields
-      setHasVariants(false);
-      setBaseSKU('');
-      setBasePrice(0);
-      setVariantAttributes([]);
-      setVariants([]);
     }
   }, [isOpen]);
-
-  useEffect(() => {
-    if (hasVariants && formData.name && !product) {
-      setBaseSKU(generateSKUFromName(formData.name));
-    }
-  }, [formData.name, hasVariants, product]);
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -319,7 +282,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       }
 
       setUploadedImages(prev => [...prev, ...uploadedUrls]);
-      setSuccessModal({isOpen: true, message: `Đã tải lên thành công ${uploadedUrls.length} ảnh!`});
     } catch (error) {
       console.error('Error uploading images:', error);
       setErrorModal({
@@ -406,6 +368,14 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       setErrorModal({isOpen: true, title: 'Dữ liệu không hợp lệ', message: 'Giá sản phẩm không được là số âm'});
       return;
     }
+    if (formData.original_price_vnd !== undefined && formData.original_price_vnd < 0) {
+      setErrorModal({isOpen: true, title: 'Dữ liệu không hợp lệ', message: 'Giá gốc không được là số âm'});
+      return;
+    }
+    if (formData.original_price_vnd && formData.price_vnd && formData.original_price_vnd < formData.price_vnd) {
+      setErrorModal({isOpen: true, title: 'Dữ liệu không hợp lệ', message: 'Giá gốc phải lớn hơn hoặc bằng giá bán'});
+      return;
+    }
     
     setLoading(true);
 
@@ -451,47 +421,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         form_factor: formFactor.trim() || undefined,
         led_type: ledType.trim() || undefined,
       };
-      
-      // Add variant data if enabled
-      if (hasVariants) {
-        productData.has_variants = true;
-        productData.sku = baseSKU.trim();
-        productData.base_price = basePrice;
-        productData.variant_attributes = variantAttributes;
-        productData.variants = variants;
-        
-        // Validate variant data
-        if (!productData.sku) {
-          setErrorModal({isOpen: true, title: 'Thiếu thông tin', message: 'Vui lòng nhập SKU cơ sở cho sản phẩm có biến thể'});
-          setLoading(false);
-          return;
-        }
-        if (!productData.base_price || productData.base_price <= 0) {
-          setErrorModal({isOpen: true, title: 'Dữ liệu không hợp lệ', message: 'Giá cơ sở phải lớn hơn 0'});
-          setLoading(false);
-          return;
-        }
-        if (!variantAttributes || variantAttributes.length === 0) {
-          setErrorModal({isOpen: true, title: 'Thiếu thông tin', message: 'Vui lòng thêm ít nhất một thuộc tính biến thể'});
-          setLoading(false);
-          return;
-        }
-        if (!variants || variants.length === 0) {
-          setErrorModal({isOpen: true, title: 'Thiếu thông tin', message: 'Vui lòng tạo ít nhất một biến thể sản phẩm'});
-          setLoading(false);
-          return;
-        }
-      } else {
-        productData.has_variants = false;
-        productData.sku = undefined;
-        productData.base_price = undefined;
-        productData.variant_attributes = undefined;
-        productData.variants = undefined;
-      }
 
-      console.log('Submitting product data:', productData);
       await onSubmit(productData);
-      
       onClose();
     } catch (error) {
       console.error('Error submitting product:', error);
@@ -547,39 +478,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
           <div className="form-row form-row-2">
             <div className="form-group">
-              <label>Danh mục *</label>
-              <div className="custom-select-dropdown" ref={categoryDropdownRef}>
-                <button
-                  type="button"
-                  className={`custom-select-btn ${categoryDropdownOpen ? 'open' : ''} ${!formData.category ? 'placeholder' : ''}`}
-                  onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
-                >
-                  <span>{formData.category ? categories.find(c => c.id === formData.category)?.name : 'Chọn danh mục'}</span>
-                  <i className="fas fa-chevron-down"></i>
-                </button>
-                
-                {categoryDropdownOpen && (
-                  <div className="custom-select-list">
-                    {categories.map(cat => (
-                      <div
-                        key={cat.id}
-                        className={`custom-select-option ${formData.category === cat.id ? 'selected' : ''}`}
-                        onClick={() => {
-                          setFormData({ ...formData, category: cat.id });
-                          setCategoryDropdownOpen(false);
-                        }}
-                      >
-                        <i className="fas fa-tag"></i>
-                        <span>{cat.name}</span>
-                        {formData.category === cat.id && <i className="fas fa-check"></i>}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="form-group">
               <label>Loại sản phẩm *</label>
               <div className="custom-select-dropdown" ref={typeDropdownRef}>
                 <button
@@ -596,7 +494,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     <div
                       className={`custom-select-option ${formData.type === 'physical' ? 'selected' : ''}`}
                       onClick={() => {
-                        setFormData({ ...formData, type: 'physical' });
+                        // Reset category when changing type
+                        setFormData({ ...formData, type: 'physical', category: '' });
                         setTypeDropdownOpen(false);
                       }}
                     >
@@ -607,7 +506,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     <div
                       className={`custom-select-option ${formData.type === 'digital' ? 'selected' : ''}`}
                       onClick={() => {
-                        setFormData({ ...formData, type: 'digital' });
+                        // Reset category when changing type
+                        setFormData({ ...formData, type: 'digital', category: '' });
                         setTypeDropdownOpen(false);
                       }}
                     >
@@ -619,11 +519,65 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 )}
               </div>
             </div>
+
+            <div className="form-group">
+              <label>Danh mục *</label>
+              <div className="custom-select-dropdown" ref={categoryDropdownRef}>
+                <button
+                  type="button"
+                  className={`custom-select-btn ${categoryDropdownOpen ? 'open' : ''} ${!formData.category ? 'placeholder' : ''}`}
+                  onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
+                  disabled={!formData.type}
+                >
+                  <span>{formData.category ? categories.find(c => c.id === formData.category)?.name : formData.type ? 'Chọn danh mục' : 'Chọn loại sản phẩm trước'}</span>
+                  <i className="fas fa-chevron-down"></i>
+                </button>
+                
+                {categoryDropdownOpen && (
+                  <div className="custom-select-list">
+                    {categories
+                      .filter(cat => cat.type === formData.type)
+                      .map(cat => (
+                        <div
+                          key={cat.id}
+                          className={`custom-select-option ${formData.category === cat.id ? 'selected' : ''}`}
+                          onClick={() => {
+                            setFormData({ ...formData, category: cat.id });
+                            setCategoryDropdownOpen(false);
+                          }}
+                        >
+                          <i className="fas fa-tag"></i>
+                          <span>{cat.name}</span>
+                          {formData.category === cat.id && <i className="fas fa-check"></i>}
+                        </div>
+                      ))}
+                    {categories.filter(cat => cat.type === formData.type).length === 0 && (
+                      <div className="custom-select-option disabled">
+                        <i className="fas fa-info-circle"></i>
+                        <span>Không có danh mục nào cho loại này</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="form-row">
+          <div className="form-row form-row-2">
             <div className="form-group">
-              <label htmlFor="price_vnd">Giá (VNĐ) *</label>
+              <label htmlFor="original_price_vnd">Giá ban đầu (VNĐ)</label>
+              <input
+                id="original_price_vnd"
+                type="number"
+                min="0"
+                value={formData.original_price_vnd || ''}
+                onChange={(e) => setFormData({ ...formData, original_price_vnd: e.target.value ? Number(e.target.value) : undefined })}
+                placeholder="Không bắt buộc"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="price_vnd">Giá hiện tại (VNĐ) *</label>
               <input
                 id="price_vnd"
                 type="number"
@@ -646,9 +600,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   onClick={() => setStockDropdownOpen(!stockDropdownOpen)}
                 >
                   <span>
-                    {formData.stock_status === 'in_stock' && 'Còn hàng'}
-                    {formData.stock_status === 'low_stock' && 'Sắp hết'}
-                    {formData.stock_status === 'out_of_stock' && 'Hết hàng'}
+                    {formData.stock_status === 'out_of_stock' ? 'Liên hệ' : 'Còn hàng'}
                   </span>
                   <i className="fas fa-chevron-down"></i>
                 </button>
@@ -656,7 +608,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 {stockDropdownOpen && (
                   <div className="custom-select-list">
                     <div
-                      className={`custom-select-option ${formData.stock_status === 'in_stock' ? 'selected' : ''}`}
+                      className={`custom-select-option ${formData.stock_status !== 'out_of_stock' ? 'selected' : ''}`}
                       onClick={() => {
                         setFormData({ ...formData, stock_status: 'in_stock' });
                         setStockDropdownOpen(false);
@@ -664,18 +616,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     >
                       <i className="fas fa-check-circle"></i>
                       <span>Còn hàng</span>
-                      {formData.stock_status === 'in_stock' && <i className="fas fa-check"></i>}
-                    </div>
-                    <div
-                      className={`custom-select-option ${formData.stock_status === 'low_stock' ? 'selected' : ''}`}
-                      onClick={() => {
-                        setFormData({ ...formData, stock_status: 'low_stock' });
-                        setStockDropdownOpen(false);
-                      }}
-                    >
-                      <i className="fas fa-exclamation-triangle"></i>
-                      <span>Sắp hết</span>
-                      {formData.stock_status === 'low_stock' && <i className="fas fa-check"></i>}
+                      {formData.stock_status !== 'out_of_stock' && <i className="fas fa-check"></i>}
                     </div>
                     <div
                       className={`custom-select-option ${formData.stock_status === 'out_of_stock' ? 'selected' : ''}`}
@@ -684,8 +625,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         setStockDropdownOpen(false);
                       }}
                     >
-                      <i className="fas fa-times-circle"></i>
-                      <span>Hết hàng</span>
+                      <i className="fas fa-phone-alt"></i>
+                      <span>Liên hệ</span>
                       {formData.stock_status === 'out_of_stock' && <i className="fas fa-check"></i>}
                     </div>
                   </div>
@@ -1176,43 +1117,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
               </div>
             )}
             
-            {formData.type === 'physical' && (
-              <div className="form-checkbox">
-                <input
-                  id="has_variants"
-                  type="checkbox"
-                  checked={hasVariants}
-                  onChange={(e) => {
-                    const enabled = e.target.checked;
-                    setHasVariants(enabled);
-                    if (enabled && !baseSKU && formData.name) {
-                      setBaseSKU(generateSKUFromName(formData.name));
-                    }
-                    if (enabled && !basePrice && formData.price_vnd) {
-                      setBasePrice(formData.price_vnd);
-                    }
-                  }}
-                />
-                <label htmlFor="has_variants">
-                  <i className="fas fa-layer-group"></i> Sản phẩm có biến thể
-                </label>
-              </div>
-            )}
           </div>
-
-          {hasVariants && formData.type === 'physical' && (
-            <VariantEditor
-              baseSKU={baseSKU}
-              basePrice={basePrice}
-              variantAttributes={variantAttributes}
-              variants={variants}
-              onChange={(attrs, vars) => {
-                console.log('VariantEditor onChange:', { attrs, vars });
-                setVariantAttributes(attrs);
-                setVariants(vars);
-              }}
-            />
-          )}
 
           <div className="modal-footer">
             <button type="button" className="btn-secondary" onClick={onClose} disabled={loading}>
@@ -1256,28 +1161,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         </div>
       )}
 
-      {/* Success Modal */}
-      {successModal.isOpen && (
-        <div className="notification-modal-overlay" onClick={() => setSuccessModal({isOpen: false, message: ''})}>
-          <div className="notification-modal success" onClick={(e) => e.stopPropagation()}>
-            <div className="notification-modal-header">
-              <i className="fas fa-check-circle"></i>
-              <h3>Thành công</h3>
-            </div>
-            <div className="notification-modal-body">
-              <p>{successModal.message}</p>
-            </div>
-            <div className="notification-modal-footer">
-              <button 
-                className="btn-primary" 
-                onClick={() => setSuccessModal({isOpen: false, message: ''})}
-              >
-                <i className="fas fa-check"></i> OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

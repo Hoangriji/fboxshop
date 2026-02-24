@@ -183,14 +183,9 @@ class ProductCache {
     // Check memory first
     if (this.categoryCounts && Object.keys(this.categoryCounts).length > 0) {
       const age = Date.now() - this.countsTimestamp;
-      console.log(`Category counts cache age: ${Math.round(age / 1000)}s (TTL: ${COUNTS_CACHE_TTL / 1000}s)`);
-      
       if (age < COUNTS_CACHE_TTL) {
         const total = Object.values(this.categoryCounts).reduce((sum, count) => sum + count, 0);
-        console.log(`Using cached category counts`);
         return { counts: this.categoryCounts, total };
-      } else {
-        console.log(`Category counts cache expired`);
       }
     }
 
@@ -200,21 +195,16 @@ class ProductCache {
       if (stored) {
         const parsed = JSON.parse(stored);
         const age = Date.now() - parsed.timestamp;
-        
         if (age < COUNTS_CACHE_TTL) {
           this.categoryCounts = parsed.counts;
           this.countsTimestamp = parsed.timestamp;
-          console.log(`Loaded category counts from localStorage`);
           return { counts: parsed.counts, total: parsed.total };
-        } else {
-          console.log(`localStorage category counts expired`);
         }
       }
     } catch (err) {
       console.error('Error loading category counts:', err);
     }
 
-    console.log(`No valid category counts cache`);
     return null;
   }
 

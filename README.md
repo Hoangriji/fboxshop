@@ -9,21 +9,21 @@
 
 ## 🚀 Features
 
-### 🎨 **Modern UI/UX Design**
+### **Modern UI/UX Design**
 - **Neumorphic Dark Theme** với custom accent colors
 - **Responsive Design** tối ưu cho mọi thiết bị
 - **Product Cards** hiện đại với hover animations
 - **Wishlist System** với localStorage persistence
 - **Color Theme Picker** - 6 màu sắc tùy chỉnh
 
-### 🛒 **E-commerce Functionality**
+### **E-commerce Functionality**
 - **Product Catalog** với filtering và sorting
 - **Product Detail Pages** đầy đủ thông tin
 - **Wishlist Management** - thêm/xóa sản phẩm yêu thích
 - **Shopping Cart** (coming soon)
 - **User Authentication** với Firebase
 
-### 🔧 **Technical Features**
+### **Technical Features**
 - **React 19.1.1** với Hooks và Context
 - **TypeScript** cho type safety
 - **Vite** build tool siêu nhanh
@@ -34,14 +34,14 @@
 
 ## 📱 Pages & Navigation
 
-- **🏠 Home Page** - Featured products & promotions
-- **📦 Products Page** - Product catalog với filtering
-- **❤️ Wishlist Page** - Sản phẩm yêu thích
-- **ℹ️ About Page** - Thông tin công ty
-- **📞 Contact Page** - Liên hệ support
-- **👁️ Product Detail** - Chi tiết sản phẩm
+- ** Home Page** - Featured products & promotions
+- ** Products Page** - Product catalog với filtering
+- ** Wishlist Page** - Sản phẩm yêu thích
+- ** About Page** - Thông tin công ty
+- ** Contact Page** - Liên hệ support
+- ** Product Detail** - Chi tiết sản phẩm
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 - **React 19.1.1** - UI Library
@@ -61,7 +61,7 @@
 - **ESLint** - Code linting
 - **TypeScript Config** - Strict type checking
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js (v18 or higher)
@@ -103,7 +103,7 @@ npm run dev
 http://localhost:5173
 ```
 
-## 📦 Build for Production
+## Build for Production
 
 ```bash
 # Build for production
@@ -113,7 +113,7 @@ npm run build
 npm run preview
 ```
 
-## 🎨 Customization
+## Customization
 
 ### Color Themes
 Website hỗ trợ 6 color themes có thể thay đổi trực tiếp từ header:
@@ -151,7 +151,7 @@ uside_shop/
 └── 📄 package.json           # Dependencies
 ```
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create feature branch (`git checkout -b feature/AmazingFeature`)
@@ -159,14 +159,14 @@ uside_shop/
 4. Push to branch (`git push origin feature/AmazingFeature`)
 5. Open Pull Request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📞 Support
+## Support
 
-- 🌐 Website: [usideshop.studio](https://www.uside.studio)
-- 📱 Discord: [Join our community](https://discord.gg/usideshop)
+-  Website: [usideshop.studio](https://www.uside.studio)
+-  Discord: [Join our community](https://discord.gg/usideshop)
 
 ---
 

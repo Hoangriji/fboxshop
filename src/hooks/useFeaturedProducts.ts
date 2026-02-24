@@ -11,23 +11,30 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Product } from '../types';
 import { ProductsService } from '../services/firebaseService';
 
+export interface PlaceholderProduct {
+  id: string;
+  isPlaceholder: true;
+  name: string;
+  category: string;
+}
+
 interface UseFeaturedProductsResult {
-  featuredProducts: Product[];
-  freeDigitalProducts: Product[];
+  featuredProducts: (Product | PlaceholderProduct)[];
+  freeDigitalProducts: (Product | PlaceholderProduct)[];
   loading: boolean;
   error: Error | null;
   refresh: () => Promise<void>;
 }
 
 // Cache for featured products
-let cachedFeaturedProducts: Product[] | null = null;
-let cachedFreeProducts: Product[] | null = null;
+let cachedFeaturedProducts: (Product | PlaceholderProduct)[] | null = null;
+let cachedFreeProducts: (Product | PlaceholderProduct)[] | null = null;
 let cacheTimestamp: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export const useFeaturedProducts = (): UseFeaturedProductsResult => {
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [freeDigitalProducts, setFreeDigitalProducts] = useState<Product[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<(Product | PlaceholderProduct)[]>([]);
+  const [freeDigitalProducts, setFreeDigitalProducts] = useState<(Product | PlaceholderProduct)[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -57,14 +64,14 @@ export const useFeaturedProducts = (): UseFeaturedProductsResult => {
         .slice(0, 8);
       
       // Fill với placeholders nếu < 8
-      const physicalWithPlaceholders = [...physicalFeatured];
+      const physicalWithPlaceholders: (Product | PlaceholderProduct)[] = [...physicalFeatured];
       while (physicalWithPlaceholders.length < 8) {
         physicalWithPlaceholders.push({
           id: `placeholder-physical-${physicalWithPlaceholders.length}`,
           isPlaceholder: true,
           name: 'Coming Soon',
           category: 'Đang cập nhật',
-        } as any);
+        } as PlaceholderProduct);
       }
       
       // Separate Digital featured products for carousel 2
@@ -73,14 +80,14 @@ export const useFeaturedProducts = (): UseFeaturedProductsResult => {
         .slice(0, 8);
       
       // Fill với placeholders nếu < 8
-      const digitalWithPlaceholders = [...digitalFeatured];
+      const digitalWithPlaceholders: (Product | PlaceholderProduct)[] = [...digitalFeatured];
       while (digitalWithPlaceholders.length < 8) {
         digitalWithPlaceholders.push({
           id: `placeholder-digital-${digitalWithPlaceholders.length}`,
           isPlaceholder: true,
           name: 'Coming Soon',
           category: 'Đang cập nhật',
-        } as any);
+        } as PlaceholderProduct);
       }
 
       // Update cache

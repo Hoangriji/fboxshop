@@ -1,128 +1,37 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useProductDetail } from '../../hooks/useProductDetail';
-// import { useSiteConfig } from '../../hooks/useSiteConfig';
 import { WishlistButton } from '../../components/WishlistButton';
 import { RelatedProducts } from '../../components/RelatedProducts';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
-import { VariantSelector } from '../../components/VariantSelector';
 import { openZaloImmediate } from '../../utils/zaloHelper';
-import type { ProductVariant } from '../../types';
 import './ProductDetailPage.css';
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { product, relatedProducts, loading, error } = useProductDetail(id);
-  // const { config } = useSiteConfig();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showModal, setShowModal] = useState(false);
-  
-  // Variant selection state
-  const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
 
-  // Initialize variant selection from URL params
-  useEffect(() => {
-    if (!product?.has_variants || !product.variant_attributes) return;
-    
-    const urlAttributes: Record<string, string> = {};
-    product.variant_attributes.forEach(attr => {
-      const paramValue = searchParams.get(attr.name);
-      if (paramValue && attr.values.includes(paramValue)) {
-        urlAttributes[attr.name] = paramValue;
-      }
-    });
-    
-    if (Object.keys(urlAttributes).length > 0) {
-      setSelectedAttributes(urlAttributes);
-    }
-  }, [product, searchParams]);
-
-  // Find current variant based on selected attributes
-  const currentVariant = useMemo((): ProductVariant | undefined => {
-    if (!product?.has_variants || !product.variants) return undefined;
-    
-    // Check if all required attributes are selected
-    const allAttributesSelected = product.variant_attributes?.every(
-      attr => selectedAttributes[attr.name]
-    );
-    
-    if (!allAttributesSelected) return undefined;
-    
-    // Find matching variant
-    return product.variants.find(variant => {
-      return Object.entries(selectedAttributes).every(
-        ([key, value]) => variant.attributes[key] === value
-      );
-    });
-  }, [product, selectedAttributes]);
-
-  // Calculate current price (base + variant adjustment)
-  const currentPrice = useMemo(() => {
-    if (!product) return 0;
-    if (!product.has_variants) return product.price_vnd || 0;
-    
-    const basePrice = product.base_price || product.price_vnd;
-    const adjustment = currentVariant?.price_adjustment || 0;
-    return basePrice + adjustment;
-  }, [product, currentVariant]);
+  // Calculate current price
+  const currentPrice = product?.price_vnd || 0;
 
   // Calculate stock status
-  const stockStatus = useMemo(() => {
-    if (!product) return 'in_stock';
-    if (product.has_variants && currentVariant) {
-      const stock = currentVariant.stock;
-      if (stock === 0 || !currentVariant.is_available) return 'out_of_stock';
-      if (stock <= 5) return 'low_stock';
-      return 'in_stock';
-    }
-    return product.stock_status || 'in_stock';
-  }, [product, currentVariant]);
+  const stockStatus = product?.stock_status || 'in_stock';
 
-  // Calculate original price for variants
-  const originalPrice = useMemo(() => {
-    if (!product) return undefined;
-    if (product.has_variants && product.base_price && product.original_price_vnd) {
-      // If product had original price, apply same discount to variant
-      const discount = product.original_price_vnd - product.base_price;
-      return currentPrice + discount;
-    }
-    return product.original_price_vnd;
-  }, [product, currentPrice]);
-
-  // Handle variant attribute change
-  const handleAttributeChange = (attributeName: string, value: string) => {
-    const newAttributes = { ...selectedAttributes, [attributeName]: value };
-    setSelectedAttributes(newAttributes);
-    
-    // Update URL params
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set(attributeName, value);
-    setSearchParams(newParams, { replace: true });
-  };
+  // Original price
+  const originalPrice = product?.original_price_vnd;
 
   // Handle contact for purchase - Copy info and show modal
   const handleZaloPurchase = async () => {
     if (!product) return;
     
-    // Prepare variant info if applicable
-    let variantInfo = '';
-    if (product.has_variants && currentVariant) {
-      const variantDetails = Object.entries(selectedAttributes)
-        .map(([key, value]) => {
-          const attr = product.variant_attributes?.find(a => a.name === key);
-          return `  - ${attr?.display_name || key}: ${value}`;
-        })
-        .join('\n');
-      variantInfo = `\nPhiên bản:\n${variantDetails}\n• SKU: ${currentVariant.sku}`;
-    }
-    
     // Tạo message template với thông tin sản phẩm
     const productUrl = window.location.href;
     const messageTemplate = `Tôi muốn mua sản phẩm:
 • Mã SP: ${product.id}
-• Tên: ${product.name}${variantInfo}
+• Tên: ${product.name}
 • Giá: ${currentPrice.toLocaleString('vi-VN')} VNĐ
 • Link: ${productUrl}`;
     
@@ -149,14 +58,6 @@ const ProductDetailPage: React.FC = () => {
   const handleCloseModal = () => {
     setShowModal(false);
   };
-
-  // TEMPORARILY DISABLED - Discord/Coin payment
-  // const handleDiscordPurchase = () => {
-  //   if (!product || !config) return;
-  //   
-  //   const discordUrl = config.site?.contact?.discord || 'https://discord.gg/uside-shop';
-  //   window.open(discordUrl, '_blank');
-  // };
 
   // Loading state
   if (loading) {
@@ -256,32 +157,16 @@ const ProductDetailPage: React.FC = () => {
               )}
             </div>
 
-            {/* Variant Selector */}
-            {product.has_variants && product.variant_attributes && product.variants && (
-              <VariantSelector
-                variantAttributes={product.variant_attributes}
-                variants={product.variants}
-                selectedAttributes={selectedAttributes}
-                onAttributeChange={handleAttributeChange}
-                currentVariant={currentVariant}
-              />
-            )}
-
             <div className="detail-stock-status">
-              {stockStatus === 'in_stock' ? (
+              {stockStatus === 'out_of_stock' ? (
+                <span className="detail-out-of-stock">
+                  <i className="fas fa-phone-alt"></i>
+                  Liên hệ
+                </span>
+              ) : (
                 <span className="detail-in-stock">
                   <i className="fas fa-check-circle"></i>
                   Còn hàng
-                </span>
-              ) : stockStatus === 'low_stock' ? (
-                <span className="detail-low-stock">
-                  <i className="fas fa-exclamation-circle"></i>
-                  Sắp hết
-                </span>
-              ) : (
-                <span className="detail-out-of-stock">
-                  <i className="fas fa-times-circle"></i>
-                  Hết hàng
                 </span>
               )}
             </div>
@@ -297,24 +182,13 @@ const ProductDetailPage: React.FC = () => {
                   <button 
                     className="detail-messenger-btn"
                     onClick={handleZaloPurchase}
-                    disabled={stockStatus === 'out_of_stock'}
                   >
                     <i className="fas fa-comments"></i>
-                    <span className="btn-label">Inbox Zalo để đặt hàng</span>
+                    <span className="btn-label">
+                      {stockStatus === 'out_of_stock' ? 'Liên hệ Zalo để đặt hàng' : 'Inbox Zalo để đặt hàng'}
+                    </span>
                   </button>
                   
-                  {/* TEMPORARILY DISABLED - Discord/Coin payment */}
-                  {/* <button 
-                    className="detail-discord-btn"
-                    onClick={handleDiscordPurchase}
-                    disabled={stockStatus === 'out_of_stock'}
-                  >
-                    <i className="fab fa-discord"></i>
-                    <div className="btn-content">
-                      <span className="btn-label">Mua bằng Coin</span>
-                      <span className="btn-price">{product.price_virtual.toLocaleString('vi-VN')} UC</span>
-                    </div>
-                  </button> */}
                 </div>
                 
                 <WishlistButton 

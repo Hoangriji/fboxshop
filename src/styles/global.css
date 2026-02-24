@@ -194,11 +194,10 @@ body {
     inset 6px 6px 12px rgba(255, 255, 255, 0.2),
     0 8px 25px rgba(0, 0, 0, 0.4),
     0 0 20px var(--accent-glow);
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.05);
+  transform: scale(1.05);
   box-shadow: 
     inset -8px -8px 16px rgba(0, 0, 0, 0.4), 
     inset 6px 6px 12px rgba(255, 255, 255, 0.15), 
@@ -215,7 +214,7 @@ body {
 }
 
 .btn-primary:active:not(:disabled) {
-  transform: translateY(-1px) scale(1.02);
+  transform: scale(1.02);
 }
 
 .btn-primary:disabled {
@@ -229,7 +228,7 @@ body {
   font-weight: 500;
   color: #a8b3cf;
   background: var(--theme-surface);
-  border: 1px solid var(--theme-border);
+  border: none;
   border-radius: 12px;
   cursor: pointer;
   font-family: 'Quicksand', sans-serif;

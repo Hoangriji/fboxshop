@@ -18,8 +18,6 @@ interface Product {
   specs?: Record<string, string>;
   brand?: string;
   features?: string[];
-  hasVariants?: boolean;
-  variantCount?: number;
 }
 
 interface ProductCardProps {
@@ -44,12 +42,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onViewDetails
   };
 
   const getStatusConfig = () => {
-    if (product.stockStatus === 'in_stock' || (!product.stockStatus && product.inStock)) {
-      return { text: 'Còn hàng', className: 'in-stock' };
-    } else if (product.stockStatus === 'low_stock') {
-      return { text: 'Sắp hết', className: 'low-stock' };
+    if (product.stockStatus === 'out_of_stock') {
+      return { text: 'Liên hệ', className: 'out-of-stock' };
     } else {
-      return { text: 'Hết hàng', className: 'out-of-stock' };
+      return { text: 'Còn hàng', className: 'in-stock' };
     }
   };
 
@@ -86,11 +82,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onViewDetails
           <div className="card-content">
             <div className="product-card-tag-product">
               <span className="tag">{product.category}</span>
-              {product.hasVariants && product.variantCount && (
-                <span className="tag tag-variant">
-                  <i className="fas fa-layer-group"></i> {product.variantCount} phiên bản
-                </span>
-              )}
             </div>
 
             <div className="card-title-container">

@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useFeaturedProducts } from "../../hooks/useFeaturedProducts";
+import { useSiteConfig } from "../../hooks/useSiteConfig";
+import { useOptimizedHeroImage } from "../../hooks/useOptimizedHeroImage";
 import ProductCarousel from "../../components/ProductCarousel/ProductCarousel";
 import { LazySection } from "../../components/LazySection";
 import { SkeletonCarousel } from "../../components/Skeleton";
@@ -11,6 +13,16 @@ import "./HomePage.css";
 const HomePage = () => {
   const navigate = useNavigate();
   const { featuredProducts, freeDigitalProducts } = useFeaturedProducts();
+  const { config } = useSiteConfig();
+  
+  // Get hero image from config with optimization and caching
+  const heroImageUrl = config?.site?.hero_image_url;
+  const heroImagePublicId = config?.site?.hero_image_public_id;
+  
+  const { 
+    optimizedUrl, 
+    shouldShowBlur 
+  } = useOptimizedHeroImage(heroImageUrl, heroImagePublicId);
 
   const handleCategoryClick = (category: string) => {
     navigate(`/products?category=${category}`);
@@ -18,8 +30,13 @@ const HomePage = () => {
 
   return (
     <div className="home-page">
-      {/* Hero Section - Renders IMMEDIATELY */}
-      <section className="hero-section">
+      {/* Hero Section - Renders IMMEDIATELY with optimized image */}
+      <section 
+        className={`hero-section ${shouldShowBlur ? 'hero-loading' : 'hero-loaded'}`}
+        style={optimizedUrl ? {
+          '--hero-bg-image': `url(${optimizedUrl})`
+        } as React.CSSProperties : undefined}
+      >
         <div className="hero-wrapper">
           <div className="hero-content">
             <h1 className="hero-title">
@@ -341,15 +358,7 @@ const HomePage = () => {
             </Button>
           </div>
 
-          {/* TEMPORARILY DISABLED - Discord/Coin payment */}
-          {/* <div className="contact-card discord">
-            <div className="contact-icon">
-              <i className="fab fa-discord"></i>
-            </div>
-            <h3>Discord Server</h3>
-            <p>Thanh toán USide Coin</p>
-            <Button variant="secondary">Join server</Button>
-          </div> */}
+
         </div>
       </section>
       </LazySection>

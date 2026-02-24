@@ -97,7 +97,7 @@ export const useProductsOptimized = (
               lastVisible
             );
             setPrefetchedData(nextBatch);
-          } catch (err) {
+          } catch {
             // Silently fail prefetch
           }
         }, 100);
@@ -134,7 +134,7 @@ export const useProductsOptimized = (
                 prefetchedData.lastDoc!
               );
               setPrefetchedData(nextBatch);
-            } catch (err) {
+            } catch {
               // Silently fail prefetch
             }
           }, 100);
@@ -162,7 +162,7 @@ export const useProductsOptimized = (
                 nextLastDoc
               );
               setPrefetchedData(nextBatch);
-            } catch (err) {
+            } catch {
               // Silently fail prefetch
             }
           }, 100);

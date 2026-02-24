@@ -24,10 +24,7 @@ const Footer: React.FC = () => {
               <a href={`https://zalo.me/${import.meta.env.VITE_ZALO_PHONE}`} className="social-link facebook" target="_blank" rel="noopener noreferrer">
                 <i className="fas fa-comments"></i>
               </a>
-              {/* TEMPORARILY DISABLED - Discord */}
-              {/* <a href="#" className="social-link discord">
-                <i className="fab fa-discord"></i>
-              </a> */}
+
               <a href="#" className="social-link youtube">
                 <i className="fab fa-youtube"></i>
               </a>
@@ -82,14 +79,7 @@ const Footer: React.FC = () => {
                   <span className="contact-value">Hân Nguyễn</span>
                 </div>
               </div>
-              {/* TEMPORARILY DISABLED - Discord/Coin */}
-              {/* <div className="contact-item">
-                <i className="fab fa-discord"></i>
-                <div>
-                  <span className="contact-label">Discord</span>
-                  <span className="contact-value">USide Community</span>
-                </div>
-              </div> */}
+
               <div className="contact-item">
                 <i className="fas fa-clock"></i>
                 <div>
@@ -97,13 +87,7 @@ const Footer: React.FC = () => {
                   <span className="contact-value">24/7 Online</span>
                 </div>
               </div>
-              {/* <div className="contact-item">
-                <i className="fas fa-shield-alt"></i>
-                <div>
-                  <span className="contact-label">Bảo Hành</span>
-                  <span className="contact-value">12 tháng chính hãng</span>
-                </div>
-              </div> */}
+
             </div>
           </div>
         </div>
@@ -125,8 +109,7 @@ const Footer: React.FC = () => {
               <span className="payment-label">Thanh toán:</span>
               <div className="payment-icons">
                 <i className="fas fa-money-bill-wave" title="VND Cash"></i>
-                {/* TEMPORARILY DISABLED - USide Coin */}
-                {/* <i className="fas fa-coins" title="USide Coin"></i> */}
+  
               </div>
             </div>
           </div>

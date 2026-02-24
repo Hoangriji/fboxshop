@@ -13,6 +13,7 @@ interface UseProductsLoadMoreOptions {
 
 interface UseProductsLoadMoreResult {
   displayedProducts: Product[];
+  allProducts: Product[];
   prefetchedProducts: Product[];
   loading: boolean;
   loadingMore: boolean;
@@ -32,6 +33,9 @@ export const useProductsLoadMore = (
   
   // Displayed products (rendered on screen)
   const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
+
+  // All products loaded from Firebase (for client-side pagination)
+  const [allLoadedProducts, setAllLoadedProducts] = useState<Product[]>([]);
   
   // Prefetched products (loaded but not yet displayed)
   const [prefetchedProducts, setPrefetchedProducts] = useState<Product[]>([]);
@@ -50,25 +54,17 @@ export const useProductsLoadMore = (
   // Firestore pagination cursor
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   
-  // Load category counts with REAL-TIME updates
+  // Subscribe to product counts (real-time)
   useEffect(() => {
-    // Subscribe to real-time updates
     const unsubscribe = ProductsService.subscribeToProductCounts((counts, total) => {
-      // Update state
       setCategoryCounts(counts);
       setTotalCount(total);
-      
-      // Update cache
       productCache.setCategoryCounts(counts, total);
     });
-    
-    // Cleanup listener on unmount
-    return () => {
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
-  // Load products with REAL-TIME sync
+  // Subscribe to products by category (real-time)
   useEffect(() => {
     let productsUnsubscribe: (() => void) | null = null;
     
@@ -76,20 +72,21 @@ export const useProductsLoadMore = (
       setLoading(true);
       setError(null);
       
-      // Check cache first for instant display
+      // Show cached data immediately while waiting for live data
       const cached = productCache.get(currentCategory, 0, PRODUCTS_PER_PAGE);
       if (cached) {
         setDisplayedProducts(cached.products);
         setLoading(false);
       }
       
-      // Setup real-time listener
       productsUnsubscribe = ProductsService.subscribeToProductsByCategory(
         currentCategory,
         (allProducts) => {
-          // Update cache with ALL products from Firebase
           productCache.set(currentCategory, allProducts, null);
-          
+
+          // Store all products for client-side pagination
+          setAllLoadedProducts(allProducts);
+
           // Show first page
           const firstPage = allProducts.slice(0, PRODUCTS_PER_PAGE);
           setDisplayedProducts(firstPage);
@@ -260,6 +257,7 @@ export const useProductsLoadMore = (
 
   return {
     displayedProducts,
+    allProducts: allLoadedProducts,
     prefetchedProducts,
     loading,
     loadingMore,

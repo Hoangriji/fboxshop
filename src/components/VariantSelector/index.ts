@@ -1,1 +1,0 @@
-export { VariantSelector } from './VariantSelector';

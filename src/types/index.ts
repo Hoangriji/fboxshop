@@ -1,19 +1,3 @@
-// Product Variant Types
-export interface VariantAttribute {
-  name: string;         // Internal name: "color", "switch_type", "size"
-  display_name: string; // Display name: "Màu sắc", "Loại Switch", "Kích thước"
-  values: string[];     // ["Pink", "Blue", "Green"]
-}
-
-export interface ProductVariant {
-  id: string;                           // "var_001"
-  sku: string;                          // "AKKO-5098B-PINK-GAT"
-  attributes: Record<string, string>;   // { "color": "Pink", "switch_type": "Gateron" }
-  price_adjustment: number;             // +0, +200000, -50000 (relative to base_price)
-  stock: number;                        // 5
-  is_available: boolean;                // true/false
-}
-
 // Product Types
 export interface Product {
   id: string;
@@ -30,12 +14,7 @@ export interface Product {
   stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock';
   featured: boolean;
   is_free?: boolean;
-  // Product Variants fields
-  has_variants?: boolean;              // true if product has variants
-  sku?: string;                        // Base SKU (e.g., "AKKO-5098B")
-  base_price?: number;                 // Base price when has_variants = true
-  variant_attributes?: VariantAttribute[]; // Attribute definitions
-  variants?: ProductVariant[];         // List of all variants
+  sku?: string;                        // Product SKU
   digital_file?: string;
   file_size?: string;
   specs?: Record<string, string>;
@@ -117,6 +96,8 @@ export interface SiteConfig {
     name: string;
     tagline: string;
     description: string;
+    hero_image_url?: string;  // Hero section background image URL from Cloudinary
+    hero_image_public_id?: string;  // Cloudinary public ID for deletion
     currency: {
       primary: string;
       virtual: string;
@@ -188,5 +169,4 @@ export interface User {
 export interface CartItem {
   product: Product;
   quantity: number;
-  variantId?: string; // Selected variant ID if product has variants
 }

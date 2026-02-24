@@ -4,12 +4,13 @@ import { useCategories } from '../../../hooks/useCategories';
 import { ProductsService } from '../../../services/firebaseService';
 import ProductFormModal from './ProductFormModal';
 import type { Product } from '../../../types';
+import type { PlaceholderProduct } from '../../../hooks/useFeaturedProducts';
 
 const FeaturedManagement: React.FC = () => {
   const { products, loading, mutate } = useProducts();
   const { categories } = useCategories();
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [freeDigitalProducts, setFreeDigitalProducts] = useState<Product[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<(Product | PlaceholderProduct)[]>([]);
+  const [freeDigitalProducts, setFreeDigitalProducts] = useState<(Product | PlaceholderProduct)[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -21,12 +22,12 @@ const FeaturedManagement: React.FC = () => {
         .slice(0, 8);
       
       // Fill thiếu với Coming Soon placeholders
-      const featuredWithPlaceholders = [...featured];
+      const featuredWithPlaceholders: (Product | PlaceholderProduct)[] = [...featured];
       while (featuredWithPlaceholders.length < 8) {
         featuredWithPlaceholders.push({
           id: `placeholder-${featuredWithPlaceholders.length}`,
           isPlaceholder: true,
-        } as any);
+        } as PlaceholderProduct);
       }
       
       // Lấy 8 sản phẩm Digital featured đầu tiên
@@ -35,12 +36,12 @@ const FeaturedManagement: React.FC = () => {
         .slice(0, 8);
       
       // Fill thiếu với Coming Soon placeholders  
-      const freeDigitalWithPlaceholders = [...freeDigital];
+      const freeDigitalWithPlaceholders: (Product | PlaceholderProduct)[] = [...freeDigital];
       while (freeDigitalWithPlaceholders.length < 8) {
         freeDigitalWithPlaceholders.push({
           id: `placeholder-digital-${freeDigitalWithPlaceholders.length}`,
           isPlaceholder: true,
-        } as any);
+        } as PlaceholderProduct);
       }
       
       setFeaturedProducts(featuredWithPlaceholders);
@@ -120,7 +121,7 @@ const FeaturedManagement: React.FC = () => {
                 8 sản phẩm Vật lý (Featured) đầu tiên sẽ hiển thị trong carousel Homepage
               </p>
             </div>
-            <span className="count-badge">{featuredProducts.filter((p: any) => !p.isPlaceholder).length}/8 sản phẩm</span>
+            <span className="count-badge">{featuredProducts.filter((p): p is Product => 'isPlaceholder' in p && !p.isPlaceholder).length}/8 sản phẩm</span>
           </div>
           
           {featuredProducts.length === 0 ? (
@@ -131,8 +132,8 @@ const FeaturedManagement: React.FC = () => {
             </div>
           ) : (
             <div className="featured-products-grid">
-              {featuredProducts.map((product: any) => {
-                if (product.isPlaceholder) {
+              {featuredProducts.map((product) => {
+                if ('isPlaceholder' in product && product.isPlaceholder) {
                   return (
                     <div key={product.id} className="featured-product-card coming-soon">
                       <div className="card-image">
@@ -151,30 +152,33 @@ const FeaturedManagement: React.FC = () => {
                   );
                 }
                 
+                // Type guard: ensure this is a real Product
+                const realProduct = product as Product;
+                
                 return (
-                  <div key={product.id} className="featured-product-card">
+                  <div key={realProduct.id} className="featured-product-card">
                     <div className="card-image">
-                      <img src={product.images[0]} alt={product.name} />
+                      <img src={realProduct.images[0]} alt={realProduct.name} />
                     </div>
                     <div className="card-content">
-                      <h4 className="card-title">{product.name}</h4>
+                      <h4 className="card-title">{realProduct.name}</h4>
                       <div className="card-meta">
-                        <span className="card-category">{product.category}</span>
+                        <span className="card-category">{realProduct.category}</span>
                         <span className="card-price">
-                          {product.price_vnd.toLocaleString('vi-VN')}₫
+                          {realProduct.price_vnd.toLocaleString('vi-VN')}₫
                         </span>
                       </div>
                       <div className="card-actions">
                         <button 
                           className="btn-card-action btn-edit" 
-                          onClick={() => handleEditProduct(product)}
+                          onClick={() => handleEditProduct(realProduct)}
                           title="Chỉnh sửa"
                         >
                           <i className="fas fa-edit"></i>
                         </button>
                         <button 
                           className="btn-card-action btn-toggle-featured" 
-                          onClick={() => handleToggleFeatured(product)}
+                          onClick={() => handleToggleFeatured(realProduct)}
                           title="Bỏ khỏi Featured"
                         >
                           <i className="fas fa-star"></i>
@@ -197,7 +201,7 @@ const FeaturedManagement: React.FC = () => {
                 8 sản phẩm Digital (Featured) đầu tiên sẽ hiển thị trong carousel Homepage
               </p>
             </div>
-            <span className="count-badge">{freeDigitalProducts.filter((p: any) => !p.isPlaceholder).length}/8 sản phẩm</span>
+            <span className="count-badge">{freeDigitalProducts.filter((p): p is Product => 'isPlaceholder' in p && !p.isPlaceholder).length}/8 sản phẩm</span>
           </div>
           
           {freeDigitalProducts.length === 0 ? (
@@ -208,8 +212,8 @@ const FeaturedManagement: React.FC = () => {
             </div>
           ) : (
             <div className="featured-products-grid">
-              {freeDigitalProducts.map((product: any) => {
-                if (product.isPlaceholder) {
+              {freeDigitalProducts.map((product) => {
+                if ('isPlaceholder' in product && product.isPlaceholder) {
                   return (
                     <div key={product.id} className="featured-product-card digital coming-soon">
                       <div className="card-image">
@@ -228,33 +232,36 @@ const FeaturedManagement: React.FC = () => {
                   );
                 }
                 
+                // Type guard: ensure this is a real Product
+                const realProduct = product as Product;
+                
                 return (
-                  <div key={product.id} className="featured-product-card digital">
+                  <div key={realProduct.id} className="featured-product-card digital">
                     <div className="card-image">
-                      <img src={product.images[0]} alt={product.name} />
+                      <img src={realProduct.images[0]} alt={realProduct.name} />
                       <div className="free-badge">
                         <i className="fas fa-gift"></i> FREE
                       </div>
                     </div>
                     <div className="card-content">
-                      <h4 className="card-title">{product.name}</h4>
+                      <h4 className="card-title">{realProduct.name}</h4>
                       <div className="card-meta">
-                        <span className="card-category">{product.category}</span>
+                        <span className="card-category">{realProduct.category}</span>
                         <span className="card-size">
-                          <i className="fas fa-file"></i> {product.file_size || 'N/A'}
+                          <i className="fas fa-file"></i> {realProduct.file_size || 'N/A'}
                         </span>
                       </div>
                       <div className="card-actions">
                         <button 
                           className="btn-card-action btn-edit" 
-                          onClick={() => handleEditProduct(product)}
+                          onClick={() => handleEditProduct(realProduct)}
                           title="Chỉnh sửa"
                         >
                           <i className="fas fa-edit"></i>
                         </button>
                         <button 
                           className="btn-card-action btn-toggle-free" 
-                          onClick={() => handleToggleFree(product)}
+                          onClick={() => handleToggleFree(realProduct)}
                           title="Bỏ khỏi Free"
                         >
                           <i className="fas fa-gift"></i>

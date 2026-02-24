@@ -73,27 +73,7 @@ const ContactPage: React.FC = () => {
                 </Button>
               </div>
             </div>
-            {/* TEMPORARILY DISABLED - Discord/Coin */}
-            {/* <div className="contact-method discord">
-              <div className="method-icon">
-                <i className="fab fa-discord"></i>
-              </div>
-              <div className="method-info">
-                <h3>Discord Server</h3>
-                <p>Tham gia cộng đồng Discord để được hỗ trợ và kết nối với game thủ khác</p>
-                <div className="method-details">
-                  <span><i className="fas fa-users"></i> Cộng đồng 1000+ thành viên</span>
-                  <span><i className="fas fa-robot"></i> Bot hỗ trợ tự động</span>
-                </div>
-                <Button 
-                  variant="secondary" 
-                  onClick={() => window.open('https://discord.gg/uside', '_blank')}
-                >
-                  <i className="fab fa-discord"></i>
-                  Tham gia Discord
-                </Button>
-              </div>
-            </div> */}
+
           </div>
 
           <div className="contact-info">

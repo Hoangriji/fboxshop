@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { ActivityLogsService } from '../../services/activityLogsService';
 import { AnimatedList } from '../../components/AnimatedList';
+import DashboardSearch from './components/DashboardSearch';
 import type { ActivityLog } from '../../types';
 
 interface DashboardLayoutProps {
@@ -20,7 +21,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const navigation = [
     { name: 'Tổng quan', href: '/dashboard/overview', icon: <i className="fa-solid fa-database"></i> },
     { name: 'Quản lý sản phẩm', href: '/dashboard/products', icon: <i className="fa-solid fa-boxes-stacked"></i> },
+    { name: 'Nhập sản phẩm', href: '/dashboard/import', icon: <i className="fa-solid fa-file-import"></i> },
     { name: 'Sản phẩm nổi bật', href: '/dashboard/featured', icon: <i className="fa-solid fa-star"></i> },
+    { name: 'Hình nền Hero', href: '/dashboard/hero-image', icon: <i className="fa-solid fa-image"></i> },
   ];
 
   // Check screen size
@@ -92,8 +95,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     }
   };
 
-  const formatTimestamp = (timestamp: any) => {
-    const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+  const formatTimestamp = (timestamp: { toDate: () => Date } | string | Date) => {
+    let date: Date;
+    if (timestamp && typeof timestamp === 'object' && 'toDate' in timestamp) {
+      date = timestamp.toDate();
+    } else if (typeof timestamp === 'string') {
+      date = new Date(timestamp);
+    } else {
+      date = timestamp;  
+    }
     const now = new Date();
     const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
 
@@ -156,6 +166,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             )}
             <h1>Dashboard</h1>
           </div>
+
+          <div className="header-center">
+            <DashboardSearch />
+          </div>
+
           <div className="header-right">
             {/* Notification Button */}
             <div className="notification-wrapper">

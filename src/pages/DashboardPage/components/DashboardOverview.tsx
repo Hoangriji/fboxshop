@@ -118,17 +118,17 @@ const DashboardOverview: React.FC = () => {
         
         <div className="stat-card stat-card-purple">
           <div className="stat-icon">
-            <i className="fas fa-exclamation-triangle"></i>
+            <i className="fas fa-comments"></i>
           </div>
           <div className="stat-content">
-            <h3 className="stat-label">Hết hàng</h3>
+            <h3 className="stat-label">Liên hệ</h3>
             <p className="stat-number">{stats.outOfStockProducts}</p>
-            <span className="stat-change" style={{ color: stats.outOfStockProducts > 0 ? '#ef4444' : '#10b981' }}>
-              {stats.outOfStockProducts > 0 ? 'Cần nhập thêm' : 'Kho đầy đủ'}
+            <span className="stat-change" style={{ color: '#00d2ff' }}>
+              Đặt hàng qua Zalo
             </span>
           </div>
           <div className="stat-bg-icon">
-            <i className="fas fa-exclamation-triangle"></i>
+            <i className="fas fa-comments"></i>
           </div>
         </div>
       </div>
@@ -174,7 +174,7 @@ const DashboardOverview: React.FC = () => {
                   }}
                   color={categoryStats.map(cat => cat.color)}
                   tooltip={{
-                    formatter: (datum: any) => {
+                    formatter: (datum: { type: string; value: number }) => {
                       const percentage = ((datum.value / stats.totalProducts) * 100).toFixed(1);
                       return {
                         name: datum.type,
@@ -216,7 +216,7 @@ const DashboardOverview: React.FC = () => {
                   color={categoryStats.map(cat => cat.color)}
                   label={{
                     position: 'top',
-                    formatter: (datum: any) => `${datum.value.toFixed(1)}M`,
+                    formatter: (datum: { value: number }) => `${datum.value.toFixed(1)}M`,
                   }}
                   yAxis={{
                     title: {
@@ -230,7 +230,7 @@ const DashboardOverview: React.FC = () => {
                     },
                   }}
                   tooltip={{
-                    formatter: (datum: any) => {
+                    formatter: (datum: { category: string; value: number }) => {
                       const cat = categoryStats.find(c => c.name === datum.category);
                       return {
                         name: datum.category,

@@ -55,29 +55,6 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({
     setShowToast(false);
   };
 
-  // TEMPORARILY DISABLED - Discord/Coin payment
-  // const handleVirtualPayment = () => {
-  //   const discordUrl = `https://discord.gg/${import.meta.env.VITE_DISCORD_SERVER_INVITE || 'uside-shop'}`;
-  //   
-  //   // Track payment attempt
-  //   trackPaymentAttempt('virtual', product.id);
-  //   
-  //   // Save payment intent to localStorage
-  //   const paymentIntent = {
-  //     product_id: product.id,
-  //     product_name: product.name,
-  //     method: 'virtual',
-  //     amount: product.price_virtual,
-  //     timestamp: Date.now()
-  //   };
-  //   
-  //   const existingIntents = JSON.parse(localStorage.getItem('payment_intents') || '[]');
-  //   existingIntents.push(paymentIntent);
-  //   localStorage.setItem('payment_intents', JSON.stringify(existingIntents));
-  //   
-  //   window.open(discordUrl, '_blank');
-  // };
-
   const handleFreeDownload = () => {
     if (product.digital_file) {
       // Track download
@@ -154,18 +131,7 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({
           <span className="payment-method">Inbox Zalo để đặt hàng</span>
         </Button>
         
-        {/* TEMPORARILY DISABLED - Discord/Coin payment */}
-        {/* <Button 
-          onClick={handleVirtualPayment} 
-          variant="secondary"
-          className="payment-button virtual-payment"
-        >
-          <i className="fab fa-discord"></i>
-          <div className="payment-info">
-            <span className="payment-method">Mua bằng UC</span>
-            <span className="payment-amount">{product.price_virtual} UC</span>
-          </div>
-        </Button> */}
+
       </div>
       
       <div className="payment-instructions">
