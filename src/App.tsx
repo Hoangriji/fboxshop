@@ -5,10 +5,9 @@ import { Header } from './components/Header';
 import { ScrollToTop } from './components/ScrollToTop';
 import { ClickSpark } from './components/ClickSpark';
 import { Footer } from './components';
+import { Spinner } from './components/Spinner';
 import { getWishlistCount } from './utils/wishlist';
-import { useProductStore } from './store/productStore';
 import HomePage from './pages/HomePage/HomePage'; // EAGER LOAD for instant Hero
-import './styles/global.css';
 
 // Lazy load non-critical pages
 const ProductsPage = lazy(() => import('./pages/ProductsPage/ProductsPage'));
@@ -26,14 +25,7 @@ const PageLoader = () => (
     justifyContent: 'center',
     background: 'var(--theme-background)'
   }}>
-    <div style={{
-      width: '40px',
-      height: '40px',
-      border: '3px solid var(--theme-border)',
-      borderTop: '3px solid var(--accent-primary)',
-      borderRadius: '50%',
-      animation: 'spin 1s linear infinite'
-    }}></div>
+    <Spinner size="md" aria-label="Loading page" />
   </div>
 );
 
@@ -47,7 +39,6 @@ const App: React.FC = () => {
   });
   
   const [wishlistCount, setWishlistCount] = useState(0);
-  const { loadProducts } = useProductStore();
 
   // Save accent color to localStorage whenever it changes
   useEffect(() => {
@@ -59,13 +50,6 @@ const App: React.FC = () => {
 
   // Get current page from location (exclude dashboard)
   const currentPage = location.pathname.split('/')[1] || 'home';
-
-  // Load products from Firebase on app start
-  useEffect(() => {
-    if (!isDashboardRoute) {
-      loadProducts();
-    }
-  }, [loadProducts, isDashboardRoute]);
 
   // Load wishlist count
   useEffect(() => {

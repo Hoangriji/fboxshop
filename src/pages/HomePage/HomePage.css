@@ -370,20 +370,6 @@ hr.line {
   color: var(--theme-text-primary);
 }
 
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--theme-border);
-  border-top: 3px solid var(--accent-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 .error-container i {
   font-size: 3rem;
   color: var(--accent-danger);
@@ -799,12 +785,6 @@ hr.line {
     gap: 0.875rem;
   }
   
-  .loading-spinner {
-    width: 36px;
-    height: 36px;
-    border-width: 2.5px;
-  }
-  
   .error-container i {
     font-size: 2.5rem;
   }
@@ -923,12 +903,6 @@ hr.line {
     gap: 0.75rem;
   }
   
-  .loading-spinner {
-    width: 32px;
-    height: 32px;
-    border-width: 2px;
-  }
-  
   .error-container i {
     font-size: 2.25rem;
   }
@@ -1045,12 +1019,6 @@ hr.line {
   .error-container {
     min-height: 200px;
     gap: 0.625rem;
-  }
-  
-  .loading-spinner {
-    width: 28px;
-    height: 28px;
-    border-width: 2px;
   }
   
   .error-container i {

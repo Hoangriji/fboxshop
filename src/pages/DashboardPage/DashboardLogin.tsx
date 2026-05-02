@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { Spinner } from '../../components/Spinner';
 import './DashboardLogin.css';
 
 const DashboardLogin: React.FC = () => {
@@ -48,7 +49,7 @@ const DashboardLogin: React.FC = () => {
     return (
       <div className="dashboard-login">
         <div className="login-loading">
-          <div className="loading-spinner"></div>
+          <Spinner size="md" aria-label="Checking session" />
           <p>Đang kiểm tra phiên đăng nhập...</p>
         </div>
       </div>

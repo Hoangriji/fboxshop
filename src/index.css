@@ -17,6 +17,5 @@
   --font-family: 'Quicksand', sans-serif;
   --font-size-base: 16px;
   
-  /* Border radius from theme */
-  --border-radius: var(--border-radius);
+  /* Border radius comes from global theme tokens */
 }

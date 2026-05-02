@@ -1,9 +1,10 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useProductsLoadMore } from '../../hooks/useProductsLoadMore';
+import { useProductsQuery } from '../../hooks/useProductsQuery';
 import { useCategories } from '../../hooks/useCategories';
 import { SimpleProductCard } from '../../components/SimpleProductCard/SimpleProductCard';
 import Button from '../../components/Button/Button';
+import { Spinner } from '../../components/Spinner';
 import './ProductsPage.css';
 
 // DropdownFilter Component
@@ -102,19 +103,26 @@ const ProductsPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = React.useState<string>(categoryFromUrl);
   
   const { 
-    allProducts: products,
-    loading: productsLoading, 
-    error: productsError,
-    categoryCounts,
-    totalCount,
-    setCategory
-  } = useProductsLoadMore({ category: selectedCategory });
+    data: products,
+    isLoading: productsLoading,
+    isError: productsError,
+  } = useProductsQuery();
   
   const { categories, loading: categoriesLoading } = useCategories();
+
+  const categoryCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    products.forEach((product) => {
+      if (!product.category) return;
+      counts[product.category] = (counts[product.category] || 0) + 1;
+    });
+    return counts;
+  }, [products]);
+
+  const totalCount = products.length;
   
   const [sortBy, setSortBy] = React.useState<string>('newest');
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const PRODUCTS_PER_PAGE = 12;
+  const [displayLimit, setDisplayLimit] = React.useState(12);
   const [selectedBrands, setSelectedBrands] = React.useState<string[]>([]);
   const [selectedPriceRange, setSelectedPriceRange] = React.useState<string>('');
   const [selectedSubcategories, setSelectedSubcategories] = React.useState<string[]>([]);
@@ -158,6 +166,7 @@ const ProductsPage: React.FC = () => {
   
   // Ref for sort dropdown to handle outside clicks
   const sortDropdownRef = React.useRef<HTMLDivElement>(null);
+  const sentinelRef = React.useRef<HTMLDivElement | null>(null);
 
   // Close sort dropdown when clicking outside
   React.useEffect(() => {
@@ -180,7 +189,6 @@ const ProductsPage: React.FC = () => {
     const categoryParam = searchParams.get('category');
     if (categoryParam && categoryParam !== selectedCategory) {
       setSelectedCategory(categoryParam);
-      setCategory(categoryParam); // Trigger reload with new category
       
       // Reset filters when category changes
       setSelectedBrands([]);
@@ -212,7 +220,7 @@ const ProductsPage: React.FC = () => {
       setSelectedProductTypes([]);
       setSelectedMaterials([]);
     }
-  }, [searchParams, selectedCategory, setCategory]);
+  }, [searchParams, selectedCategory]);
 
   // Extract brands from products based on brand field or tags
   const availableBrands = React.useMemo(() => {
@@ -932,32 +940,36 @@ const ProductsPage: React.FC = () => {
     }
   }, [products, selectedCategory, selectedBrands, selectedConnectionTypes, selectedCompatibility, selectedFormFactors, selectedLedTypes, selectedFeatures, selectedHeadsetTypes, selectedUseCases, selectedScreenSizes, selectedRefreshRates, selectedResolutions, selectedResponseTimes, selectedPanelTypes, selectedMonitorFeatures, selectedStorageCapacities, selectedUsbTypes, selectedReadSpeeds, selectedWriteSpeeds, selectedMemoryCardTypes, selectedContentTypes, selectedFormatTypes, selectedLicenseTypes, selectedSoftwareCompatibility, selectedPriceRanges, selectedProductTypes, selectedMaterials, selectedSubcategories, selectedPriceRange, sortBy, searchParams]);
 
-  // For display - client-side pagination on filtered products
-  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * PRODUCTS_PER_PAGE,
-    currentPage * PRODUCTS_PER_PAGE
-  );
+  const visibleProducts = React.useMemo(() => {
+    return filteredProducts.slice(0, displayLimit);
+  }, [filteredProducts, displayLimit]);
 
-  // Reset to page 1 whenever filters change
   React.useEffect(() => {
-    setCurrentPage(1);
-  }, [filteredProducts.length, selectedCategory]);
+    setDisplayLimit(12);
+  }, [filteredProducts]);
 
-  // Helper: build page number range with ellipsis
-  const getPageRange = (current: number, total: number): (number | '...')[] => {
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-    const pages: (number | '...')[] = [];
-    const delta = 2;
-    const left = Math.max(2, current - delta);
-    const right = Math.min(total - 1, current + delta);
-    pages.push(1);
-    if (left > 2) pages.push('...');
-    for (let i = left; i <= right; i++) pages.push(i);
-    if (right < total - 1) pages.push('...');
-    pages.push(total);
-    return pages;
-  };
+  React.useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return;
+        setDisplayLimit((prev) => {
+          if (prev >= filteredProducts.length) return prev;
+          return Math.min(prev + 12, filteredProducts.length);
+        });
+      },
+      {
+        root: null,
+        rootMargin: '200px',
+        threshold: 0,
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [filteredProducts.length]);
 
   const handleBrandToggle = (brand: string) => {
     setSelectedBrands(prev =>
@@ -973,7 +985,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(c => c !== connectionType)
         : [...prev, connectionType]
     );
-
   };
 
   const handleCompatibilityToggle = (compatibility: string) => {
@@ -982,7 +993,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(c => c !== compatibility)
         : [...prev, compatibility]
     );
-
   };
 
   const handleFormFactorToggle = (formFactor: string) => {
@@ -991,7 +1001,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(f => f !== formFactor)
         : [...prev, formFactor]
     );
-
   };
 
   const handleLedTypeToggle = (ledType: string) => {
@@ -1000,7 +1009,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(l => l !== ledType)
         : [...prev, ledType]
     );
-
   };
 
   const handleFeatureToggle = (feature: string) => {
@@ -1009,7 +1017,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(f => f !== feature)
         : [...prev, feature]
     );
-
   };
 
   const handleHeadsetTypeToggle = (headsetType: string) => {
@@ -1018,7 +1025,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(h => h !== headsetType)
         : [...prev, headsetType]
     );
-
   };
 
   const handleUseCaseToggle = (useCase: string) => {
@@ -1027,7 +1033,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(u => u !== useCase)
         : [...prev, useCase]
     );
-
   };
 
   const handleScreenSizeToggle = (screenSize: string) => {
@@ -1036,7 +1041,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(s => s !== screenSize)
         : [...prev, screenSize]
     );
-
   };
 
   const handleRefreshRateToggle = (refreshRate: string) => {
@@ -1045,7 +1049,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(r => r !== refreshRate)
         : [...prev, refreshRate]
     );
-
   };
 
   const handleResolutionToggle = (resolution: string) => {
@@ -1054,7 +1057,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(r => r !== resolution)
         : [...prev, resolution]
     );
-
   };
 
   const handleResponseTimeToggle = (responseTime: string) => {
@@ -1063,7 +1065,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(r => r !== responseTime)
         : [...prev, responseTime]
     );
-
   };
 
   const handlePanelTypeToggle = (panelType: string) => {
@@ -1072,7 +1073,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(p => p !== panelType)
         : [...prev, panelType]
     );
-
   };
 
   const handleMonitorFeatureToggle = (feature: string) => {
@@ -1081,7 +1081,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(f => f !== feature)
         : [...prev, feature]
     );
-
   };
 
   // USB filter handlers
@@ -1091,7 +1090,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(c => c !== capacity)
         : [...prev, capacity]
     );
-
   };
 
   const handleUsbTypeToggle = (usbType: string) => {
@@ -1100,7 +1098,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(u => u !== usbType)
         : [...prev, usbType]
     );
-
   };
 
   const handleReadSpeedToggle = (readSpeed: string) => {
@@ -1109,7 +1106,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(r => r !== readSpeed)
         : [...prev, readSpeed]
     );
-
   };
 
   const handleWriteSpeedToggle = (writeSpeed: string) => {
@@ -1118,7 +1114,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(w => w !== writeSpeed)
         : [...prev, writeSpeed]
     );
-
   };
 
   const handleMemoryCardTypeToggle = (cardType: string) => {
@@ -1127,7 +1122,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(c => c !== cardType)
         : [...prev, cardType]
     );
-
   };
 
   // Digital filter handlers
@@ -1137,7 +1131,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(c => c !== contentType)
         : [...prev, contentType]
     );
-
   };
 
   const handleFormatTypeToggle = (formatType: string) => {
@@ -1146,7 +1139,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(f => f !== formatType)
         : [...prev, formatType]
     );
-
   };
 
   const handleLicenseTypeToggle = (licenseType: string) => {
@@ -1155,7 +1147,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(l => l !== licenseType)
         : [...prev, licenseType]
     );
-
   };
 
   const handleSoftwareCompatibilityToggle = (software: string) => {
@@ -1164,7 +1155,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(s => s !== software)
         : [...prev, software]
     );
-
   };
 
   const handleOtherPriceRangeToggle = (priceRange: string) => {
@@ -1173,7 +1163,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(p => p !== priceRange)
         : [...prev, priceRange]
     );
-
   };
 
   const handleOtherProductTypeToggle = (productType: string) => {
@@ -1182,7 +1171,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(p => p !== productType)
         : [...prev, productType]
     );
-
   };
 
   const handleOtherMaterialToggle = (material: string) => {
@@ -1191,7 +1179,6 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(m => m !== material)
         : [...prev, material]
     );
-
   };
 
   const handleSubcategoryToggle = (subcategory: string) => {
@@ -1200,12 +1187,10 @@ const ProductsPage: React.FC = () => {
         ? prev.filter(s => s !== subcategory)
         : [...prev, subcategory]
     );
-
   };
 
   const handlePriceRangeChange = (range: string) => {
     setSelectedPriceRange(range === selectedPriceRange ? '' : range);
-
   };
 
   const clearAllFilters = () => {
@@ -1237,7 +1222,6 @@ const ProductsPage: React.FC = () => {
     setSelectedProductTypes([]);
     setSelectedMaterials([]);
     setSelectedPriceRange('');
-
   };
 
   // Dropdown handlers
@@ -1273,7 +1257,7 @@ const ProductsPage: React.FC = () => {
     return (
       <div className="products-page">
         <div className="loading-container">
-          <div className="loading-spinner"></div>
+          <Spinner size="md" aria-label="Loading products" />
           <p>Đang tải sản phẩm...</p>
         </div>
       </div>
@@ -1324,16 +1308,6 @@ const ProductsPage: React.FC = () => {
                 <i className="fas fa-box-open"></i>
               </div>
               <h2 className="empty-title">Chưa Có Sản Phẩm Nào</h2>
-              <p className="empty-description">
-                Hiện tại chúng tôi chưa có sản phẩm nào trong danh mục này.<br />
-                Vui lòng quay lại sau hoặc khám phá các danh mục khác.
-              </p>
-              <div className="empty-actions">
-                <a href="/" className="btn-back-home">
-                  <i className="fas fa-home"></i>
-                  <span>Về Trang Chủ</span>
-                </a>
-              </div>
             </div>
           </div>
         </div>
@@ -1344,35 +1318,8 @@ const ProductsPage: React.FC = () => {
   return (
     <div className="products-page">
       <div className="products-container">
-        {/* Page Header */}
-        <div className="page-header">
-          <div className="header-content">
-            <h1 className="page-title">
-              <i className="fas fa-th-large"></i>
-              Tất Cả Sản Phẩm
-            </h1>
-            {/* Search Query Display */}
-            {searchParams.get('search') && (
-              <div className="search-query-display">
-                <i className="fas fa-search"></i>
-                Kết quả tìm kiếm cho: <strong>"{searchParams.get('search')}"</strong>
-                <button 
-                  className="clear-search-btn"
-                  onClick={() => {
-                    navigate('/products');
-                  }}
-                  title="Xóa tìm kiếm"
-                >
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Filters & Controls */}
-        <div className="products-controls">
-          <div className="filter-section">
+        <div className="filters-sidebar">
+          <div className="category-section">
             <h3>
               <i className="fas fa-filter"></i>
               Lọc theo danh mục
@@ -1473,7 +1420,7 @@ const ProductsPage: React.FC = () => {
         </div>
 
         {/* Advanced Filters Section */}
-        <div className="advanced-filters-container">{/* Advanced Filters */}
+        <div className="advanced-filters-container">
           {/* Dropdown Filters for Keyboard */}
           {selectedCategory === 'keyboard' && (
             <div className="dropdown-filters">
@@ -1549,7 +1496,6 @@ const ProductsPage: React.FC = () => {
                 />
               )}
 
-              {/* Clear All Filters Button */}
               <button 
                 className="clear-all-filters-btn"
                 onClick={clearAllFilters}
@@ -1623,7 +1569,6 @@ const ProductsPage: React.FC = () => {
                 />
               )}
 
-              {/* Clear All Filters Button */}
               <button 
                 className="clear-all-filters-btn"
                 onClick={clearAllFilters}
@@ -1697,7 +1642,6 @@ const ProductsPage: React.FC = () => {
                 />
               )}
 
-              {/* Clear All Filters Button */}
               <button 
                 className="clear-all-filters-btn"
                 onClick={clearAllFilters}
@@ -1808,7 +1752,6 @@ const ProductsPage: React.FC = () => {
                 />
               )}
 
-              {/* Clear All Filters Button */}
               <button 
                 className="clear-all-filters-btn"
                 onClick={clearAllFilters}
@@ -1894,7 +1837,6 @@ const ProductsPage: React.FC = () => {
                 />
               )}
 
-              {/* Clear All Filters Button */}
               <button 
                 className="clear-all-filters-btn"
                 onClick={clearAllFilters}
@@ -1968,7 +1910,6 @@ const ProductsPage: React.FC = () => {
                 />
               )}
 
-              {/* Clear All Filters Button */}
               <button 
                 className="clear-all-filters-btn"
                 onClick={clearAllFilters}
@@ -2030,7 +1971,6 @@ const ProductsPage: React.FC = () => {
                 />
               )}
 
-              {/* Clear All Filters Button */}
               <button 
                 className="clear-all-filters-btn"
                 onClick={clearAllFilters}
@@ -2129,7 +2069,7 @@ const ProductsPage: React.FC = () => {
           {filteredProducts.length > 0 ? (
             <>
               <div className="products-grid">
-                {paginatedProducts.map((product) => (
+                {visibleProducts.map((product) => (
                   <SimpleProductCard
                     key={product.id}
                     product={product}
@@ -2138,40 +2078,12 @@ const ProductsPage: React.FC = () => {
                 ))}
               </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="pagination">
-                  <button
-                    className="pagination-btn pagination-arrow"
-                    onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    disabled={currentPage === 1}
-                    aria-label="Trang trước"
-                  >
-                    <i className="fas fa-chevron-left"></i>
-                  </button>
-
-                  {getPageRange(currentPage, totalPages).map((page, idx) =>
-                    page === '...' ? (
-                      <span key={`ellipsis-${idx}`} className="pagination-ellipsis">...</span>
-                    ) : (
-                      <button
-                        key={page}
-                        className={`pagination-btn${currentPage === page ? ' active' : ''}`}
-                        onClick={() => { setCurrentPage(page as number); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                      >
-                        {page}
-                      </button>
-                    )
-                  )}
-
-                  <button
-                    className="pagination-btn pagination-arrow"
-                    onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    disabled={currentPage === totalPages}
-                    aria-label="Trang sau"
-                  >
-                    <i className="fas fa-chevron-right"></i>
-                  </button>
+              {displayLimit < filteredProducts.length && (
+                <div ref={sentinelRef} className="infinite-scroll-sentinel">
+                  <div className="loading-more">
+                    <Spinner size="md" aria-label="Loading more products" />
+                    <span>Đang tải thêm...</span>
+                  </div>
                 </div>
               )}
             </>

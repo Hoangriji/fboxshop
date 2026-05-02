@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { useAuth } from '../../hooks/useAuth';
 import { useAuthStore } from '../../store/authStore';
+import { Spinner } from '../../components/Spinner';
 import './DashboardApp.css';
 
 // Lazy load all dashboard components for better code splitting
@@ -17,7 +18,7 @@ const ProductImport = lazy(() => import('./components/ProductImport.tsx'));
 // Loading fallback for dashboard components
 const DashboardLoader = () => (
   <div className="dashboard-loading">
-    <div className="loading-spinner"></div>
+    <Spinner size="md" aria-label="Loading dashboard" />
     <p>Đang tải...</p>
   </div>
 );
@@ -30,7 +31,7 @@ const DashboardRouteGuard: React.FC<{ children: React.ReactNode }> = ({ children
   if (isLoading) {
     return (
       <div className="dashboard-loading">
-        <div className="loading-spinner"></div>
+        <Spinner size="md" aria-label="Authenticating" />
         <p>Đang xác thực...</p>
       </div>
     );

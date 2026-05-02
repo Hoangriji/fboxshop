@@ -21,12 +21,7 @@ const Button: React.FC<ButtonProps> = ({
   const buttonClass = `btn btn-${variant} ${className}`.trim();
 
   return (
-    <button
-      className={buttonClass}
-      onClick={onClick}
-      type={type}
-      disabled={disabled}
-    >
+    <button className={buttonClass} onClick={onClick} type={type} disabled={disabled}>
       {children}
     </button>
   );

@@ -962,20 +962,6 @@
   }
 }
 
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--theme-border);
-  border-top: 3px solid var(--accent-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 .error-container i {
   font-size: 2rem;
   color: var(--accent-danger);
@@ -1515,12 +1501,6 @@
     gap: 0.875rem;
   }
   
-  .loading-spinner {
-    width: 36px;
-    height: 36px;
-    border-width: 2.5px;
-  }
-  
   .error-container i {
     font-size: 1.75rem;
   }
@@ -1668,12 +1648,6 @@
   .error-container {
     min-height: 250px;
     gap: 0.75rem;
-  }
-  
-  .loading-spinner {
-    width: 32px;
-    height: 32px;
-    border-width: 2px;
   }
   
   .error-container i {
@@ -1825,12 +1799,6 @@
   .error-container {
     min-height: 200px;
     gap: 0.625rem;
-  }
-  
-  .loading-spinner {
-    width: 28px;
-    height: 28px;
-    border-width: 2px;
   }
   
   .error-container i {

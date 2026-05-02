@@ -106,6 +106,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onViewDetails
 
             <TechButton
               variant="primary"
+              className="quick-view-btn"
               onClick={handleQuickViewClick}
               icon={<i className="fas fa-info-circle" style={{ fontSize: '16px', color: 'var(--theme-bg-primary)' }}></i>}
             >

@@ -17,15 +17,6 @@
   color: var(--theme-text-primary);
 }
 
-.dashboard-loading .loading-spinner {
-  width: 60px;
-  height: 60px;
-  border: 4px solid var(--theme-border);
-  border-top: 4px solid var(--accent-primary);
-  border-radius: 50%;
-  animation: dashboardSpin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
 @keyframes dashboardSpin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -255,11 +246,6 @@
 /* Dashboard specific overrides */
 .dashboard-app * {
   box-sizing: border-box;
-}
-
-.dashboard-app .loading-spinner {
-  border: 3px solid #e2e8f0;
-  border-top: 3px solid #667eea;
 }
 
 /* Reset any shop styles that might interfere */

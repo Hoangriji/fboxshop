@@ -4,6 +4,7 @@ import { useProductDetail } from '../../hooks/useProductDetail';
 import { WishlistButton } from '../../components/WishlistButton';
 import { RelatedProducts } from '../../components/RelatedProducts';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
+import { Spinner } from '../../components/Spinner';
 import { openZaloImmediate } from '../../utils/zaloHelper';
 import './ProductDetailPage.css';
 
@@ -64,7 +65,7 @@ const ProductDetailPage: React.FC = () => {
     return (
       <div className="product-detail-page">
         <div className="loading-container">
-          <div className="loading-spinner"></div>
+          <Spinner size="md" aria-label="Loading product" />
           <p>Đang tải thông tin sản phẩm...</p>
         </div>
       </div>
