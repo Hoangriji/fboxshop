@@ -1,7 +1,11 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/((?!api/|@vite/|@fs/|@id/|@react-refresh|src/|node_modules/|assets/|.*\\.(?:js|mjs|cjs|css|map|json|png|jpe?g|gif|svg|webp|ico|txt|woff2?|ttf|eot|otf)).*)",
       "destination": "/index.html"
     }
   ]

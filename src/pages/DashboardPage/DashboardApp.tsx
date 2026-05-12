@@ -11,6 +11,7 @@ const DashboardLogin = lazy(() => import('./DashboardLogin'));
 const DashboardLayout = lazy(() => import('./DashboardLayout'));
 const DashboardOverview = lazy(() => import('./components/DashboardOverview.tsx'));
 const ProductsManagement = lazy(() => import('./components/ProductsManagement.tsx'));
+const OrderManagement = lazy(() => import('./components/OrderManagement.tsx'));
 const FeaturedManagement = lazy(() => import('./components/FeaturedManagement.tsx'));
 const HeroImageManagement = lazy(() => import('./components/HeroImageManagement.tsx'));
 const ProductImport = lazy(() => import('./components/ProductImport.tsx'));
@@ -71,6 +72,12 @@ const DashboardRoutes: React.FC = () => {
                 <Route path="products" element={
                   <DashboardLayout>
                     <ProductsManagement />
+                  </DashboardLayout>
+                } />
+                {/* Orders route */}
+                <Route path="orders" element={
+                  <DashboardLayout>
+                    <OrderManagement />
                   </DashboardLayout>
                 } />
                 <Route path="featured" element={

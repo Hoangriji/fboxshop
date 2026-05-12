@@ -143,7 +143,7 @@ const DashboardSearch: React.FC = () => {
           ref={inputRef}
           type="text"
           className="ds-input"
-          placeholder="Tìm theo tên, mã SP, SKU, thương hiệu..."
+          placeholder="Tìm sản phẩm theo tên, mã SP, SKU, thương hiệu..."
           value={query}
           onChange={handleChange}
           onFocus={handleFocus}

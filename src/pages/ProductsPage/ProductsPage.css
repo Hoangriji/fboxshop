@@ -967,9 +967,7 @@
   color: var(--accent-danger);
 }
 
-/* ========================================
-   RESPONSIVE DESIGN - NEW BREAKPOINTS
-   ======================================== */
+/* responsive */
 
 /* Desktop - Under 1440px */
 @media (max-width: 1440px) {

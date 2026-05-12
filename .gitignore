@@ -64,3 +64,5 @@ data/
 
 
 .firebaserc
+.vercel
+.env*.local

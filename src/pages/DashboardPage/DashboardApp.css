@@ -1187,6 +1187,66 @@
    PRODUCTS MANAGEMENT STYLES
    ======================================== */
 
+.products-management .tab-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid var(--theme-border);
+  background: var(--theme-bg-tertiary);
+  margin-bottom: 1.5rem;
+}
+
+.products-management .tab-button {
+  border: none;
+  background: transparent;
+  color: var(--theme-text-secondary);
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.products-management .tab-button:hover {
+  color: var(--accent-primary);
+}
+
+.products-management .tab-button.active {
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.25), rgba(var(--accent-rgb), 0.1));
+  color: var(--accent-primary);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+.products-management .tab-panel {
+  animation: tabFadeIn 0.2s ease;
+}
+
+.products-management .page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1rem 1.5rem;
+}
+
+.products-management .page-header h2 {
+  flex: 0 0 auto;
+}
+
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .products-management .products-filters {
   display: flex;
   gap: 1rem;
@@ -1194,15 +1254,16 @@
 }
 
 .products-management .search-wrapper {
-  flex: 1;
+  flex: 1 1 320px;
   position: relative;
   display: flex;
   align-items: center;
+  max-width: 520px;
 }
 
 .products-management .search-wrapper i {
   position: absolute;
-  left: 14px;
+  left: 16px;
   color: var(--theme-text-secondary);
   font-size: 16px;
   pointer-events: none;
@@ -1212,14 +1273,21 @@
 
 .products-management .search-input {
   width: 100%;
-  height: 44px;
-  padding: 0 40px;
-  background: var(--theme-surface);
-  border: 1px solid var(--theme-border);
-  border-radius: 12px;
+  height: 48px;
+  padding: 0 16px 0 46px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.95));
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 14px;
   color: var(--theme-text-primary);
   font-size: 14px;
   transition: all 0.3s ease;
+  position: static;
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  left: auto;
+  top: auto;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.35);
 }
 
 .products-management .search-input::placeholder {
@@ -1228,7 +1296,8 @@
 
 .products-management .search-input:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: rgba(var(--accent-rgb), 0.7);
+  box-shadow: 0 10px 26px rgba(var(--accent-rgb), 0.25);
 }
 
 .products-management .search-wrapper:hover i {
@@ -1237,6 +1306,35 @@
 
 .products-management .search-input:focus + i {
   color: var(--accent-primary);
+}
+
+.products-management .page-header .btn-primary {
+  margin-left: auto;
+}
+
+.products-management .product-form select {
+  max-width: 100%;
+  width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.products-management .product-form input:disabled,
+.products-management .product-form input[readonly] {
+  background: var(--theme-bg-tertiary);
+  border-color: var(--theme-border);
+  color: var(--theme-text-secondary);
+  cursor: not-allowed;
+}
+
+.products-management .product-form input:disabled:hover,
+.products-management .product-form input:disabled:focus,
+.products-management .product-form input[readonly]:hover,
+.products-management .product-form input[readonly]:focus {
+  border-color: var(--theme-border);
+  box-shadow: none;
+  outline: none;
 }
 
 /* Category Dropdown - Custom Design */
@@ -1412,6 +1510,12 @@
   border: 1px solid var(--theme-border);
 }
 
+.products-management .orders-table-scroll,
+.products-management .customers-table-scroll {
+  max-height: 675px;
+  overflow-y: auto;
+}
+
 .products-management .table-container {
   min-width: 100%;
 }
@@ -1424,6 +1528,13 @@
 .products-management .products-table thead {
   background: var(--theme-bg-tertiary);
   border-bottom: 2px solid var(--theme-border);
+}
+
+.products-management .products-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--theme-bg-tertiary);
 }
 
 .products-management .products-table th {
@@ -1441,6 +1552,10 @@
   transition: all var(--transition-fast);
 }
 
+.products-management .products-table tbody tr[role='button'] {
+  cursor: pointer;
+}
+
 .products-management .products-table tbody tr:hover {
   background: rgba(var(--accent-rgb), 0.05);
 }
@@ -1448,6 +1563,60 @@
 .products-management .products-table td {
   padding: 1rem;
   vertical-align: middle;
+}
+
+.products-management .order-items-table {
+  table-layout: auto;
+  min-width: 1020px;
+}
+
+.products-management .order-items-table th:nth-child(1),
+.products-management .order-items-table td:nth-child(1) {
+  min-width: 320px;
+}
+
+.products-management .order-items-table th:nth-child(2),
+.products-management .order-items-table td:nth-child(2) {
+  min-width: 120px;
+}
+
+.products-management .order-items-table th:nth-child(3),
+.products-management .order-items-table td:nth-child(3) {
+  min-width: 110px;
+}
+
+.products-management .order-items-table th:nth-child(4),
+.products-management .order-items-table td:nth-child(4) {
+  min-width: 160px;
+}
+
+.products-management .order-items-table th:nth-child(5),
+.products-management .order-items-table td:nth-child(5) {
+  min-width: 130px;
+}
+
+.products-management .order-items-table th:nth-child(6),
+.products-management .order-items-table td:nth-child(6) {
+  min-width: 140px;
+}
+
+.products-management .order-items-table th:nth-child(7),
+.products-management .order-items-table td:nth-child(7) {
+  min-width: 90px;
+}
+
+.products-management .order-items-table td:nth-child(1) {
+  white-space: normal;
+  word-break: break-word;
+}
+
+.products-management .order-items-table td:nth-child(2),
+.products-management .order-items-table td:nth-child(3),
+.products-management .order-items-table td:nth-child(4),
+.products-management .order-items-table td:nth-child(5),
+.products-management .order-items-table td:nth-child(6),
+.products-management .order-items-table td:nth-child(7) {
+  white-space: nowrap;
 }
 
 .products-management .product-image {
@@ -4464,6 +4633,20 @@
   .products-management .products-filters {
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .products-management .page-header {
+    align-items: stretch;
+  }
+
+  .products-management .page-header .search-wrapper {
+    max-width: none;
+  }
+
+  .products-management .page-header .btn-primary {
+    width: 100%;
+    margin-left: 0;
+    justify-content: center;
   }
 
   .products-management .search-wrapper,
