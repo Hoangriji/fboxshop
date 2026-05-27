@@ -1396,6 +1396,10 @@ const ProductsPage: React.FC = () => {
                 Tất cả ({totalCount || 0})
               </button>
               {categories.map((category) => {
+                if (category.id === 'digital') {
+                  // ẩn digital
+                  return null;
+                }
                 const count = categoryCounts[category.id] || 0;
                 return (
                   <button
@@ -1913,7 +1917,8 @@ const ProductsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Dropdown Filters for Digital */}
+          {/* ẩn digital */}
+          {/*
           {selectedCategory === 'digital' && (
             <div className="dropdown-filters">
               {availableBrands.length > 0 && (
@@ -1976,7 +1981,6 @@ const ProductsPage: React.FC = () => {
                 />
               )}
 
-              {/* Clear All Filters Button */}
               <button 
                 className="clear-all-filters-btn"
                 onClick={clearAllFilters}
@@ -1986,6 +1990,7 @@ const ProductsPage: React.FC = () => {
               </button>
             </div>
           )}
+          */}
 
           {/* Other Products Filters */}
           {selectedCategory === 'other' && (

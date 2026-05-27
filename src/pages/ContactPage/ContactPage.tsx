@@ -99,10 +99,13 @@ const ContactPage: React.FC = () => {
                   <h4>Sản phẩm có được bảo hành không?</h4>
                   <p>Tất cả sản phẩm đều được bảo hành chính hãng theo quy định của nhà sản xuất.</p>
                 </div>
+                {/* ẩn digital */}
+                {/*
                 <div className="faq-item">
                   <h4>Tôi có thể mua sản phẩm digital miễn phí ở đâu?</h4>
                   <p>Các sản phẩm digital miễn phí như wallpaper, preset, template có thể tải trực tiếp trên website mục "Tải Miễn Phí".</p>
                 </div>
+                */}
               </div>
             </div>
           </div>

@@ -325,8 +325,9 @@ const ProductImport: React.FC = () => {
                   <th className="col-specs">Thông số KT</th>
                   <th className="col-tags">Tags</th>
                   <th className="col-images">Hình ảnh</th>
-                  <th className="col-digital">File số</th>
-                  <th className="col-filesize">Kích thước</th>
+                  {/* ẩn digital */}
+                  {/* <th className="col-digital">File số</th> */}
+                  {/* <th className="col-filesize">Kích thước</th> */}
                   <th className="col-messages">Lỗi / Cảnh báo</th>
                 </tr>
               </thead>
@@ -405,6 +406,8 @@ const ProductImport: React.FC = () => {
                           : '-'
                         }
                       </td>
+                      {/* ẩn digital */}
+                      {/*
                       <td className="col-digital" title={product.digital_file}>
                         {product.digital_file ? (
                           product.digital_file.length > 30
@@ -413,6 +416,7 @@ const ProductImport: React.FC = () => {
                         ) : '-'}
                       </td>
                       <td className="col-filesize">{product.file_size || '-'}</td>
+                      */}
                       <td className="col-messages">
                         {hasErrors && (
                           <div className="messages-list">

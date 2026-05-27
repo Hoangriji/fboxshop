@@ -12,7 +12,8 @@ import "./HomePage.css";
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { featuredProducts, freeDigitalProducts } = useFeaturedProducts();
+  const { featuredProducts } = useFeaturedProducts();
+  // const { featuredProducts, freeDigitalProducts } = useFeaturedProducts(); // ẩn digital
   const { config } = useSiteConfig();
   
   // Get hero image from config with optimization and caching
@@ -43,8 +44,7 @@ const HomePage = () => {
               Chào Mừng Bạn Đến Với USide Shop
             </h1>
             <p className="hero-description">
-              Khám phá bộ sưu tập gaming hardware chất lượng cao và digital
-              products.
+              Khám phá bộ sưu tập gaming hardware chất lượng cao.{/* ẩn digital: và digital products. */}
             </p>
           </div>
         </div>
@@ -97,6 +97,8 @@ const HomePage = () => {
               </div>
               <span>USB</span>
             </div>
+            {/* ẩn digital */}
+            {/*
             <div
               className="category-item"
               onClick={() => handleCategoryClick("digital")}
@@ -106,6 +108,7 @@ const HomePage = () => {
               </div>
               <span>Tài Liệu Số</span>
             </div>
+            */}
             <div
               className="category-item"
               onClick={() => handleCategoryClick("other")}
@@ -174,7 +177,7 @@ const HomePage = () => {
               <p>
                 <strong>USide Shop</strong> là điểm đến hàng đầu cho những game thủ và tech enthusiasts 
                 tìm kiếm thiết bị công nghệ chất lượng cao. Chúng tôi tự hào mang đến bộ sưu tập đa dạng 
-                từ gaming peripherals đến digital products.
+                từ gaming peripherals.{/* ẩn digital: đến digital products. */}
               </p>
               <p>
                 Với cam kết về chất lượng và dịch vụ khách hàng tận tâm, chúng tôi không chỉ bán sản phẩm 
@@ -255,7 +258,8 @@ const HomePage = () => {
         </section>
       </LazySection>
 
-      {/* Free Digital Products Section */}
+      {/* ẩn digital */}
+      {/*
       <LazySection
         threshold={0.1}
         rootMargin="100px"
@@ -324,6 +328,7 @@ const HomePage = () => {
           )}
         </section>
       </LazySection>
+      */}
 
 
 

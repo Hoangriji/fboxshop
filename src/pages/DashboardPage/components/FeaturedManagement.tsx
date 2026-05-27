@@ -10,7 +10,7 @@ const FeaturedManagement: React.FC = () => {
   const { products, loading, mutate } = useProducts();
   const { categories } = useCategories();
   const [featuredProducts, setFeaturedProducts] = useState<(Product | PlaceholderProduct)[]>([]);
-  const [freeDigitalProducts, setFreeDigitalProducts] = useState<(Product | PlaceholderProduct)[]>([]);
+  // const [freeDigitalProducts, setFreeDigitalProducts] = useState<(Product | PlaceholderProduct)[]>([]); // ẩn digital
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -30,12 +30,13 @@ const FeaturedManagement: React.FC = () => {
         } as PlaceholderProduct);
       }
       
-      // Lấy 8 sản phẩm Digital featured đầu tiên
+      setFeaturedProducts(featuredWithPlaceholders);
+
+      /* ẩn digital
       const freeDigital = products
         .filter(p => p.type === 'digital' && p.featured)
         .slice(0, 8);
       
-      // Fill thiếu với Coming Soon placeholders  
       const freeDigitalWithPlaceholders: (Product | PlaceholderProduct)[] = [...freeDigital];
       while (freeDigitalWithPlaceholders.length < 8) {
         freeDigitalWithPlaceholders.push({
@@ -44,8 +45,8 @@ const FeaturedManagement: React.FC = () => {
         } as PlaceholderProduct);
       }
       
-      setFeaturedProducts(featuredWithPlaceholders);
       setFreeDigitalProducts(freeDigitalWithPlaceholders);
+      */
     }
   }, [products]);
 
@@ -65,6 +66,7 @@ const FeaturedManagement: React.FC = () => {
     }
   };
 
+  /* ẩn digital
   const handleToggleFree = async (product: Product) => {
     try {
       await ProductsService.updateProduct(product.id, {
@@ -76,6 +78,7 @@ const FeaturedManagement: React.FC = () => {
       alert('Có lỗi xảy ra khi cập nhật trạng thái miễn phí');
     }
   };
+  */
 
   const handleSubmitProduct = async (productData: Partial<Product>) => {
     try {
@@ -106,9 +109,12 @@ const FeaturedManagement: React.FC = () => {
     <div className="featured-management">
       <div className="page-header">
         <h2><i className="fas fa-star"></i> Quản lý Sản phẩm Nổi bật</h2>
+        {/* ẩn digital */}
+        {/*
         <p style={{ fontSize: '0.9rem', color: 'var(--theme-text-secondary)', marginTop: '0.5rem' }}>
           Quản lý 2 carousel hiển thị trên trang chủ - Featured Products và Digital Free
         </p>
+        */}
       </div>
       
       <div className="featured-sections">
@@ -192,7 +198,8 @@ const FeaturedManagement: React.FC = () => {
           )}
         </div>
 
-        {/* Digital Free Carousel */}
+        {/* ẩn digital */}
+        {/*
         <div className="featured-section">
           <div className="section-header">
             <div>
@@ -274,6 +281,7 @@ const FeaturedManagement: React.FC = () => {
             </div>
           )}
         </div>
+        */}
       </div>
 
       <ProductFormModal

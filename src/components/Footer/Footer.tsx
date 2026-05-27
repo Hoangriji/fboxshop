@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
               <span>USide Shop</span>
             </div>
             <p className="footer-description">
-              Cửa hàng gaming gear và digital products. 
+              Cửa hàng gaming gear.{/* ẩn digital: và digital products. */}
               Chất lượng cao, giá cả hợp lý, dịch vụ tận tâm.
             </p>
             <div className="footer-social">
@@ -43,7 +43,8 @@ const Footer: React.FC = () => {
             <ul className="footer-links">
               <li><a href="/"><i className="fa-solid fa-arrow-right"></i>Trang Chủ</a></li>
               <li><a href="/products"><i className="fa-solid fa-arrow-right"></i>Sản Phẩm</a></li>
-              <li><a href="/products?category=digital"><i className="fa-solid fa-arrow-right"></i> Digital Products</a></li>
+              {/* ẩn digital */}
+              {/* <li><a href="/products?category=digital"><i className="fa-solid fa-arrow-right"></i> Digital Products</a></li> */}
               <li><a href="/wishlist"><i className="fa-solid fa-arrow-right"></i>Yêu Thích</a></li>
               <li><a href="/contact"><i className="fa-solid fa-arrow-right"></i>Liên Hệ</a></li>
             </ul>

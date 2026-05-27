@@ -143,7 +143,8 @@ const Header: React.FC<HeaderProps> = ({
           </div>
           <div>
             <h1 className="logo-text">Uside Shop</h1>
-            <p className="logo-subtitle">Gaming & Digital Store</p>
+            {/* ẩn digital */}
+            {/* <p className="logo-subtitle">Gaming & Digital Store</p> */}
           </div>
         </Link>
 

@@ -1263,31 +1263,34 @@
 
 .products-management .search-wrapper i {
   position: absolute;
-  left: 16px;
+  left: 14px;
   color: var(--theme-text-secondary);
   font-size: 16px;
   pointer-events: none;
   transition: color 0.3s ease;
-  z-index: 1;
+  z-index: 2;
 }
 
 .products-management .search-input {
   width: 100%;
-  height: 48px;
-  padding: 0 16px 0 46px;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.95));
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 14px;
+  height: 44px;
+  padding: 0 40px 0 40px;
+  background: var(--theme-surface);
+  border: 2px solid var(--theme-border);
+  border-radius: 12px;
   color: var(--theme-text-primary);
   font-size: 14px;
   transition: all 0.3s ease;
-  position: static;
+  position: relative;
+  z-index: 1;
   opacity: 1;
   pointer-events: auto;
   transform: none;
   left: auto;
   top: auto;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.35);
+  box-shadow:
+    inset 4px 4px 8px var(--theme-shadow-dark),
+    inset -2px -2px 6px var(--theme-shadow-light);
 }
 
 .products-management .search-input::placeholder {
@@ -1296,15 +1299,15 @@
 
 .products-management .search-input:focus {
   outline: none;
-  border-color: rgba(var(--accent-rgb), 0.7);
-  box-shadow: 0 10px 26px rgba(var(--accent-rgb), 0.25);
+  border-color: var(--accent-primary);
+  box-shadow:
+    inset 4px 4px 8px rgba(0, 0, 0, 0.3),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.05),
+    0 0 15px var(--accent-glow);
 }
 
-.products-management .search-wrapper:hover i {
-  color: var(--accent-primary);
-}
-
-.products-management .search-input:focus + i {
+.products-management .search-wrapper:hover i,
+.products-management .search-wrapper:focus-within i {
   color: var(--accent-primary);
 }
 
@@ -4652,6 +4655,12 @@
   .products-management .search-wrapper,
   .products-management .category-dropdown {
     width: 100%;
+  }
+
+  .products-management .search-wrapper {
+    align-self: stretch;
+    flex: 0 0 auto;
+    height: auto;
   }
 
   .products-management .category-dropdown {

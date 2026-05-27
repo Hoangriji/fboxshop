@@ -503,6 +503,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                       <span>Vật lý</span>
                       {formData.type === 'physical' && <i className="fas fa-check"></i>}
                     </div>
+                    {/* ẩn digital */}
+                    {/*
                     <div
                       className={`custom-select-option ${formData.type === 'digital' ? 'selected' : ''}`}
                       onClick={() => {
@@ -515,6 +517,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                       <span>Digital</span>
                       {formData.type === 'digital' && <i className="fas fa-check"></i>}
                     </div>
+                    */}
                   </div>
                 )}
               </div>
@@ -634,6 +637,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
               </div>
             </div>
 
+            {/* ẩn digital */}
+            {/*
             {formData.type === 'digital' && (
               <div className="form-group">
                 <label htmlFor="file_size">Kích thước file</label>
@@ -646,6 +651,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 />
               </div>
             )}
+            */}
           </div>
 
           <div className="form-row">
@@ -1103,6 +1109,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
               </label>
             </div>
 
+            {/* ẩn digital */}
+            {/*
             {formData.type === 'digital' && (
               <div className="form-checkbox">
                 <input
@@ -1116,6 +1124,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 </label>
               </div>
             )}
+            */}
             
           </div>
 
