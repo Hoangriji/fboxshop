@@ -2,7 +2,6 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Header } from './components/Header';
-import { ScrollToTop } from './components/ScrollToTop';
 import { ClickSpark } from './components/ClickSpark';
 import { Footer } from './components';
 import { Spinner } from './components/Spinner';
@@ -32,21 +31,11 @@ const PageLoader = () => (
 const App: React.FC = () => {
   const location = useLocation();
   
-  // Load accent color from localStorage or use default
-  const [currentAccentColor, setCurrentAccentColor] = useState(() => {
-    const saved = localStorage.getItem('accentColor');
-    return saved || '#00d2ff';
-  });
-  
   const [wishlistCount, setWishlistCount] = useState(0);
-
-  // Save accent color to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('accentColor', currentAccentColor);
-  }, [currentAccentColor]);
 
   // Check if current route is dashboard
   const isDashboardRoute = location.pathname.startsWith('/dashboard');
+  const isHomePage = location.pathname === '/';
 
   // Get current page from location (exclude dashboard)
   const currentPage = location.pathname.split('/')[1] || 'home';
@@ -67,10 +56,6 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Update CSS variables when accent color changes
-  useEffect(() => {
-    document.documentElement.style.setProperty('--accent-primary', currentAccentColor);
-  }, [currentAccentColor]);
 
   // If it's a dashboard route, render dashboard app without main layout
   if (isDashboardRoute) {
@@ -87,10 +72,7 @@ const App: React.FC = () => {
         <Header 
           currentPage={currentPage} 
           wishlistCount={wishlistCount}
-          currentAccentColor={currentAccentColor}
-          setCurrentAccentColor={setCurrentAccentColor}
         />
-        <ScrollToTop />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={
@@ -114,7 +96,7 @@ const App: React.FC = () => {
             </Suspense>
           } />
         </Routes>
-        <Footer />
+        {!isHomePage && <Footer />}
         <SpeedInsights />
       </div>
     </ClickSpark>

@@ -65,18 +65,18 @@ const InvoiceEmailTemplate: React.FC<InvoiceEmailTemplateProps> = ({ order }) =>
   return (
     <Html>
       <Head />
-      <Preview>Xác nhận đơn hàng {order.id} - Uside Shop</Preview>
+      <Preview>Xác nhận đơn hàng {order.id} - Fbox Shop</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={headerSection}>
-            <Text style={brand}>USIDE SHOP</Text>
+            <Text style={brand}>FBOX SHOP</Text>
             <Text style={brandSub}>PROFESSIONAL GAMING GEARS</Text>
           </Section>
 
           <Section style={titleSection}>
             <Heading style={title}>XÁC NHẬN ĐƠN HÀNG #{order.id}</Heading>
             <Text style={introText}>
-              Chào {order.customerSnapshot.name || 'bạn'}, cảm ơn bạn đã mua sắm tại Uside Shop.
+              Chào {order.customerSnapshot.name || 'bạn'}, cảm ơn bạn đã mua sắm tại Fbox Shop.
               Dưới đây là hóa đơn chi tiết cho giao dịch của bạn.
             </Text>
           </Section>
@@ -193,11 +193,11 @@ const InvoiceEmailTemplate: React.FC<InvoiceEmailTemplateProps> = ({ order }) =>
             <Text style={notesItem}>• Bảo hành theo số serial trên sản phẩm.</Text>
             <Text style={notesItem}>• Vui lòng giữ lại hóa đơn để đối soát khi cần.</Text>
             <Text style={notesItem}>• Vui lòng quay video mở hàng để được hỗ trợ đổi/hoàn khi có sự cố do vận chuyển.</Text>
-            <Text style={notesItem}>• Liên hệ Uside Shop nếu cần hỗ trợ thêm.</Text>
+            <Text style={notesItem}>• Liên hệ Fbox Shop nếu cần hỗ trợ thêm.</Text>
           </Section>
 
           <Hr style={divider} />
-          <Text style={footerText}>Uside Shop - Professional Gaming Gears</Text>
+          <Text style={footerText}>Fbox Shop - Professional Gaming Gears</Text>
         </Container>
       </Body>
     </Html>

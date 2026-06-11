@@ -2,20 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useProducts } from '../../hooks/useProducts';
 import type { Product } from '../../types';
+import logo from '../../assets/logo.png';
 import './Header.css';
 
 interface HeaderProps {
   currentPage: string;
   wishlistCount: number;
-  currentAccentColor: string;
-  setCurrentAccentColor: (color: string) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
   currentPage, 
-  wishlistCount = 0,
-  currentAccentColor,
-  setCurrentAccentColor 
+  wishlistCount = 0
 }) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,18 +24,9 @@ const Header: React.FC<HeaderProps> = ({
   const desktopInputRef = useRef<HTMLInputElement | null>(null);
   const headerRef = useRef<HTMLElement | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [colorPickerOpen, setColorPickerOpen] = useState(false);
-  const colorPickerRef = useRef<HTMLDivElement | null>(null);
   const suggestionsRef = useRef<HTMLDivElement | null>(null);
   
   const { products } = useProducts();
-
-  // Apply current accent color to CSS variables
-  useEffect(() => {
-    document.documentElement.style.setProperty('--accent-primary', currentAccentColor);
-    // Save to localStorage whenever color changes
-    localStorage.setItem('accentColor', currentAccentColor);
-  }, [currentAccentColor]);
 
   // Set a CSS variable with the header height so pages can offset content accordingly
   useEffect(() => {
@@ -109,64 +97,54 @@ const Header: React.FC<HeaderProps> = ({
     }
   }, [searchQuery, products]);
 
-  // close color picker when clicking outside or pressing Escape
+  // Close suggestions on Escape
   useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
-      if (!colorPickerRef.current) return;
-      const target = e.target as Node | null;
-      if (colorPickerRef.current.contains(target)) return;
-      setColorPickerOpen(false);
-    };
-
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setColorPickerOpen(false);
         setShowSuggestions(false);
       }
     };
-
-    document.addEventListener('click', onDocClick);
     document.addEventListener('keydown', onKey);
     return () => {
-      document.removeEventListener('click', onDocClick);
       document.removeEventListener('keydown', onKey);
     };
   }, []);
 
   return (
     <header className="header" ref={headerRef}>
-      <div className="header-container">
-        {/* Logo Section */}
-        <Link to="/" className="logo-section">
-          <div className="logo">
-            <i className="fas fa-cloud"></i>
-          </div>
-          <div>
-            <h1 className="logo-text">Uside Shop</h1>
-            {/* ẩn digital */}
-            {/* <p className="logo-subtitle">Gaming & Digital Store</p> */}
-          </div>
-        </Link>
+      <div className="header-shell">
+        <div className="header-container">
+          {/* Main Navigation */}
+          <nav className="main-nav">
+            <ul className="nav-menu">
+              {navigationItems.map((item) => (
+                <li key={item.id} className="nav-item">
+                  <Link
+                    to={item.path}
+                    className={`nav-link ${currentPage === item.id ? 'active' : ''}`}
+                  >
+                    <i className={item.icon}></i>
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-        {/* Main Navigation */}
-        <nav className="main-nav">
-          <ul className="nav-menu">
-            {navigationItems.map((item) => (
-              <li key={item.id} className="nav-item">
-                <Link
-                  to={item.path}
-                  className={`nav-link ${currentPage === item.id ? 'active' : ''}`}
-                >
-                  <i className={item.icon}></i>
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+          {/* Logo Section */}
+          <Link to="/" className="logo-section">
+            <div className="logo">
+              <img src={logo} alt="Fbox Shop" className="logo-image" />
+            </div>
+            <div>
+              <h1 className="logo-text">Fbox Shop</h1>
+              {/* ẩn digital */}
+              {/* <p className="logo-subtitle">Gaming & Digital Store</p> */}
+            </div>
+          </Link>
 
-        {/* Header Actions */}
-        <div className="header-actions">
+          {/* Header Actions */}
+          <div className="header-actions">
           {/* Desktop Search Bar - Visible on >= 1000px */}
           <form className="desktop-search-form" onSubmit={handleDesktopSearch}>
             <div className="desktop-search-wrapper" ref={suggestionsRef}>
@@ -295,50 +273,6 @@ const Header: React.FC<HeaderProps> = ({
             {wishlistCount > 0 && <span className="wishlist-badge">{wishlistCount}</span>}
           </button>
 
-          {/* Accent Color Picker */}
-          <div className={`accent-color-picker ${colorPickerOpen ? 'open' : ''}`} ref={colorPickerRef}>
-            <button
-              className="action-button"
-              title="Thay đổi màu chủ đề"
-              aria-expanded={colorPickerOpen}
-              onClick={() => setColorPickerOpen((s) => !s)}
-            >
-              <i className="fas fa-palette"></i>
-            </button>
-            <div className="color-picker-dropdown" role="menu">
-              <div 
-                className="accent-btn" 
-                style={{ backgroundColor: '#00d2ff' }}
-                onClick={() => setCurrentAccentColor('#00d2ff')}
-              ></div>
-              <div 
-                className="accent-btn" 
-                style={{ backgroundColor: '#ff6b6b' }}
-                onClick={() => setCurrentAccentColor('#ff6b6b')}
-              ></div>
-              <div 
-                className="accent-btn" 
-                style={{ backgroundColor: '#4ecdc4' }}
-                onClick={() => setCurrentAccentColor('#4ecdc4')}
-              ></div>
-              <div 
-                className="accent-btn" 
-                style={{ backgroundColor: '#45b7d1' }}
-                onClick={() => setCurrentAccentColor('#45b7d1')}
-              ></div>
-              <div 
-                className="accent-btn" 
-                style={{ backgroundColor: '#96ceb4' }}
-                onClick={() => setCurrentAccentColor('#96ceb4')}
-              ></div>
-              <div 
-                className="accent-btn" 
-                style={{ backgroundColor: '#feca57' }}
-                onClick={() => setCurrentAccentColor('#feca57')}
-              ></div>
-            </div>
-          </div>
-
           {/* Mobile Menu Button */}
           <button
             className={`mobile-menu-button ${isMobileMenuOpen ? 'active' : ''}`}
@@ -349,6 +283,7 @@ const Header: React.FC<HeaderProps> = ({
             <span></span>
             <span></span>
           </button>
+          </div>
         </div>
       </div>
 

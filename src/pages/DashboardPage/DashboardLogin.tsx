@@ -64,7 +64,7 @@ const DashboardLogin: React.FC = () => {
             <i className="fas fa-shield-alt"></i>
           </div>
           <h1>Đăng nhập Admin</h1>
-          <p>Truy cập bảng điều khiển Uside Shop</p>
+          <p>Truy cập bảng điều khiển Fbox Shop</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">

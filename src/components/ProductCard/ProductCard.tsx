@@ -88,9 +88,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onViewDetails
               <h3 className="card-title">{product.name}</h3>
             </div>
 
-            <div className="card-description-container">
+            {/* <div className="card-description-container">
               <p className="card-description">{product.description}</p>
-            </div>
+            </div> */}
 
             <div className="card-price">
               {product.originalPrice &&

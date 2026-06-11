@@ -160,6 +160,50 @@
     background: var(--accent-primary);
 }
 
+/* VEXO Light Theme Overrides */
+.tech-btn-wrapper {
+    clip-path: none;
+    border-radius: 999px;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+}
+
+.tech-btn-wrapper.primary .btn-inner {
+    background: var(--theme-text-primary);
+}
+
+.tech-btn-wrapper.primary .btn-text,
+.tech-btn-wrapper.primary .arrow-icon {
+    color: #ffffff;
+    stroke: #ffffff;
+}
+
+.tech-btn-wrapper.secondary .btn-inner {
+    background: transparent;
+    border: 1px solid var(--theme-border);
+}
+
+.btn-inner {
+    clip-path: none;
+    border-radius: 999px;
+}
+
+.btn-icon-section {
+    background: transparent;
+    width: 42px;
+}
+
+.arrow-icon {
+    stroke: currentColor;
+}
+
+.tech-btn-wrapper:hover {
+    box-shadow: none;
+    filter: none;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     :root {

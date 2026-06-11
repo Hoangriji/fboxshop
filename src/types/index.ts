@@ -98,6 +98,7 @@ export interface SiteConfig {
     description: string;
     hero_image_url?: string;  // Hero section background image URL from Cloudinary
     hero_image_public_id?: string;  // Cloudinary public ID for deletion
+    hero_product_ids?: string[]; // Hero carousel product IDs (max 5)
     currency: {
       primary: string;
       virtual: string;

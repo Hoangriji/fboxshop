@@ -637,9 +637,10 @@ export class SiteConfigService {
       // Return default config if not exists
       return {
         site: {
-          name: 'Uside Shop',
+          name: 'Fbox Shop',
           tagline: 'Gaming & Digital Store',
           description: 'Your one-stop shop for gaming peripherals and digital products',
+            hero_product_ids: [],
           currency: {
             primary: 'VNĐ',
             virtual: 'UPoints'
@@ -672,9 +673,10 @@ export class SiteConfigService {
         // Return default config
         callback({
           site: {
-            name: 'Uside Shop',
+            name: 'Fbox Shop',
             tagline: 'Gaming & Digital Store',
             description: 'Your one-stop shop for gaming peripherals and digital products',
+            hero_product_ids: [],
             currency: {
               primary: 'VNĐ',
               virtual: 'UPoints'

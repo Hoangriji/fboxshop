@@ -126,7 +126,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         <div className="sidebar-header">
           <h2>
             <i className="fa-solid fa-store"></i>
-            <span className="brand-text">Uside Shop</span>
+            <span className="brand-text">Fbox Shop</span>
           </h2>
           <span className="admin-badge">Admin</span>
         </div>

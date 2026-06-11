@@ -1,177 +1,95 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSiteConfig } from '../../../hooks/useSiteConfig';
-import { CloudinaryService } from '../../../services/cloudinaryService';
+import { useProducts } from '../../../hooks/useProducts';
 import { SiteConfigService } from '../../../services/firebaseService';
-import { ConfirmationModal } from '../../../components/ConfirmationModal';
+import type { Product } from '../../../types';
 import './HeroImageManagement.css';
 
-// Helper to clear hero image cache
-const clearHeroImageCache = async (): Promise<void> => {
-  try {
-    // Clear localStorage
-    localStorage.removeItem('hero_image_cache');
-    localStorage.removeItem('hero_image_version');
-
-    // Clear Cache API
-    if ('caches' in window) {
-      await caches.delete('hero-images-v1');
-    }
-  } catch (error) {
-    console.error('Error clearing hero image cache:', error);
-  }
-};
+const HERO_LIMIT = 5;
 
 const HeroImageManagement: React.FC = () => {
   const { config, loading } = useSiteConfig();
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const { products, loading: productsLoading } = useProducts();
+  const [search, setSearch] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
 
-  const currentHeroImage = config?.site?.hero_image_url;
-  const currentPublicId = config?.site?.hero_image_public_id;
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setError(null);
-    setSuccess(null);
-
-    // Validate file
-    const validation = CloudinaryService.validateImage(file, 5);
-    if (!validation.valid) {
-      setError(validation.error || 'File không hợp lệ');
-      return;
+  useEffect(() => {
+    if (config?.site?.hero_product_ids) {
+      setSelectedIds(config.site.hero_product_ids.slice(0, HERO_LIMIT));
     }
+  }, [config?.site?.hero_product_ids]);
 
-    setSelectedFile(file);
+  const selectedProducts = useMemo(() => {
+    return selectedIds
+      .map((id) => products.find((product) => product.id === id))
+      .filter((product): product is Product => Boolean(product));
+  }, [products, selectedIds]);
 
-    // Create preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviewUrl(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+  const filteredProducts = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return products
+      .filter((product) => product.type !== 'digital')
+      .filter((product) => {
+        if (!query) return true;
+        return (
+          product.name.toLowerCase().includes(query) ||
+          product.category.toLowerCase().includes(query) ||
+          product.sku?.toLowerCase().includes(query)
+        );
+      })
+      .slice(0, 60);
+  }, [products, search]);
+
+  const addProduct = (productId: string) => {
+    if (selectedIds.includes(productId)) return;
+    if (selectedIds.length >= HERO_LIMIT) return;
+    setSelectedIds((prev) => [...prev, productId]);
   };
 
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      setError('Vui lòng chọn file ảnh');
-      return;
-    }
+  const removeProduct = (productId: string) => {
+    setSelectedIds((prev) => prev.filter((id) => id !== productId));
+  };
 
+  const moveProduct = (productId: string, direction: 'up' | 'down') => {
+    setSelectedIds((prev) => {
+      const index = prev.indexOf(productId);
+      if (index < 0) return prev;
+      const nextIndex = direction === 'up' ? index - 1 : index + 1;
+      if (nextIndex < 0 || nextIndex >= prev.length) return prev;
+      const updated = [...prev];
+      const temp = updated[index];
+      updated[index] = updated[nextIndex];
+      updated[nextIndex] = temp;
+      return updated;
+    });
+  };
+
+  const handleSave = async () => {
+    if (!config?.site) return;
     try {
-      setUploading(true);
-      setUploadProgress(30);
-      setError(null);
-      setSuccess(null);
-
-      // Upload to Cloudinary
-      const uploadResult = await CloudinaryService.uploadImage(
-        selectedFile,
-        'hero-images'
-      );
-
-      setUploadProgress(70);
-
-      // Delete old image if exists
-      if (currentPublicId) {
-        try {
-          await CloudinaryService.deleteImage(currentPublicId);
-        } catch (err) {
-          console.warn('Failed to delete old hero image:', err);
-          // Don't fail the upload if deletion fails
-        }
-      }
-
-      setUploadProgress(90);
-
-      // Update site config with new hero image
+      setSaving(true);
+      setStatus(null);
       await SiteConfigService.updateSiteConfig({
         site: {
-          ...config?.site,
-          hero_image_url: uploadResult.url,
-          hero_image_public_id: uploadResult.publicId,
+          ...config.site,
+          hero_product_ids: selectedIds,
         },
       });
-
-      // Clear cache so new image loads immediately
-      await clearHeroImageCache();
-
-      setUploadProgress(100);
-      setSuccess('Cập nhật hình nền Hero Section thành công! Cache đã được xóa.');
-      setSelectedFile(null);
-      setPreviewUrl(null);
-
-      // Reset after 3 seconds
-      setTimeout(() => {
-        setUploadProgress(0);
-        setSuccess(null);
-      }, 3000);
-    } catch (err) {
-      console.error('Upload error:', err);
-      setError(
-        err instanceof Error ? err.message : 'Lỗi khi upload ảnh'
-      );
+      setStatus('Đã cập nhật danh sách sản phẩm Hero.');
+    } catch (error) {
+      console.error('Hero update failed', error);
+      setStatus('Có lỗi xảy ra khi lưu.');
     } finally {
-      setUploading(false);
+      setSaving(false);
+      setTimeout(() => setStatus(null), 2500);
     }
-  };
-
-  const handleRemoveHeroImage = async () => {
-    try {
-      setUploading(true);
-      setError(null);
-
-      // Delete from Cloudinary if exists
-      if (currentPublicId) {
-        try {
-          await CloudinaryService.deleteImage(currentPublicId);
-        } catch (err) {
-          console.warn('Failed to delete from Cloudinary:', err);
-        }
-      }
-
-      // Remove from config — use null (not undefined) since Firestore rejects undefined
-      await SiteConfigService.updateSiteConfig({
-        site: {
-          ...config?.site,
-          hero_image_url: null,
-          hero_image_public_id: null,
-        },
-      });
-
-      // Clear cache
-      await clearHeroImageCache();
-
-      setSuccess('Đã xóa hình nền Hero Section thành công! Cache đã được xóa.');
-
-      setTimeout(() => {
-        setSuccess(null);
-      }, 3000);
-    } catch (err) {
-      console.error('Remove error:', err);
-      setError(
-        err instanceof Error ? err.message : 'Lỗi khi xóa ảnh'
-      );
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleCancelPreview = () => {
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    setError(null);
   };
 
   if (loading) {
     return (
-      <div className="hero-image-management">
+      <div className="hero-management">
         <div className="loading-state">
           <i className="fas fa-spinner fa-spin"></i>
           <p>Đang tải...</p>
@@ -181,167 +99,117 @@ const HeroImageManagement: React.FC = () => {
   }
 
   return (
-    <>
-    <div className="hero-image-management">
+    <div className="hero-management">
       <div className="page-header">
         <h2>
-          <i className="fas fa-image"></i> Quản lý Hình nền
+          <i className="fas fa-images"></i> Quản lý Hero Carousel
         </h2>
         <p className="page-description">
-          Upload và quản lý hình nền cho Hero Section trên trang chủ. Ảnh sẽ được lưu trữ trên Cloudinary.
+          Chọn tối đa {HERO_LIMIT} sản phẩm để hiển thị ở Hero trang chủ.
         </p>
       </div>
 
-      {error && (
-        <div className="alert alert-error">
-          <i className="fas fa-exclamation-circle"></i>
-          <span>{error}</span>
-        </div>
-      )}
+      {status && <div className="hero-status">{status}</div>}
 
-      {success && (
-        <div className="alert alert-success">
-          <i className="fas fa-check-circle"></i>
-          <span>{success}</span>
-        </div>
-      )}
-
-      <div className="hero-image-content">
-        {/* Current Hero Image */}
-        <div className="current-image-section">
-          <h3 className="section-title">
-            <i className="fas fa-photo-video"></i> Hình nền hiện tại
-          </h3>
-          <div className="image-preview-large">
-            {currentHeroImage ? (
-              <>
-                <img src={currentHeroImage} alt="Current Hero" />
-                <div className="image-info">
-                  <span className="image-status">
-                    <i className="fas fa-cloud"></i> Cloudinary
-                  </span>
-                  <button
-                    className="btn-remove"
-                    onClick={() => setShowDeleteModal(true)}
-                    disabled={uploading}
-                  >
-                    <i className="fas fa-trash"></i> Xóa và dùng ảnh mặc định
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="no-image">
-                <i className="fas fa-image"></i>
-                <p>Đang sử dụng ảnh mặc định từ assets</p>
-                <small>Upload ảnh mới để thay thế</small>
-              </div>
-            )}
+      <div className="hero-management-grid">
+        <div className="hero-selected">
+          <div className="section-header">
+            <h3>Sản phẩm đang hiển thị</h3>
+            <span>{selectedIds.length}/{HERO_LIMIT}</span>
           </div>
-        </div>
 
-        {/* Upload New Image */}
-        <div className="upload-section">
-          <h3 className="section-title">
-            <i className="fas fa-upload"></i> Upload hình nền mới
-          </h3>
-
-          <div className="upload-area">
-            {!previewUrl ? (
-              <label className="file-drop-zone">
-                <input
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/webp"
-                  onChange={handleFileSelect}
-                  disabled={uploading}
-                />
-                <div className="drop-zone-content">
-                  <i className="fas fa-cloud-upload-alt"></i>
-                  <p>Kéo thả ảnh vào đây hoặc nhấp để chọn</p>
-                  <small>Chấp nhận JPG, PNG, WebP - Tối đa 5MB</small>
-                  <small>Khuyến nghị: 1920x1080px hoặc lớn hơn</small>
-                </div>
-              </label>
-            ) : (
-              <div className="preview-section">
-                <div className="preview-image">
-                  <img src={previewUrl} alt="Preview" />
-                  <div className="preview-overlay">
+          {selectedProducts.length === 0 ? (
+            <div className="hero-empty">Chưa chọn sản phẩm nào.</div>
+          ) : (
+            <div className="hero-selected-list">
+              {selectedProducts.map((product, index) => (
+                <div key={product.id} className="hero-selected-item">
+                  <img src={product.images?.[0]} alt={product.name} />
+                  <div className="hero-selected-info">
+                    <strong>{product.name}</strong>
+                    <span>{product.price_vnd.toLocaleString('vi-VN')}₫</span>
+                  </div>
+                  <div className="hero-selected-actions">
                     <button
-                      className="btn-icon"
-                      onClick={handleCancelPreview}
-                      disabled={uploading}
-                      title="Hủy"
+                      type="button"
+                      onClick={() => moveProduct(product.id, 'up')}
+                      disabled={index === 0}
+                    >
+                      <i className="fas fa-arrow-up"></i>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveProduct(product.id, 'down')}
+                      disabled={index === selectedProducts.length - 1}
+                    >
+                      <i className="fas fa-arrow-down"></i>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeProduct(product.id)}
                     >
                       <i className="fas fa-times"></i>
                     </button>
                   </div>
                 </div>
-                <div className="preview-details">
-                  <h4>
-                    <i className="fas fa-file-image"></i> {selectedFile?.name}
-                  </h4>
-                  <p className="file-size">
-                    {selectedFile && (selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                  <button
-                    className="btn-upload btn-primary"
-                    onClick={handleUpload}
-                    disabled={uploading}
-                  >
-                    {uploading ? (
-                      <>
-                        <i className="fas fa-spinner fa-spin"></i> Đang upload...
-                      </>
-                    ) : (
-                      <>
-                        <i className="fas fa-cloud-upload-alt"></i> Upload và cập nhật
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {uploading && uploadProgress > 0 && (
-            <div className="upload-progress">
-              <div className="progress-bar">
-                <div
-                  className="progress-fill"
-                  style={{ width: `${uploadProgress}%` }}
-                ></div>
-              </div>
-              <span className="progress-text">{uploadProgress}%</span>
+              ))}
             </div>
           )}
+        </div>
 
-          <div className="upload-instructions">
-            <h4><i className="fas fa-info-circle"></i> Hướng dẫn:</h4>
-            <ul>
-              <li>Chọn ảnh có độ phân giải cao (khuyến nghị 1920x1080px trở lên)</li>
-              <li>Ảnh sẽ được upload lên Cloudinary và tự động tối ưu hóa</li>
-              <li>Khi upload ảnh mới, ảnh cũ trên Cloudinary sẽ tự động bị xóa</li>
-              <li>Thay đổi sẽ hiển thị ngay lập tức trên trang chủ</li>
-            </ul>
+        <div className="hero-library">
+          <div className="section-header">
+            <h3>Thư viện sản phẩm</h3>
+            <input
+              type="text"
+              placeholder="Tìm theo tên, SKU, danh mục..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
           </div>
+
+          {productsLoading ? (
+            <div className="hero-empty">Đang tải sản phẩm...</div>
+          ) : (
+            <div className="hero-library-list">
+              {filteredProducts.map((product) => {
+                const isSelected = selectedIds.includes(product.id);
+                const isDisabled = !isSelected && selectedIds.length >= HERO_LIMIT;
+
+                return (
+                  <div key={product.id} className="hero-library-item">
+                    <img src={product.images?.[0]} alt={product.name} />
+                    <div className="hero-library-info">
+                      <strong>{product.name}</strong>
+                      <span>{product.category}</span>
+                      <span>{product.price_vnd.toLocaleString('vi-VN')}₫</span>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={isDisabled}
+                      onClick={() => addProduct(product.id)}
+                    >
+                      {isSelected ? 'Đã chọn' : 'Thêm'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
-    </div>
 
-      <ConfirmationModal
-        isOpen={showDeleteModal}
-        title="Xóa hình nền Hero Section"
-        message="Bạn có chắc muốn xóa hình nền hiện tại? Trang chủ sẽ quay về ảnh mặc định."
-        icon="warning"
-        primaryButtonLabel="Xóa"
-        secondaryButtonLabel="Hủy"
-        onPrimaryAction={() => {
-          setShowDeleteModal(false);
-          handleRemoveHeroImage();
-        }}
-        onClose={() => setShowDeleteModal(false)}
-      />
-    </>
+      <div className="hero-actions">
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
+        </button>
+      </div>
+    </div>
   );
 };
 

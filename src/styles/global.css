@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700;800&display=swap');
+
 /* Theme System CSS Variables */
 :root {
   /* Theme State */
@@ -154,6 +156,12 @@ body {
   background-attachment: fixed;
 }
 
+html,
+body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 /* Enhanced dark theme body gradient */
 :root:not(.light-theme) body {
   background:
@@ -169,22 +177,19 @@ body {
 
 /* Button Styles */
 .btn-primary {
-  padding: 14px 28px;
-  font-size: 14px;
+  padding: 12px 26px;
+  font-size: 12px;
   font-weight: 600;
-  color: white;
-  background: var(--accent-primary);
-  border: none;
-  border-radius: 12px;
+  color: #ffffff;
+  background: var(--theme-text-primary);
+  border: 1px solid var(--theme-text-primary);
+  border-radius: 999px;
   cursor: pointer;
-  letter-spacing: 0.5px;
-  font-family: 'Quicksand', sans-serif;
-  box-shadow:
-    inset -6px -6px 12px rgba(0, 0, 0, 0.3),
-    inset 6px 6px 12px rgba(255, 255, 255, 0.1),
-    0 0 15px var(--accent-glow);
-  border: 1px solid var(--accent-border);
-  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-family: var(--font-family);
+  box-shadow: 0 12px 22px rgba(17, 24, 39, 0.18);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 
 /* Enhanced dark theme primary button */
@@ -197,11 +202,8 @@ body {
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: scale(1.05);
-  box-shadow: 
-    inset -8px -8px 16px rgba(0, 0, 0, 0.4), 
-    inset 6px 6px 12px rgba(255, 255, 255, 0.15), 
-    0 0 25px var(--accent-glow);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px rgba(17, 24, 39, 0.22);
 }
 
 /* Enhanced dark theme primary button hover */
@@ -214,7 +216,7 @@ body {
 }
 
 .btn-primary:active:not(:disabled) {
-  transform: scale(1.02);
+  transform: translateY(0) scale(0.98);
 }
 
 .btn-primary:disabled {
@@ -223,19 +225,19 @@ body {
 }
 
 .btn-secondary {
-  padding: 14px 28px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #a8b3cf;
-  background: var(--theme-surface);
-  border: none;
-  border-radius: 12px;
+  padding: 12px 26px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--theme-text-primary);
+  background: transparent;
+  border: 1px solid var(--theme-border);
+  border-radius: 999px;
   cursor: pointer;
-  font-family: 'Quicksand', sans-serif;
-  box-shadow:
-    inset -6px -6px 12px var(--theme-shadow-dark),
-    inset 6px 6px 12px var(--theme-shadow-light);
-  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  font-family: var(--font-family);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow: none;
+  transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
 
 /* Enhanced dark theme secondary button */
@@ -250,13 +252,11 @@ body {
 }
 
 .btn-secondary:hover:not(:disabled) {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   color: var(--theme-text-primary);
-  border-color: var(--accent-border);
-  box-shadow: 
-    inset -8px -8px 16px var(--theme-shadow-dark), 
-    inset 6px 6px 12px var(--theme-shadow-light), 
-    0 0 15px var(--accent-glow);
+  border-color: var(--theme-text-primary);
+  background: var(--theme-bg-tertiary);
+  box-shadow: none;
 }
 
 /* Enhanced dark theme secondary button hover */
@@ -280,33 +280,29 @@ body {
 }
 
 .btn-icon {
-  width: 50px;
-  height: 50px;
-  font-size: 18px;
-  color: var(--accent-primary);
-  background: var(--theme-surface);
-  border: 2px solid var(--theme-border);
-  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  font-size: 16px;
+  color: var(--theme-text-primary);
+  background: #ffffff;
+  border: 1px solid var(--theme-border);
+  border-radius: 999px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow:
-    10px 10px 20px var(--theme-shadow-dark),
-    -10px -10px 20px var(--theme-shadow-light);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: var(--shadow-small);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .btn-icon:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.1);
-  box-shadow: 
-    15px 15px 30px var(--theme-shadow-dark), 
-    -15px -15px 30px var(--theme-shadow-light), 
-    0 0 25px var(--accent-glow);
+  transform: translateY(-1px);
+  border-color: var(--theme-text-primary);
+  box-shadow: var(--shadow-medium);
 }
 
 .btn-icon:active:not(:disabled) {
-  transform: translateY(-1px) scale(1.05);
+  transform: translateY(0) scale(0.98);
 }
 
 .btn-icon:disabled {
@@ -484,5 +480,136 @@ body {
     width: 36px;
     height: 36px;
     font-size: 11px;
+  }
+}
+
+/* ========================================
+   VEXO LIGHT THEME OVERRIDES
+   ======================================== */
+
+:root {
+  --theme: 'light';
+  --font-family: 'Manrope', sans-serif;
+  --font-family-heading: 'Space Grotesk', sans-serif;
+
+  --theme-background: #f4f5f7;
+  --theme-bg-primary: #f4f5f7;
+  --theme-bg-secondary: #ffffff;
+  --theme-bg-tertiary: #eef1f4;
+  --theme-surface: #ffffff;
+  --theme-text-primary: #111827;
+  --theme-text-secondary: #4b5563;
+  --theme-text-tertiary: #9ca3af;
+  --theme-text-placeholder: #c0c6cf;
+  --theme-border: #e5e7eb;
+  --theme-shadow-light: rgba(17, 24, 39, 0.04);
+  --theme-shadow-dark: rgba(17, 24, 39, 0.08);
+  --theme-inset-light: rgba(255, 255, 255, 0.7);
+  --theme-inset-dark: rgba(17, 24, 39, 0.06);
+  --theme-inset-hover-light: rgba(255, 255, 255, 0.85);
+  --theme-inset-hover-dark: rgba(17, 24, 39, 0.1);
+
+  --accent-primary: #111827;
+  --accent-secondary: #1f2937;
+  --accent-rgb: 17, 24, 39;
+  --accent-glow: rgba(17, 24, 39, 0.12);
+  --accent-light: rgba(17, 24, 39, 0.06);
+  --accent-border: rgba(17, 24, 39, 0.15);
+  --accent-danger: #d64545;
+
+  --shadow-small: 0 6px 14px rgba(17, 24, 39, 0.08);
+  --shadow-medium: 0 16px 30px rgba(17, 24, 39, 0.1);
+  --shadow-large: 0 24px 50px rgba(17, 24, 39, 0.12);
+  --shadow-xl: 0 32px 70px rgba(17, 24, 39, 0.14);
+
+  --neumorphic-shadow: 0 16px 32px rgba(17, 24, 39, 0.08);
+  --neumorphic-shadow-hover: 0 20px 40px rgba(17, 24, 39, 0.12);
+  --neumorphic-inset: inset 0 1px 2px rgba(17, 24, 39, 0.08);
+
+  --border-radius-sm: 10px;
+  --border-radius: 14px;
+  --border-radius-lg: 18px;
+  --border-radius-xl: 26px;
+}
+
+body {
+  font-family: var(--font-family);
+  background: var(--theme-bg-primary);
+  color: var(--theme-text-primary);
+  line-height: 1.6;
+  background-attachment: scroll;
+}
+
+:root:not(.light-theme) body,
+:root.light-theme body {
+  background: var(--theme-bg-primary);
+}
+
+h1, h2, h3, h4, h5, h6,
+.vexo-title,
+.section-title {
+  font-family: var(--font-family-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.btn-primary {
+  background: var(--theme-text-primary);
+  border: 1px solid var(--theme-text-primary);
+  box-shadow: 0 12px 22px rgba(17, 24, 39, 0.18);
+  color: #ffffff;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px rgba(17, 24, 39, 0.22);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--theme-border);
+  color: var(--theme-text-primary);
+  box-shadow: none;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--theme-text-primary);
+  color: var(--theme-text-primary);
+  transform: translateY(-1px);
+  box-shadow: none;
+  background: var(--theme-bg-tertiary);
+}
+
+.btn-icon {
+  border: 1px solid var(--theme-border);
+  box-shadow: var(--shadow-small);
+}
+
+/* Scroll Snap Utilities */
+.snap-page {
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+}
+
+.snap-section {
+  min-height: 100dvh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+@media (max-width: 768px) {
+  .snap-page {
+    scroll-snap-type: y proximity;
+  }
+
+  .snap-section.no-snap-mobile {
+    scroll-snap-align: none;
   }
 }

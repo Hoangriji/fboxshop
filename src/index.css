@@ -14,7 +14,7 @@
   --dark-color: var(--theme-bg-primary);
   
   /* Typography */
-  --font-family: 'Quicksand', sans-serif;
+  --font-family: 'Manrope', sans-serif;
   --font-size-base: 16px;
   
   /* Border radius comes from global theme tokens */
