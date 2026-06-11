@@ -561,72 +561,72 @@ const ProductsPage: React.FC = () => {
   }, [products, selectedCategory]);
 
   // Extract digital content types
-  const availableContentTypes = React.useMemo(() => {
-    if (!products || products.length === 0) return [];
-    const categoryProducts = selectedCategory === 'all' 
-      ? products 
-      : products.filter(product => product.category === selectedCategory);
+  // const availableContentTypes = React.useMemo(() => {
+  //   if (!products || products.length === 0) return [];
+  //   const categoryProducts = selectedCategory === 'all' 
+  //     ? products 
+  //     : products.filter(product => product.category === selectedCategory);
     
-    const contentTypes = new Set<string>();
-    categoryProducts.forEach(product => {
-      if (product.content_type) {
-        contentTypes.add(product.content_type);
-      }
-    });
+  //   const contentTypes = new Set<string>();
+  //   categoryProducts.forEach(product => {
+  //     if (product.content_type) {
+  //       contentTypes.add(product.content_type);
+  //     }
+  //   });
     
-    return Array.from(contentTypes).sort();
-  }, [products, selectedCategory]);
+  //   return Array.from(contentTypes).sort();
+  // }, [products, selectedCategory]);
 
-  // Extract digital format types
-  const availableFormatTypes = React.useMemo(() => {
-    if (!products || products.length === 0) return [];
-    const categoryProducts = selectedCategory === 'all' 
-      ? products 
-      : products.filter(product => product.category === selectedCategory);
+  // // Extract digital format types
+  // const availableFormatTypes = React.useMemo(() => {
+  //   if (!products || products.length === 0) return [];
+  //   const categoryProducts = selectedCategory === 'all' 
+  //     ? products 
+  //     : products.filter(product => product.category === selectedCategory);
     
-    const formatTypes = new Set<string>();
-    categoryProducts.forEach(product => {
-      if (product.format_type) {
-        formatTypes.add(product.format_type);
-      }
-    });
+  //   const formatTypes = new Set<string>();
+  //   categoryProducts.forEach(product => {
+  //     if (product.format_type) {
+  //       formatTypes.add(product.format_type);
+  //     }
+  //   });
     
-    return Array.from(formatTypes).sort();
-  }, [products, selectedCategory]);
+  //   return Array.from(formatTypes).sort();
+  // }, [products, selectedCategory]);
 
-  // Extract digital license types
-  const availableLicenseTypes = React.useMemo(() => {
-    if (!products || products.length === 0) return [];
-    const categoryProducts = selectedCategory === 'all' 
-      ? products 
-      : products.filter(product => product.category === selectedCategory);
+  // // Extract digital license types
+  // const availableLicenseTypes = React.useMemo(() => {
+  //   if (!products || products.length === 0) return [];
+  //   const categoryProducts = selectedCategory === 'all' 
+  //     ? products 
+  //     : products.filter(product => product.category === selectedCategory);
     
-    const licenseTypes = new Set<string>();
-    categoryProducts.forEach(product => {
-      if (product.license_type) {
-        licenseTypes.add(product.license_type);
-      }
-    });
+  //   const licenseTypes = new Set<string>();
+  //   categoryProducts.forEach(product => {
+  //     if (product.license_type) {
+  //       licenseTypes.add(product.license_type);
+  //     }
+  //   });
     
-    return Array.from(licenseTypes).sort();
-  }, [products, selectedCategory]);
+  //   return Array.from(licenseTypes).sort();
+  // }, [products, selectedCategory]);
 
-  // Extract digital software compatibility
-  const availableSoftwareCompatibility = React.useMemo(() => {
-    if (!products || products.length === 0) return [];
-    const categoryProducts = selectedCategory === 'all' 
-      ? products 
-      : products.filter(product => product.category === selectedCategory);
+  // // Extract digital software compatibility
+  // const availableSoftwareCompatibility = React.useMemo(() => {
+  //   if (!products || products.length === 0) return [];
+  //   const categoryProducts = selectedCategory === 'all' 
+  //     ? products 
+  //     : products.filter(product => product.category === selectedCategory);
     
-    const softwareCompat = new Set<string>();
-    categoryProducts.forEach(product => {
-      if (product.software_compatibility) {
-        product.software_compatibility.forEach(software => softwareCompat.add(software));
-      }
-    });
+  //   const softwareCompat = new Set<string>();
+  //   categoryProducts.forEach(product => {
+  //     if (product.software_compatibility) {
+  //       product.software_compatibility.forEach(software => softwareCompat.add(software));
+  //     }
+  //   });
     
-    return Array.from(softwareCompat).sort();
-  }, [products, selectedCategory]);
+  //   return Array.from(softwareCompat).sort();
+  // }, [products, selectedCategory]);
 
   // Extract other products price ranges
   const availableOtherPriceRanges = React.useMemo(() => {
@@ -1139,41 +1139,41 @@ const ProductsPage: React.FC = () => {
   };
 
   // Digital filter handlers
-  const handleContentTypeToggle = (contentType: string) => {
-    setSelectedContentTypes(prev =>
-      prev.includes(contentType)
-        ? prev.filter(c => c !== contentType)
-        : [...prev, contentType]
-    );
+  // const handleContentTypeToggle = (contentType: string) => {
+  //   setSelectedContentTypes(prev =>
+  //     prev.includes(contentType)
+  //       ? prev.filter(c => c !== contentType)
+  //       : [...prev, contentType]
+  //   );
 
-  };
+  // };
 
-  const handleFormatTypeToggle = (formatType: string) => {
-    setSelectedFormatTypes(prev =>
-      prev.includes(formatType)
-        ? prev.filter(f => f !== formatType)
-        : [...prev, formatType]
-    );
+  // const handleFormatTypeToggle = (formatType: string) => {
+  //   setSelectedFormatTypes(prev =>
+  //     prev.includes(formatType)
+  //       ? prev.filter(f => f !== formatType)
+  //       : [...prev, formatType]
+  //   );
 
-  };
+  // };
 
-  const handleLicenseTypeToggle = (licenseType: string) => {
-    setSelectedLicenseTypes(prev =>
-      prev.includes(licenseType)
-        ? prev.filter(l => l !== licenseType)
-        : [...prev, licenseType]
-    );
+  // const handleLicenseTypeToggle = (licenseType: string) => {
+  //   setSelectedLicenseTypes(prev =>
+  //     prev.includes(licenseType)
+  //       ? prev.filter(l => l !== licenseType)
+  //       : [...prev, licenseType]
+  //   );
 
-  };
+  // };
 
-  const handleSoftwareCompatibilityToggle = (software: string) => {
-    setSelectedSoftwareCompatibility(prev =>
-      prev.includes(software)
-        ? prev.filter(s => s !== software)
-        : [...prev, software]
-    );
+  // const handleSoftwareCompatibilityToggle = (software: string) => {
+  //   setSelectedSoftwareCompatibility(prev =>
+  //     prev.includes(software)
+  //       ? prev.filter(s => s !== software)
+  //       : [...prev, software]
+  //   );
 
-  };
+  // };
 
   const handleOtherPriceRangeToggle = (priceRange: string) => {
     setSelectedPriceRanges(prev =>
