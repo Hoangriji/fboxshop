@@ -3,12 +3,13 @@
 .home-page {
   position: relative;
   background: var(--theme-bg-primary);
-  height: calc(100vh - var(--header-height, 72px));
+  height: calc(100dvh - var(--header-height, 72px));
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  scroll-snap-type: y mandatory;
 }
 
 .home-page::-webkit-scrollbar {
@@ -30,6 +31,8 @@
 .home-page .snap-section {
   min-height: 100%;
   height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
 }
 
 .slide-inner {
