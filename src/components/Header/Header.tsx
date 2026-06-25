@@ -30,17 +30,23 @@ const Header: React.FC<HeaderProps> = ({
 
   // Set a CSS variable with the header height so pages can offset content accordingly
   useEffect(() => {
-    const setHeaderHeight = () => {
-      const height = headerRef.current?.offsetHeight ?? 0;
-      document.documentElement.style.setProperty('--header-height', `${height}px`);
+    const headerEl = headerRef.current;
+    if (!headerEl) return;
+
+    // Sử dụng ResizeObserver để lắng nghe mọi thay đổi kích thước thực tế của Header
+    const resizeObserver = new ResizeObserver((entries) => {
+      const height = entries[0].target.getBoundingClientRect().height;
+      if (height > 0) {
+        document.documentElement.style.setProperty('--header-height', `${height}px`);
+      }
+    });
+
+    resizeObserver.observe(headerEl);
+
+    // Cleanup function
+    return () => {
+      resizeObserver.disconnect();
     };
-
-    // initial set
-    setHeaderHeight();
-
-    // update on resize
-    window.addEventListener('resize', setHeaderHeight);
-    return () => window.removeEventListener('resize', setHeaderHeight);
   }, []);
 
   const navigationItems = [
