@@ -602,7 +602,6 @@ h1, h2, h3, h4, h5, h6,
 
 /* Scroll Snap Utilities */
 .snap-page {
-  height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;
   scroll-snap-type: y mandatory;
