@@ -69,8 +69,8 @@ const App: React.FC = () => {
   return (
     <ClickSpark>
       <div className="App">
-        <Header 
-          currentPage={currentPage} 
+        <Header
+          currentPage={currentPage}
           wishlistCount={wishlistCount}
         />
         <Routes>

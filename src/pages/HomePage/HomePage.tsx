@@ -52,12 +52,12 @@ const HomePage = () => {
 
   const heroProductIds = useMemo(
     () => config?.site?.hero_product_ids ?? [],
-    [config?.site?.hero_product_ids]
+    [config?.site?.hero_product_ids],
   );
 
   const physicalCategories = useMemo(
     () => categories.filter((category) => category.type !== "digital"),
-    [categories]
+    [categories],
   );
 
   useEffect(() => {
@@ -66,10 +66,12 @@ const HomePage = () => {
     const loadHeroProducts = async () => {
       if (heroProductIds.length > 0) {
         const selected = await ProductsService.getProductsByIds(
-          heroProductIds.slice(0, HERO_LIMIT)
+          heroProductIds.slice(0, HERO_LIMIT),
         );
         if (active) {
-          setHeroProducts(selected.filter((product) => product.type !== "digital"));
+          setHeroProducts(
+            selected.filter((product) => product.type !== "digital"),
+          );
         }
         return;
       }
@@ -114,7 +116,9 @@ const HomePage = () => {
 
   useEffect(() => {
     const container = containerRef.current;
-    const sections = Object.values(slideRefs.current).filter(Boolean) as HTMLElement[];
+    const sections = Object.values(slideRefs.current).filter(
+      Boolean,
+    ) as HTMLElement[];
     if (!sections.length) return;
 
     const observer = new IntersectionObserver(
@@ -129,7 +133,7 @@ const HomePage = () => {
           }
         });
       },
-      { threshold: 0.55, root: container }
+      { threshold: 0.55, root: container },
     );
 
     sections.forEach((section) => observer.observe(section));
@@ -141,7 +145,9 @@ const HomePage = () => {
     const container = containerRef.current;
     if (!container) return;
 
-    const parallaxNodes = Array.from(container.querySelectorAll<HTMLElement>("[data-parallax]"));
+    const parallaxNodes = Array.from(
+      container.querySelectorAll<HTMLElement>("[data-parallax]"),
+    );
     if (!parallaxNodes.length) return;
 
     let frame = 0;
@@ -168,9 +174,10 @@ const HomePage = () => {
 
   const activeHero = heroProducts[heroIndex];
   const activeIndex = SLIDES.findIndex((slide) => slide.id === activeSlide);
-  const progress = activeIndex >= 0
-    ? Math.round((activeIndex / (SLIDES.length - 1)) * 100)
-    : 0;
+  const progress =
+    activeIndex >= 0
+      ? Math.round((activeIndex / (SLIDES.length - 1)) * 100)
+      : 0;
 
   const handleCategoryClick = (categoryId: string) => {
     navigate(`/products?category=${categoryId}`);
@@ -186,7 +193,9 @@ const HomePage = () => {
 
   const handleHeroPrev = () => {
     if (heroProducts.length === 0) return;
-    setHeroIndex((prev) => (prev - 1 + heroProducts.length) % heroProducts.length);
+    setHeroIndex(
+      (prev) => (prev - 1 + heroProducts.length) % heroProducts.length,
+    );
   };
 
   const handleHeroNext = () => {
@@ -240,7 +249,9 @@ const HomePage = () => {
           className="hero-shell"
           style={
             activeHero?.images?.[0]
-              ? ({ "--hero-bg": `url(${activeHero.images[0]})` } as React.CSSProperties)
+              ? ({
+                  "--hero-bg": `url(${activeHero.images[0]})`,
+                } as React.CSSProperties)
               : undefined
           }
         >
@@ -248,9 +259,12 @@ const HomePage = () => {
           <div className="hero-inner">
             <div className="hero-copy">
               <span className="hero-eyebrow">Featured Gear</span>
-              <h1 className="hero-title">{activeHero?.name ?? "GEAR UP YOUR SETUP"}</h1>
+              <h1 className="hero-title">
+                {activeHero?.name ?? "GEAR UP YOUR SETUP"}
+              </h1>
               <p className="hero-description">
-                {activeHero?.description ?? "Khám phá bộ sưu tập gaming gear được tuyển chọn cho setup của bạn."}
+                {activeHero?.description ??
+                  "Khám phá bộ sưu tập gaming gear được tuyển chọn cho setup của bạn."}
               </p>
               <div className="hero-price">
                 {activeHero?.price_vnd
@@ -263,7 +277,9 @@ const HomePage = () => {
                   className="btn-primary hero-cta"
                   onMouseEnter={() => setHeroPaused(true)}
                   onMouseLeave={() => setHeroPaused(false)}
-                  onClick={() => activeHero && navigate(`/product/${activeHero.id}`)}
+                  onClick={() =>
+                    activeHero && navigate(`/product/${activeHero.id}`)
+                  }
                 >
                   Xem chi tiết
                 </button>
@@ -287,7 +303,11 @@ const HomePage = () => {
             </div>
           </div>
           <div className="hero-controls">
-            <button type="button" onClick={handleHeroPrev} aria-label="Previous">
+            <button
+              type="button"
+              onClick={handleHeroPrev}
+              aria-label="Previous"
+            >
               <i className="fas fa-chevron-left"></i>
             </button>
             <div className="hero-dots">
@@ -319,7 +339,9 @@ const HomePage = () => {
           <div className="slide-head">
             <span className="slide-eyebrow">Danh mục</span>
             <h2 className="slide-title">Chọn thiết bị phù hợp</h2>
-            <p className="slide-subtitle">Chạm để đi thẳng tới bộ sưu tập bạn quan tâm.</p>
+            <p className="slide-subtitle">
+              Chạm để đi thẳng tới bộ sưu tập bạn quan tâm.
+            </p>
           </div>
           <div className="categories-grid">
             {physicalCategories.map((category, index) => (
@@ -339,7 +361,9 @@ const HomePage = () => {
             ))}
           </div>
         </div>
-        <div className="slide-bg-text" data-parallax="0.2">CATEGORIES</div>
+        <div className="slide-bg-text" data-parallax="0.2">
+          CATEGORIES
+        </div>
       </section>
 
       <section
@@ -370,9 +394,10 @@ const HomePage = () => {
               <SkeletonCarousel items={4} />
             )}
           </div>
-
         </div>
-        <div className="slide-bg-text" data-parallax="0.25">PERFORMANCE</div>
+        <div className="slide-bg-text" data-parallax="0.25">
+          PERFORMANCE
+        </div>
       </section>
 
       <section
@@ -395,15 +420,17 @@ const HomePage = () => {
           <div className="about-content">
             <span className="slide-eyebrow">Về chúng tôi</span>
             <h2 className="hero-title">
-              Nơi hội tụ những <span className="highlight">Gaming Gear</span> đỉnh cao
+              Nơi hội tụ những <span className="highlight">Gaming Gear</span>{" "}
+              đỉnh cao
             </h2>
             <p>
-              <strong>Fbox Shop</strong> là điểm đến dành cho những game thủ và tech
-              enthusiasts tìm kiếm thiết bị chất lượng cao, phù hợp mọi phong cách setup.
+              <strong>Fbox Shop</strong> là điểm đến dành cho những game thủ và
+              tech enthusiasts tìm kiếm thiết bị chất lượng cao, phù hợp mọi
+              phong cách setup.
             </p>
             <p>
-              Chúng tôi tập trung vào trải nghiệm mua sắm nhanh gọn, tư vấn tận tâm và sản phẩm
-              được tuyển chọn kỹ lưỡng.
+              Chúng tôi tập trung vào trải nghiệm mua sắm nhanh gọn, tư vấn tận
+              tâm và sản phẩm được tuyển chọn kỹ lưỡng.
             </p>
             <div className="about-points">
               <div className="about-point">
@@ -421,7 +448,9 @@ const HomePage = () => {
             </div>
           </div>
         </div>
-        <div className="slide-bg-text" data-parallax="0.18">CRAFTED</div>
+        <div className="slide-bg-text" data-parallax="0.18">
+          CRAFTED
+        </div>
       </section>
 
       <section
@@ -435,7 +464,9 @@ const HomePage = () => {
           <div className="slide-head">
             <span className="slide-eyebrow">Liên hệ</span>
             <h2 className="slide-title">Liên hệ & thanh toán</h2>
-            <p className="slide-subtitle">Chọn phương thức phù hợp để được hỗ trợ nhanh nhất.</p>
+            <p className="slide-subtitle">
+              Chọn phương thức phù hợp để được hỗ trợ nhanh nhất.
+            </p>
           </div>
 
           <div className="contact-grid">
@@ -452,7 +483,9 @@ const HomePage = () => {
             <div className="contact-panel">
               <span className="contact-eyebrow">Hỗ trợ nhanh</span>
               <h3>Trao đổi và thanh toán</h3>
-              <p>Kết nối qua Zalo để được tư vấn cấu hình và chốt đơn nhanh gọn.</p>
+              <p>
+                Kết nối qua Zalo để được tư vấn cấu hình và chốt đơn nhanh gọn.
+              </p>
               <ul className="contact-list">
                 <li>Gợi ý combo phù hợp ngân sách</li>
                 <li>Thanh toán VND, xác nhận nhanh</li>

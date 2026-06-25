@@ -7,6 +7,7 @@
   width: 100%;
   background: transparent;
   padding: 0.5rem 1rem 0.75rem;
+  box-sizing: border-box;
 }
 
 .header-shell {
@@ -15,6 +16,7 @@
   border: 1px solid var(--theme-border);
   border-radius: 28px;
   box-shadow: var(--shadow-small);
+  box-sizing: border-box;
 }
 
 .header-container {
@@ -25,6 +27,7 @@
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 1.5rem;
+  box-sizing: border-box;
 }
 
 .logo-section {

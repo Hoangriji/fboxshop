@@ -3,7 +3,7 @@
 .home-page {
   position: relative;
   background: var(--theme-bg-primary);
-  height: calc(100dvh - var(--header-height, 72px));
+  height: calc(100vh - var(--header-height, 72px));
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -28,7 +28,8 @@
 }
 
 .home-page .snap-section {
-  min-height: calc(100dvh - var(--header-height, 72px));
+  min-height: 100%;
+  height: 100%;
 }
 
 .slide-inner {

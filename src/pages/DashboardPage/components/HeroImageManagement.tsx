@@ -199,7 +199,7 @@ const HeroImageManagement: React.FC = () => {
         </div>
       </div>
 
-      <div className="hero-actions">
+      <div className="hero-actions-manager">
         <button
           type="button"
           className="btn-primary"

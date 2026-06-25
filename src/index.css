@@ -12,10 +12,20 @@
   --info-color: #14b8a6;
   --light-color: var(--theme-bg-secondary);
   --dark-color: var(--theme-bg-primary);
-  
+
   /* Typography */
   --font-family: 'Manrope', sans-serif;
   --font-size-base: 16px;
-  
+
   /* Border radius comes from global theme tokens */
+}
+
+/* Ensure full height for proper scrolling */
+html, body, #root {
+  height: 100%;
+}
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
