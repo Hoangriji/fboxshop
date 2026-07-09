@@ -40,7 +40,6 @@
 .back-btn:hover {
   background: var(--accent-primary);
   color: white;
-  transform: translateY(-2px);
 }
 
 .product-detail-grid {
@@ -291,7 +290,7 @@
 }
 
 .detail-messenger-btn:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.02);
+  transform: scale(1.03);
   box-shadow:
     inset -10px -10px 20px rgba(0, 0, 0, 0.6),
     inset 8px 8px 16px rgba(255, 255, 255, 0.25),
@@ -300,16 +299,16 @@
 }
 
 .detail-messenger-btn:active:not(:disabled) {
-  transform: translateY(-1px) scale(1.01);
+  transform: scale(1.01);
   box-shadow:
     inset -6px -6px 12px rgba(0, 0, 0, 0.4),
     inset 4px 4px 8px rgba(255, 255, 255, 0.15),
     0 4px 15px rgba(0, 0, 0, 0.3),
-    0 0 15px var(--accent-glow);
+    0 0 15px var(--accent-glow);  
 }
 
 /* Discord Button */
-.detail-discord-btn {
+/* .detail-discord-btn {
   background: linear-gradient(135deg, #5865f2, #7289da);
   color: white;
   border: none;
@@ -347,9 +346,8 @@
 }
 
 .detail-discord-btn:hover:not(:disabled) {
-  transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(88, 101, 242, 0.5);
-}
+} */
 
 /* Disabled state */
 .detail-messenger-btn:disabled {

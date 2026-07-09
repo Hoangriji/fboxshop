@@ -2,7 +2,6 @@
   min-height: 100vh;
   background: var(--theme-bg-primary);
   padding: 2rem 0;
-  padding-top: calc(var(--header-height, 80px));
 }
 
 .wishlist-page-container {
@@ -11,9 +10,10 @@
   padding: 0 2rem;
 }
 
-.page-header {
+.wishlist-page .page-header {
   text-align: center;
-  margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .page-header h1 {

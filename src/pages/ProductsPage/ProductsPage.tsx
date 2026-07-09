@@ -2218,7 +2218,7 @@ const ProductsPage: React.FC = () => {
                       <span>Xóa tìm kiếm</span>
                     </button>
                   )}
-                  <button 
+                  {/* <button 
                     className="btn-clear-filters"
                     onClick={() => {
                       setSelectedCategory('all');
@@ -2227,7 +2227,7 @@ const ProductsPage: React.FC = () => {
                   >
                     <i className="fas fa-filter"></i>
                     <span>Xóa tất cả bộ lọc</span>
-                  </button>
+                  </button> */}
                 </div>
               </div>
             </div>

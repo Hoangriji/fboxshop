@@ -1,6 +1,5 @@
 /* Contact Page Styles */
 .contact-page {
-  padding-top: 80px;
   min-height: 100vh;
   background: var(--theme-background);
 }
@@ -14,7 +13,6 @@
 /* Page Header */
 .page-header {
   text-align: center;
-  margin-bottom: 4rem;
   padding: 3rem 0;
 }
 

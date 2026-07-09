@@ -69,7 +69,6 @@
 
 /* Hover Effects */
 .badge:hover {
-  transform: translateY(-1px);
   filter: brightness(1.1);
 }
 

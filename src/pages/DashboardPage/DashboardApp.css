@@ -235,12 +235,10 @@
 }
 
 .logout-btn:hover {
-  transform: translateY(-2px);
   background: #dc2626;
 }
 
 .logout-btn:active {
-  transform: translateY(0);
 }
 
 /* Dashboard specific overrides */
@@ -976,7 +974,6 @@
 }
 
 .dashboard-layout .stat-card:hover {
-  transform: translateY(-3px);
   border-color: rgba(var(--accent-rgb), 0.3);
 }
 
@@ -1084,15 +1081,13 @@
   gap: 0.5rem;
 }
 
-.dashboard-layout .btn-primary:hover, 
+.dashboard-layout .btn-primary:hover,
 .dashboard-layout .action-btn:hover {
-  transform: translateY(-2px);
   background: #0ea5e9;
 }
 
-.dashboard-layout .btn-primary:active, 
+.dashboard-layout .btn-primary:active,
 .dashboard-layout .action-btn:active {
-  transform: translateY(-1px);
 }
 
 /* Action Buttons Grid */
@@ -1735,7 +1730,6 @@
 .products-management .btn-edit:hover {
   background: var(--accent-primary);
   color: white;
-  transform: translateY(-2px);
 }
 
 .products-management .btn-delete {
@@ -1747,7 +1741,6 @@
 .products-management .btn-delete:hover {
   background: #ef4444;
   color: white;
-  transform: translateY(-2px);
 }
 
 .products-management .table-footer {
@@ -1933,7 +1926,6 @@
   background: var(--theme-bg-tertiary);
   border-color: var(--theme-text-tertiary);
   color: var(--theme-text-primary);
-  transform: translateY(-2px);
 }
 
 .products-management .btn-bulk-delete {
@@ -1953,7 +1945,6 @@
 
 .products-management .btn-bulk-delete:hover {
   background: linear-gradient(135deg, #dc2626, #b91c1c);
-  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
@@ -2041,7 +2032,6 @@
 }
 
 .featured-management .featured-product-card:hover {
-  transform: translateY(-8px);
   border-color: var(--accent-primary);
   box-shadow: 0 12px 30px rgba(var(--accent-rgb), 0.3);
 }
@@ -2230,7 +2220,6 @@
 }
 
 .featured-management .btn-card-action:hover {
-  transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 

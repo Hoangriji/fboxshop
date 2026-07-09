@@ -1,0 +1,149 @@
+.product-slider-wrapper {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.product-slider-container {
+  position: relative;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 4rem;
+}
+
+.product-swiper {
+  padding: 1rem 0 2rem;
+}
+
+.product-swiper .swiper-slide {
+  height: auto;
+}
+
+.slider-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  background: var(--theme-bg-secondary);
+  border: 2px solid var(--theme-border);
+  border-radius: 12px;
+  color: var(--theme-text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.slider-prev {
+  left: 0;
+}
+
+.slider-next {
+  right: 0;
+}
+
+.slider-nav-btn:hover {
+  background: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.slider-nav-btn:active {
+  transform: translateY(-50%) scale(1.05);
+}
+
+.placeholder-card {
+  width: 100%;
+  height: 100%;
+  background: var(--theme-bg-secondary);
+  border: 2px dashed var(--theme-border);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  opacity: 0.7;
+}
+
+.placeholder-image {
+  width: 100%;
+  height: 280px;
+  background: linear-gradient(135deg, var(--theme-bg-tertiary), var(--theme-bg-secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.placeholder-content i {
+  font-size: 3rem;
+  color: var(--theme-text-secondary);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.placeholder-content span {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--theme-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.placeholder-info {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.placeholder-info h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--theme-text-secondary);
+  font-style: italic;
+}
+
+.placeholder-info p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--theme-text-tertiary);
+  font-style: italic;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+@media (max-width: 768px) {
+  .product-slider-container {
+    padding: 0 2.5rem;
+  }
+
+  .slider-nav-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .slider-nav-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
+  }
+
+  .placeholder-image {
+    height: 200px;
+  }
+}

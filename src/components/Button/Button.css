@@ -28,7 +28,6 @@
 }
 
 .btn-ghost:hover:not(:disabled) {
-  transform: translateY(-1px);
   border-color: var(--theme-text-primary);
   color: var(--theme-text-primary);
   background: var(--theme-bg-tertiary);

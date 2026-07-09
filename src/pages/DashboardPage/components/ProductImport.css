@@ -100,11 +100,9 @@
 .btn-select-file:hover {
   filter: brightness(1.15);
   box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.5);
-  transform: translateY(-1px);
 }
 
 .btn-select-file:active {
-  transform: translateY(0);
   filter: brightness(0.95);
 }
 
@@ -262,7 +260,6 @@
 
 .summary-item:hover {
   background: var(--theme-bg-primary);
-  transform: translateY(-2px);
 }
 
 .summary-item i {
@@ -621,8 +618,7 @@
 }
 
 .btn-import:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 
+  box-shadow:
     0 10px 30px rgba(var(--accent-rgb), 0.4),
     inset -4px -4px 10px rgba(0, 0, 0, 0.3),
     inset 4px 4px 10px rgba(255, 255, 255, 0.15);

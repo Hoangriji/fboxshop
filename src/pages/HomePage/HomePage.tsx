@@ -5,7 +5,7 @@ import { useFeaturedProducts } from "../../hooks/useFeaturedProducts";
 import { useSiteConfig } from "../../hooks/useSiteConfig";
 import { useCategories } from "../../hooks/useCategories";
 import { ProductsService } from "../../services/firebaseService";
-import ProductCarousel from "../../components/ProductCarousel/ProductCarousel";
+import ProductSlider from "../../components/ProductSlider/ProductSlider";
 import { SkeletonCarousel } from "../../components/Skeleton";
 import Button from "../../components/Button";
 import { openZaloImmediate } from "../../utils/zaloHelper";
@@ -36,6 +36,8 @@ const HomePage = () => {
   const [heroPaused, setHeroPaused] = useState(false);
   const [activeSlide, setActiveSlide] = useState("hero");
   const [railOpen, setRailOpen] = useState(false);
+  const [displayIndex, setDisplayIndex] = useState(0);
+  const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
     const previousHtmlOverflow = document.documentElement.style.overflow;
@@ -101,11 +103,22 @@ const HomePage = () => {
   }, [heroIndex, heroProducts]);
 
   useEffect(() => {
+    if (heroIndex !== displayIndex) {
+      setIsFading(true);
+      const timeout = setTimeout(() => {
+        setDisplayIndex(heroIndex);
+        setIsFading(false);
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [heroIndex, displayIndex]);
+
+  useEffect(() => {
     if (heroPaused || heroProducts.length <= 1) return;
 
     heroTimerRef.current = window.setTimeout(() => {
       setHeroIndex((prev) => (prev + 1) % heroProducts.length);
-    }, 3000);
+    }, 5000);
 
     return () => {
       if (heroTimerRef.current) {
@@ -192,14 +205,14 @@ const HomePage = () => {
   };
 
   const handleHeroPrev = () => {
-    if (heroProducts.length === 0) return;
+    if (heroProducts.length === 0 || isFading) return;
     setHeroIndex(
       (prev) => (prev - 1 + heroProducts.length) % heroProducts.length,
     );
   };
 
   const handleHeroNext = () => {
-    if (heroProducts.length === 0) return;
+    if (heroProducts.length === 0 || isFading) return;
     setHeroIndex((prev) => (prev + 1) % heroProducts.length);
   };
 
@@ -250,25 +263,23 @@ const HomePage = () => {
           style={
             activeHero?.images?.[0]
               ? ({
-                  "--hero-bg": `url(${activeHero.images[0]})`,
+                  "--hero-bg": `url(${activeHero.images[1]})`,
                 } as React.CSSProperties)
               : undefined
           }
         >
           <div className="hero-backdrop"></div>
           <div className="hero-inner">
-            <div className="hero-copy">
+            <div className={`hero-copy ${isFading ? "fade-out" : ""}`}>
               <span className="hero-eyebrow">Featured Gear</span>
               <h1 className="hero-title">
-                {activeHero?.name ?? "GEAR UP YOUR SETUP"}
+                {heroProducts[displayIndex]?.name
+                  ? heroProducts[displayIndex].name.split("(")[0].trim()
+                  : "GEAR UP YOUR SETUP"}
               </h1>
-              <p className="hero-description">
-                {activeHero?.description ??
-                  "Khám phá bộ sưu tập gaming gear được tuyển chọn cho setup của bạn."}
-              </p>
               <div className="hero-price">
-                {activeHero?.price_vnd
-                  ? `${activeHero.price_vnd.toLocaleString("vi-VN")}₫`
+                {heroProducts[displayIndex]?.price_vnd
+                  ? `${heroProducts[displayIndex].price_vnd.toLocaleString("vi-VN")}₫`
                   : ""}
               </div>
               <div className="hero-actions">
@@ -278,7 +289,8 @@ const HomePage = () => {
                   onMouseEnter={() => setHeroPaused(true)}
                   onMouseLeave={() => setHeroPaused(false)}
                   onClick={() =>
-                    activeHero && navigate(`/product/${activeHero.id}`)
+                    heroProducts[displayIndex] &&
+                    navigate(`/product/${heroProducts[displayIndex].id}`)
                   }
                 >
                   Xem chi tiết
@@ -294,8 +306,12 @@ const HomePage = () => {
             </div>
             <div className="hero-media">
               <div className="hero-card">
-                {activeHero?.images?.[0] ? (
-                  <img src={activeHero.images[0]} alt={activeHero.name} />
+                {heroProducts[displayIndex]?.images?.[1] ? (
+                  <img
+                    src={heroProducts[displayIndex].images[0]}
+                    alt={heroProducts[displayIndex].name}
+                    className={isFading ? "fade-out" : ""}
+                  />
                 ) : (
                   <div className="hero-card-placeholder"></div>
                 )}
@@ -382,13 +398,12 @@ const HomePage = () => {
 
           <div className="featured-carousel">
             {featuredProducts.length > 0 ? (
-              <ProductCarousel
+              <ProductSlider
                 products={featuredProducts}
                 slidesPerView={4}
                 spaceBetween={24}
                 showNavigation={true}
-                showPagination={false}
-                loop={true}
+                autoplay={true}
               />
             ) : (
               <SkeletonCarousel items={4} />

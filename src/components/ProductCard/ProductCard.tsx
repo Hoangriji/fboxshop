@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { WishlistButton } from '../WishlistButton';
-import { TechButton } from '../TechButton';
 import './ProductCard.css';
 
 interface Product {
@@ -27,6 +26,19 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onViewDetails }) => {
   const [isFlipped, setIsFlipped] = useState(false);
+
+  // Helper to get product name without parentheses and "Bàn phím" prefix
+  const getDisplayName = (name: string) => {
+    let displayName = name;
+    const parenIndex = displayName.indexOf('(');
+    if (parenIndex !== -1) {
+      displayName = displayName.substring(0, parenIndex).trim();
+    }
+    if (displayName.toLowerCase().startsWith('bàn phím')) {
+      displayName = displayName.substring('bàn phím'.length).trim();
+    }
+    return displayName;
+  };
 
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.wishlist-btn') || 
@@ -85,7 +97,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onViewDetails
             </div>
 
             <div className="card-title-container">
-              <h3 className="card-title">{product.name}</h3>
+              <h3 className="card-title">{getDisplayName(product.name)}</h3>
             </div>
 
             {/* <div className="card-description-container">
@@ -104,14 +116,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onViewDetails
               </span>
             </div>
 
-            <TechButton
-              variant="primary"
+            <button
+              type="button"
               className="quick-view-btn"
               onClick={handleQuickViewClick}
-              icon={<i className="fas fa-info-circle" style={{ fontSize: '16px', color: 'var(--theme-bg-primary)' }}></i>}
+              title="Xem thông số kỹ thuật"
             >
-              Xem nhanh thông số
-            </TechButton>
+              <i className="fas fa-search"></i>
+              <span>Xem nhanh thông số</span>
+            </button>
           </div>
         </div>
 

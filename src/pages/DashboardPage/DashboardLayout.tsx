@@ -23,6 +23,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     { name: 'Quản lý sản phẩm', href: '/dashboard/products', icon: <i className="fa-solid fa-boxes-stacked"></i> },
     { name: 'Quản lý đơn hàng', href: '/dashboard/orders', icon: <i className="fa-solid fa-receipt"></i> },
     { name: 'Nhập sản phẩm', href: '/dashboard/import', icon: <i className="fa-solid fa-file-import"></i> },
+    { name: 'Thêm keyboard Akko', href: '/dashboard/akko-keyboard-update', icon: <i className="fa-solid fa-keyboard"></i> },
     { name: 'Sản phẩm nổi bật', href: '/dashboard/featured', icon: <i className="fa-solid fa-star"></i> },
     { name: 'Hình nền Hero', href: '/dashboard/hero-image', icon: <i className="fa-solid fa-image"></i> },
   ];

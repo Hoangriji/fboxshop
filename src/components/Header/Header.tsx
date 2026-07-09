@@ -94,7 +94,7 @@ const Header: React.FC<HeaderProps> = ({
           product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
           product.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
         )
-        .slice(0, 5); // Limit to 5 suggestions
+        .slice(0, 4); // Limit to 4 suggestions
       setFilteredProducts(filtered);
       setShowSuggestions(filtered.length > 0);
     } else {
@@ -102,6 +102,19 @@ const Header: React.FC<HeaderProps> = ({
       setShowSuggestions(false);
     }
   }, [searchQuery, products]);
+
+  // Helper to get product name without parentheses and "Bàn phím" prefix (for search suggestions only)
+  const getDisplayName = (name: string) => {
+    let displayName = name;
+    const parenIndex = displayName.indexOf('(');
+    if (parenIndex !== -1) {
+      displayName = displayName.substring(0, parenIndex).trim();
+    }
+    if (displayName.toLowerCase().startsWith('bàn phím')) {
+      displayName = displayName.substring('bàn phím'.length).trim();
+    }
+    return displayName;
+  };
 
   // Close suggestions on Escape
   useEffect(() => {
@@ -197,7 +210,7 @@ const Header: React.FC<HeaderProps> = ({
                         <img src={product.images[0]} alt={product.name} />
                       </div>
                       <div className="suggestion-info">
-                        <div className="suggestion-name">{product.name}</div>
+                        <div className="suggestion-name">{getDisplayName(product.name)}</div>
                         <div className="suggestion-category">{product.category}</div>
                       </div>
                       <div className="suggestion-price">
@@ -235,13 +248,31 @@ const Header: React.FC<HeaderProps> = ({
                   if (searchQuery.trim().length >= 2) setShowSuggestions(true);
                 }}
                 onBlur={() => {
-                  // keep it open if there is text, otherwise close after small delay
+                  // khi blurred, ẩn suggestions ngay
+                  setShowSuggestions(false);
+                  // giữ thanh search mở nếu có text, đóng nếu trống
                   setTimeout(() => {
-                    if (searchQuery.trim() === '') setSearchOpen(false);
+                    if (inputRef.current?.value.trim() === '') {
+                      setSearchOpen(false);
+                    }
                   }, 100);
                 }}
               />
-              
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="mobile-search-clear"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setShowSuggestions(false);
+                    inputRef.current?.focus();
+                  }}
+                  title="Xóa"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              )}
+
               {/* Mobile Search Suggestions */}
               {showSuggestions && filteredProducts.length > 0 && searchOpen && (
                 <div className="search-suggestions mobile-suggestions">
@@ -256,7 +287,7 @@ const Header: React.FC<HeaderProps> = ({
                         <img src={product.images[0]} alt={product.name} />
                       </div>
                       <div className="suggestion-info">
-                        <div className="suggestion-name">{product.name}</div>
+                        <div className="suggestion-name">{getDisplayName(product.name)}</div>
                         <div className="suggestion-category">{product.category}</div>
                       </div>
                       <div className="suggestion-price">

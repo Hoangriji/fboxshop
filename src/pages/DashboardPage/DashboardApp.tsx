@@ -15,6 +15,7 @@ const OrderManagement = lazy(() => import('./components/OrderManagement.tsx'));
 const FeaturedManagement = lazy(() => import('./components/FeaturedManagement.tsx'));
 const HeroImageManagement = lazy(() => import('./components/HeroImageManagement.tsx'));
 const ProductImport = lazy(() => import('./components/ProductImport.tsx'));
+const AkkoKeyboardUpdater = lazy(() => import('./components/AkkoKeyboardUpdater.tsx'));
 
 // Loading fallback for dashboard components
 const DashboardLoader = () => (
@@ -93,6 +94,11 @@ const DashboardRoutes: React.FC = () => {
                 <Route path="import" element={
                   <DashboardLayout>
                     <ProductImport />
+                  </DashboardLayout>
+                } />
+                <Route path="akko-keyboard-update" element={
+                  <DashboardLayout>
+                    <AkkoKeyboardUpdater />
                   </DashboardLayout>
                 } />
                 <Route path="*" element={<Navigate to="/dashboard/overview" replace />} />
