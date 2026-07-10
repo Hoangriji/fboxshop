@@ -258,17 +258,14 @@ const HomePage = () => {
           slideRefs.current.hero = el;
         }}
       >
-        <div
-          className="hero-shell"
-          style={
-            activeHero?.images?.[0]
-              ? ({
-                  "--hero-bg": `url(${activeHero.images[1]})`,
-                } as React.CSSProperties)
-              : undefined
-          }
-        >
-          <div className="hero-backdrop"></div>
+        <div className="hero-shell">
+          <div className="hero-backdrop">
+            <img
+              src={heroProducts[displayIndex]?.images?.[1]}
+              alt=""
+              className={`hero-bg-image ${isFading ? "fade-out" : ""}`}
+            />
+          </div>
           <div className="hero-inner">
             <div className={`hero-copy ${isFading ? "fade-out" : ""}`}>
               <span className="hero-eyebrow">Featured Gear</span>
@@ -306,7 +303,7 @@ const HomePage = () => {
             </div>
             <div className="hero-media">
               <div className="hero-card">
-                {heroProducts[displayIndex]?.images?.[1] ? (
+                {heroProducts[displayIndex]?.images?.[0] ? (
                   <img
                     src={heroProducts[displayIndex].images[0]}
                     alt={heroProducts[displayIndex].name}

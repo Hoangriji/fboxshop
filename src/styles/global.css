@@ -175,43 +175,71 @@ body {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
 }
 
-/* Button Styles */
+/* Button Styles - Wave Animation */
 .btn-primary {
+  position: relative;
   padding: 12px 26px;
   font-size: 12px;
   font-weight: 600;
   color: #ffffff;
-  background: var(--theme-text-primary);
-  border: 1px solid var(--theme-text-primary);
-  border-radius: 999px;
+  background: black;
+  border: 2px solid black;
+  border-radius: 12px;
   cursor: pointer;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   font-family: var(--font-family);
-  box-shadow: 0 12px 22px rgba(17, 24, 39, 0.18);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+  overflow: hidden;
+  transition: color 0.8s ease-in-out;
+  z-index: 1;
+}
+
+/* Wave elements */
+.btn-primary::before,
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: white;
+  transform: scaleX(0);
+  transition: transform 0.8s ease-in-out;
+  z-index: -1;
+}
+
+/* Left wave */
+.btn-primary::before {
+  left: 0;
+  transform-origin: left;
+  border-top-right-radius: 9999px;
+  border-bottom-right-radius: 9999px;
+}
+
+/* Right wave */
+.btn-primary::after {
+  right: 0;
+  transform-origin: right;
+  border-top-left-radius: 9999px;
+  border-bottom-left-radius: 9999px;
 }
 
 /* Enhanced dark theme primary button */
 :root:not(.light-theme) .btn-primary {
-  box-shadow:
-    inset -8px -8px 16px rgba(0, 0, 0, 0.5),
-    inset 6px 6px 12px rgba(255, 255, 255, 0.2),
-    0 8px 25px rgba(0, 0, 0, 0.4),
-    0 0 20px var(--accent-glow);
+  background: var(--theme-text-primary);
+  border: 2px solid var(--theme-text-primary);
+  color: #ffffff;
 }
 
+/* Hover: Expand waves */
+.btn-primary:hover:not(:disabled)::before,
+.btn-primary:hover:not(:disabled)::after {
+  transform: scaleX(1);
+}
+
+/* Text color change on hover */
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 16px 28px rgba(17, 24, 39, 0.22);
-}
-
-/* Enhanced dark theme primary button hover */
-:root:not(.light-theme) .btn-primary:hover:not(:disabled) {
-  box-shadow: 
-    inset -10px -10px 20px rgba(0, 0, 0, 0.6), 
-    inset 8px 8px 16px rgba(255, 255, 255, 0.25), 
-    0 15px 35px rgba(0, 0, 0, 0.5),
-    0 0 35px var(--accent-glow);
+  color: black;
 }
 
 .btn-primary:active:not(:disabled) {
@@ -223,49 +251,76 @@ body {
   cursor: not-allowed;
 }
 
+/* Button Styles - Wave Animation (Black Outline) */
 .btn-secondary {
+  position: relative;
   padding: 12px 26px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--theme-text-primary);
+  color: black;
   background: transparent;
-  border: 1px solid var(--theme-border);
-  border-radius: 999px;
+  border: 2px solid black;
+  border-radius: 12px;
   cursor: pointer;
-  font-family: var(--font-family);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  box-shadow: none;
-  transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+  font-family: var(--font-family);
+  overflow: hidden;
+  transition: color 0.8s ease-in-out;
+  z-index: 1;
+}
+
+/* Wave elements */
+.btn-secondary::before,
+.btn-secondary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: black;
+  transform: scaleX(0);
+  transition: transform 0.8s ease-in-out;
+  z-index: -1;
+}
+
+/* Left wave */
+.btn-secondary::before {
+  left: 0;
+  transform-origin: left;
+  border-top-right-radius: 9999px;
+  border-bottom-right-radius: 9999px;
+}
+
+/* Right wave */
+.btn-secondary::after {
+  right: 0;
+  transform-origin: right;
+  border-top-left-radius: 9999px;
+  border-bottom-left-radius: 9999px;
 }
 
 /* Enhanced dark theme secondary button */
 :root:not(.light-theme) .btn-secondary {
-  color: #c4c9d4;
-  background: rgba(30, 30, 46, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    inset -8px -8px 16px rgba(0, 0, 0, 0.6),
-    inset 6px 6px 12px rgba(255, 255, 255, 0.08),
-    0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-.btn-secondary:hover:not(:disabled) {
   color: var(--theme-text-primary);
-  border-color: var(--theme-text-primary);
-  background: var(--theme-bg-tertiary);
-  box-shadow: none;
+  background: transparent;
+  border: 2px solid var(--theme-text-primary);
 }
 
-/* Enhanced dark theme secondary button hover */
-:root:not(.light-theme) .btn-secondary:hover:not(:disabled) {
-  color: var(--accent-primary);
-  border-color: var(--accent-primary);
-  box-shadow: 
-    inset -10px -10px 20px rgba(0, 0, 0, 0.7), 
-    inset 8px 8px 16px rgba(255, 255, 255, 0.12), 
-    0 8px 25px rgba(0, 0, 0, 0.4),
-    0 0 20px var(--accent-glow);
+:root:not(.light-theme) .btn-secondary::before,
+:root:not(.light-theme) .btn-secondary::after {
+  background-color: var(--theme-text-primary);
+}
+
+/* Hover: Expand waves */
+.btn-secondary:hover:not(:disabled)::before,
+.btn-secondary:hover:not(:disabled)::after {
+  transform: scaleX(1);
+}
+
+/* Text color change on hover */
+.btn-secondary:hover:not(:disabled) {
+  color: white;
 }
 
 .btn-secondary:active:not(:disabled) {
@@ -563,7 +618,7 @@ h1, h2, h3, h4, h5, h6,
 
 .btn-primary {
   background: var(--theme-text-primary);
-  border: 1px solid var(--theme-text-primary);
+  border: 2px solid var(--theme-text-primary);
   box-shadow: 0 12px 22px rgba(17, 24, 39, 0.18);
   color: #ffffff;
   letter-spacing: 0.16em;
@@ -572,22 +627,6 @@ h1, h2, h3, h4, h5, h6,
 
 .btn-primary:hover:not(:disabled) {
   box-shadow: 0 16px 28px rgba(17, 24, 39, 0.22);
-}
-
-.btn-secondary {
-  background: transparent;
-  border: 1px solid var(--theme-border);
-  color: var(--theme-text-primary);
-  box-shadow: none;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  border-color: var(--theme-text-primary);
-  color: var(--theme-text-primary);
-  box-shadow: none;
-  background: var(--theme-bg-tertiary);
 }
 
 .btn-icon {
