@@ -185,7 +185,6 @@ const HomePage = () => {
     };
   }, []);
 
-  const activeHero = heroProducts[heroIndex];
   const activeIndex = SLIDES.findIndex((slide) => slide.id === activeSlide);
   const progress =
     activeIndex >= 0
