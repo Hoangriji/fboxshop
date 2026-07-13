@@ -53,7 +53,7 @@ const ContactPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="contact-method facebook">
+            <div className="contact-method zalo">
               <div className="method-icon">
                 <i className="fas fa-comments"></i>
               </div>

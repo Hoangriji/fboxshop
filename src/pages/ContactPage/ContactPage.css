@@ -57,7 +57,7 @@
 
 .contact-method {
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--dark-primary);
   border-radius: 20px;
   padding: 2.5rem;
   display: flex;
@@ -79,12 +79,8 @@
   transition: opacity 0.3s ease;
 }
 
-.contact-method.facebook::before {
+.contact-method.zalo::before {
   background: linear-gradient(135deg, rgba(24, 119, 242, 0.1) 0%, transparent 100%);
-}
-
-.contact-method.discord::before {
-  background: linear-gradient(135deg, rgba(88, 101, 242, 0.1) 0%, transparent 100%);
 }
 
 .contact-method:hover::before {
@@ -106,14 +102,9 @@
   transition: all 0.3s ease;
 }
 
-.contact-method.facebook .method-icon {
+.contact-method.zalo .method-icon {
   background: linear-gradient(135deg, #1877f2, #42a5f5);
   box-shadow: 0 10px 30px rgba(24, 119, 242, 0.3);
-}
-
-.contact-method.discord .method-icon {
-  background: linear-gradient(135deg, #5865f2, #7289da);
-  box-shadow: 0 10px 30px rgba(88, 101, 242, 0.3);
 }
 
 .contact-method:hover .method-icon {
@@ -175,9 +166,9 @@
 .info-section,
 .faq-section {
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--dark-primary);
   border-radius: 20px;
-  padding: 2.5rem;
+  padding: 1.5rem;
 }
 
 .info-section h3,
@@ -206,6 +197,10 @@
   display: flex;
   align-items: flex-start;
   gap: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(133, 133, 133, 0.733);
+  border-radius: 12px;
+  padding: 0.5rem;
 }
 
 .info-item i {
@@ -237,16 +232,10 @@
 }
 
 .faq-item {
-  padding: 1.5rem;
+  padding: 1rem;
   background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(133, 133, 133, 0.733);
   border-radius: 12px;
-  transition: all 0.3s ease;
-}
-
-.faq-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(99, 102, 241, 0.3);
 }
 
 .faq-item h4 {
