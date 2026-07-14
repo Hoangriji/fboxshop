@@ -275,7 +275,7 @@
 }
 
 :root:not(.light-theme) .filter-btn {
-  color: #c4c9d4;
+  color: var(--dark-text-primary);
   background: rgba(30, 30, 46, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow:
@@ -286,7 +286,7 @@
 
 /* Filter Button - Hover State (like btn-secondary:hover) */
 .filter-btn:hover {
-  color: var(--theme-text-primary);
+  color: var(--dark-text-primary);
   border-color: var(--accent-border);
   box-shadow: 
     inset -8px -8px 16px var(--theme-shadow-dark), 
@@ -295,8 +295,9 @@
 }
 
 :root:not(.light-theme) .filter-btn:hover {
-  color: var(--accent-primary);
+  color: var(--dark-text-primary);
   border-color: var(--accent-primary);
+  background: var(--accent-primary);
   box-shadow:
     inset -10px -10px 20px rgba(0, 0, 0, 0.7),
     inset 8px 8px 16px rgba(255, 255, 255, 0.12),
