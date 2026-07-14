@@ -34,10 +34,11 @@ const Footer: React.FC = () => {
         </div>
 
         <nav className="footer-links">
-          <a href="/">Trang Chủ</a>
-          <a href="/products">Sản Phẩm</a>
-          <a href="/wishlist">Yêu Thích</a>
-          <a href="/contact">Liên Hệ</a>
+          <div className="footer-links-title">Liên Kết</div>
+          <a href="/"><i className="fa-solid fa-arrow-right"></i>Trang Chủ</a>
+          <a href="/products"><i className="fa-solid fa-arrow-right"></i>Sản Phẩm</a>
+          <a href="/wishlist"><i className="fa-solid fa-arrow-right"></i>Yêu Thích</a>
+          <a href="/contact"><i className="fa-solid fa-arrow-right"></i>Liên Hệ</a>
         </nav>
 
         <div className="footer-meta">
