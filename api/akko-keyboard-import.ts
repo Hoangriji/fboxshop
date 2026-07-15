@@ -206,9 +206,10 @@ const parseListingProducts = (html: string): ListingProduct[] => {
 };
 
 const parseProductDetail = async (listing: ListingProduct): Promise<AkkoProductPayload> => {
+  // 1. TẢI HTML VÀ PARSE DỮ LIỆU CƠ BẢN TRƯỚC (Rất quan trọng, phải có cái này mới có specs)
   const html = await fetchText(listing.url);
   const schemaProduct = extractSchemaProduct(html);
-  const specs = extractSpecs(html);
+  const specs = extractSpecs(html); 
 
   const shortDescription = extractShortDescription(html);
   const schemaName = typeof schemaProduct?.name === 'string' ? decodeHtmlEntities(schemaProduct.name) : '';
@@ -223,20 +224,33 @@ const parseProductDetail = async (listing: ListingProduct): Promise<AkkoProductP
 
   const stock_status = extractStockStatus(schemaProduct) ?? listing.stockStatus;
   const images = extractImages(html, schemaProduct, listing.thumbnail);
-  const connection_types = extractConnectionTypes(specs);
-  const compatibility = extractCompatibility(specs);
-  const led_type = findSpecValue(specs, ['LED']) ?? '';
-  const form_factor = findSpecValue(specs, ['Layout', 'Form Factor']) ?? '';
-  const features = buildFeatures(specs, name);
-  const tags = buildTags(name, specs);
   const sku = extractSku(html, schemaProduct);
   const review_count = extractReviewCount(schemaProduct);
 
+  // 2. TRÍCH XUẤT DỮ LIỆU THÔ TỪ SPECS VỪA LẤY ĐƯỢC
+  const raw_connection_types = extractConnectionTypes(specs);
+  const raw_compatibility = extractCompatibility(specs);
+  const raw_led_type = findSpecValue(specs, ['LED']) ?? '';
+  const raw_form_factor = findSpecValue(specs, ['Layout', 'Form Factor']) ?? '';
+  const raw_brand = 'AKKO'; 
+
+  // 3. ĐƯA VÀO BỘ CHUẨN HÓA (Xóa rác)
+  const connection_types = normalizeConnections(raw_connection_types);
+  const compatibility = normalizeCompatibility(raw_compatibility);
+  const led_type = normalizeLed(raw_led_type);
+  const form_factor = normalizeFormFactor(raw_form_factor);
+  const brand = normalizeBrand(raw_brand);
+
+  // 4. BUILD CÁC TRƯỜNG CÒN LẠI (Sử dụng dữ liệu ĐÃ CHUẨN HÓA để build mô tả)
+  const features = buildFeatures(specs, name);
+  const tags = buildTags(name, specs);
   const description = buildDescription(shortDescription, features, specs, connection_types, led_type);
+  
   const discount = normalizedOriginal > price_vnd
     ? Math.round(((normalizedOriginal - price_vnd) / normalizedOriginal) * 100)
     : 0;
 
+  // 5. TRẢ VỀ PAYLOAD SẠCH SẼ 100%
   return {
     name,
     description,
@@ -250,11 +264,11 @@ const parseProductDetail = async (listing: ListingProduct): Promise<AkkoProductP
     type: 'physical',
     stock_status,
     featured: false,
-    brand: 'AKKO',
-    connection_types,
-    compatibility,
-    form_factor,
-    led_type,
+    brand,              // Đã chuẩn hóa: "AKKO"
+    connection_types,   // Đã chuẩn hóa: Lọc hết Mạch Xuôi, gộp 2.4GHz
+    compatibility,      // Đã chuẩn hóa: macOS, Windows...
+    form_factor,        // Đã chuẩn hóa: Full-size, 75%...
+    led_type,           // Đã chuẩn hóa: RGB, Không LED...
     features,
     specs,
     review_count,
@@ -709,4 +723,73 @@ const mapWithConcurrency = async <T, R>(
 
   await Promise.all(workers);
   return results;
+};
+
+// --- BỘ CHUẨN HÓA DỮ LIỆU (DATA NORMALIZER) ---
+
+const normalizeBrand = (brand: string): string => {
+  if (!brand) return 'Unknown';
+  return brand.trim().toUpperCase(); // Biến Akko, akko thành AKKO
+};
+
+const normalizeConnections = (connections: string[]): string[] => {
+  const result = new Set<string>();
+  
+  connections.forEach(conn => {
+    const lowerConn = conn.toLowerCase().trim();
+    
+    // Bỏ qua các dữ liệu rác bị phân loại nhầm
+    if (lowerConn.includes('mạch xuôi') || lowerConn.includes('mạch ngược')) return;
+
+    // Chuẩn hóa nhóm Wireless 2.4GHz
+    if (lowerConn.includes('2.4')) result.add('Wireless 2.4GHz');
+    // Chuẩn hóa nhóm Bluetooth
+    else if (lowerConn.includes('bluetooth')) result.add('Bluetooth');
+    // Chuẩn hóa nhóm Có dây (Wired/Type-C)
+    else if (lowerConn.includes('type-c') || lowerConn.includes('wired')) result.add('USB Type-C');
+    else if (lowerConn.includes('wireless')) result.add('Wireless (Tùy chọn)');
+  });
+
+  return Array.from(result);
+};
+
+const normalizeCompatibility = (compat: string[]): string[] => {
+  const result = new Set<string>();
+  
+  compat.forEach(c => {
+    const lower = c.toLowerCase().trim();
+    if (lower.includes('mac')) result.add('macOS');
+    else if (lower.includes('win')) result.add('Windows');
+    else if (lower.includes('ios')) result.add('iOS');
+    else if (lower.includes('android')) result.add('Android');
+  });
+
+  return Array.from(result);
+};
+
+const normalizeLed = (led: string): string => {
+  if (!led) return 'Không LED';
+  const lower = led.toLowerCase().trim();
+  
+  if (lower === 'no' || lower === 'no led' || lower === 'không') return 'Không LED';
+  if (lower.includes('south-facing') || lower.includes('argb')) return 'South-facing RGB';
+  if (lower.includes('north-facing')) return 'North-facing RGB';
+  if (lower === 'yes') return 'RGB';
+  
+  // Tự động viết hoa chữ cái đầu cho các trường hợp còn lại (VD: white led -> White LED)
+  return led.replace(/\b\w/g, char => char.toUpperCase());
+};
+
+const normalizeFormFactor = (formFactor: string): string => {
+  if (!formFactor) return 'Unknown';
+  const lower = formFactor.toLowerCase().trim();
+
+  if (lower.includes('104') || lower.includes('full')) return 'Full-size (104 phím)';
+  if (lower.includes('tkl') || lower.includes('87')) return 'TKL (87 phím)';
+  if (lower.includes('96') || lower.includes('100') || lower.includes('98')) return '96% / 1800 Compact';
+  if (lower.includes('75')) return '75%';
+  if (lower.includes('65')) return '65%';
+  if (lower.includes('60')) return '60%';
+
+  return formFactor;
 };
