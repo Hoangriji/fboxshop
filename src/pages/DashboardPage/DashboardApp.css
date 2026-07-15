@@ -6305,14 +6305,14 @@
 .deleting-spinner-container h3 {
   font-size: 24px;
   font-weight: 700;
-  color: var(--theme-text-primary);
+  color: var(--dark-text-primary);
   margin: 0 0 0.75rem;
   letter-spacing: 0.5px;
 }
 
 .deleting-spinner-container p {
   font-size: 15px;
-  color: var(--theme-text-secondary);
+  color: var(--dark-text-secondary);
   margin: 0;
 }
 

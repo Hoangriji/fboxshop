@@ -1,8 +1,7 @@
 .product-detail-page {
   min-height: 100vh;
   background: var(--theme-bg-primary);
-  padding: 2rem 0;
-  padding-top: calc(var(--header-height, 80px) + 2rem);
+  padding: 0 0 2rem 0;
 }
 
 .product-detail-page-container {
