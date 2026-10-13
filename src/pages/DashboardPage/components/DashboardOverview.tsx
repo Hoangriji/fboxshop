@@ -49,6 +49,7 @@ const DashboardOverview: React.FC = () => {
   });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isStockPieHovered, setIsStockPieHovered] = useState(false);
 
   // Fetch real orders from Firestore
   useEffect(() => {
@@ -535,8 +536,15 @@ const DashboardOverview: React.FC = () => {
             {stockSegments.length > 0 ? (
               <div className="stock-chart-layout">
                 <div className="donut-chart-container" style={{ width: 220, height: 220, position: 'relative', flexShrink: 0 }}>
+                  {/* Center Metric - Placed BEFORE PieChart so Tooltip naturally stacks above it */}
+                  <div className={`donut-center-metric ${isStockPieHovered ? 'is-hovered' : ''}`}>
+                    <span className="center-number">{productMetrics.totalProducts}</span>
+                    <span className="center-label">Tổng SP</span>
+                  </div>
+
                   <PieChart width={220} height={220}>
                     <Tooltip
+                      wrapperStyle={{ zIndex: 9999, pointerEvents: 'none' }}
                       content={({ active, payload }) => {
                         if (active && payload && payload.length) {
                           const data = payload[0].payload as StockSegment;
@@ -573,17 +581,14 @@ const DashboardOverview: React.FC = () => {
                       paddingAngle={4}
                       isAnimationActive={false}
                       stroke="none"
+                      onMouseEnter={() => setIsStockPieHovered(true)}
+                      onMouseLeave={() => setIsStockPieHovered(false)}
                     >
                       {stockSegments.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
                   </PieChart>
-                  {/* Center Metric */}
-                  <div className="donut-center-metric">
-                    <span className="center-number">{productMetrics.totalProducts}</span>
-                    <span className="center-label">Tổng SP</span>
-                  </div>
                 </div>
 
                 {/* Stock Legend & Detail Cards */}
