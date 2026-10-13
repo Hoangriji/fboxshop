@@ -180,7 +180,7 @@ export interface AnalyticsEvent {
 // Activity Log Types
 export interface ActivityLog {
   id: string;
-  action: 'create' | 'update' | 'delete' | 'feature' | 'unfeature';
+  action: 'create' | 'update' | 'delete' | 'feature' | 'unfeature' | 'export';
   productId: string;
   productName: string;
   timestamp: string;

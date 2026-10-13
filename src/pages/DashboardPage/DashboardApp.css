@@ -2224,6 +2224,180 @@
 }
 
 /* ========================================
+   EXPORT EXCEL BUTTONS & DROPDOWN STYLES
+   ======================================== */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.export-dropdown-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.btn-export-excel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff !important;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: var(--border-radius);
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-smooth);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.btn-export-excel:hover:not(:disabled) {
+  background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+  border-color: #34d399;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-export-excel:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-export-excel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-export-excel i {
+  font-size: 1rem;
+}
+
+.btn-export-excel .dropdown-arrow {
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+  transition: transform 0.2s ease;
+}
+
+.btn-export-excel.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.export-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 240px;
+  background: var(--theme-bg-secondary);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--border-radius-md);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  padding: 0.5rem;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  animation: slideDown 0.2s ease-out;
+  backdrop-filter: blur(12px);
+}
+
+.export-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  color: var(--theme-text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.export-menu-item i {
+  font-size: 1rem;
+  color: #10b981;
+  width: 1.25rem;
+  text-align: center;
+}
+
+.export-menu-item:hover {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.products-management .btn-bulk-export {
+  padding: 0.5rem 1.25rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: 1px solid #059669;
+  color: white;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.products-management .btn-bulk-export:hover {
+  background: linear-gradient(135deg, #34d399, #059669);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+
+.products-management .btn-bulk-export:active {
+  transform: translateY(0);
+}
+
+.export-success-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: var(--border-radius-md);
+  color: #34d399;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 1.25rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+.export-success-banner i.fa-check-circle {
+  font-size: 1.25rem;
+  color: #10b981;
+}
+
+.export-success-banner .banner-close-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 0.25rem;
+  font-size: 0.875rem;
+  transition: color 0.2s;
+}
+
+.export-success-banner .banner-close-btn:hover {
+  color: #ffffff;
+}
+
+/* ========================================
    END PRODUCTS MANAGEMENT STYLES
    ======================================== */
 

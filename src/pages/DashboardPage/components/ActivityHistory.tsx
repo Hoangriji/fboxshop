@@ -11,6 +11,7 @@ const ACTION_STYLES: Record<string, { color: string; icon: string; text: string 
   delete: { color: '#ef4444', icon: 'fa-trash-alt', text: 'Xóa' },
   feature: { color: '#f59e0b', icon: 'fa-star', text: 'Đặt nổi bật' },
   unfeature: { color: '#6b7280', icon: 'fa-star-half-alt', text: 'Bỏ nổi bật' },
+  export: { color: '#10b981', icon: 'fa-file-excel', text: 'Xuất Excel' },
 };
 const DEFAULT_STYLE = { color: '#a855f7', icon: 'fa-info-circle', text: 'Khác' };
 const getStyle = (action: string) => ACTION_STYLES[action] || DEFAULT_STYLE;

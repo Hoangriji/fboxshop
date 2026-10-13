@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
-import { parseExcelFile, generateExcelTemplate, exportFailedRows, type ParsedProduct } from '../../../utils/excelHelper';
+import { parseExcelFile, generateExcelTemplate, exportFailedRows, exportProductsToExcel, type ParsedProduct } from '../../../utils/excelHelper';
 import { validateProducts, checkDuplicateSKUs, getValidProducts, getInvalidProducts, getValidationSummary, toCleanProduct } from '../../../utils/productImportValidation';
 import { ProductsService } from '../../../services/firebaseService';
+import { ActivityLogsService } from '../../../services/activityLogsService';
+import { useProducts } from '../../../hooks/useProducts';
 import { ConfirmationModal } from '../../../components/ConfirmationModal';
 import './ProductImport.css';
 
 const ProductImport: React.FC = () => {
+  const { products: dbProducts } = useProducts();
   const [parsedProducts, setParsedProducts] = useState<ParsedProduct[]>([]);
   const [parsing, setParsing] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [exportingDb, setExportingDb] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -143,6 +147,38 @@ const ProductImport: React.FC = () => {
     generateExcelTemplate();
   };
 
+  // Export all current DB products to Excel
+  const handleExportDbProducts = async () => {
+    if (!dbProducts || dbProducts.length === 0) {
+      setError('Cơ sở dữ liệu chưa có sản phẩm nào để xuất.');
+      return;
+    }
+
+    try {
+      setExportingDb(true);
+      setError(null);
+      exportProductsToExcel(dbProducts);
+
+      try {
+        await ActivityLogsService.addLog({
+          action: 'export',
+          productId: 'import_page_export',
+          productName: `Xuất Excel từ trang Import (${dbProducts.length} sản phẩm)`,
+          timestamp: new Date().toISOString(),
+          details: `Đã xuất ${dbProducts.length} sản phẩm hiện có ra file Excel`
+        });
+      } catch (logErr) {
+        console.warn('Could not log export activity:', logErr);
+      }
+
+      setSuccess(`Đã xuất thành công ${dbProducts.length} sản phẩm hiện có trong cơ sở dữ liệu ra file Excel!`);
+      setExportingDb(false);
+    } catch (err) {
+      setExportingDb(false);
+      setError(err instanceof Error ? err.message : 'Lỗi khi xuất sản phẩm ra file Excel.');
+    }
+  };
+
   // Export failed rows
   const handleExportFailed = () => {
     const invalidProducts = getInvalidProducts(parsedProducts);
@@ -171,14 +207,27 @@ const ProductImport: React.FC = () => {
           <i className="fas fa-file-import"></i>
           Nhập sản phẩm từ Excel
         </h2>
-        <button 
-          className="btn-primary" 
-          onClick={handleDownloadTemplate}
-          disabled={importing}
-        >
-          <i className="fas fa-download"></i>
-          <span>Tải file mẫu</span>
-        </button>
+        <div className="header-actions">
+          <button 
+            type="button"
+            className="btn-export-excel"
+            onClick={handleExportDbProducts}
+            disabled={importing || exportingDb}
+            title="Xuất toàn bộ danh sách sản phẩm hiện có trong cơ sở dữ liệu ra file Excel"
+          >
+            <i className={exportingDb ? "fas fa-spinner fa-spin" : "fas fa-file-excel"}></i>
+            <span>{exportingDb ? 'Đang xuất...' : `Xuất SP trong DB (${dbProducts.length})`}</span>
+          </button>
+          <button 
+            type="button"
+            className="btn-primary" 
+            onClick={handleDownloadTemplate}
+            disabled={importing}
+          >
+            <i className="fas fa-download"></i>
+            <span>Tải file mẫu</span>
+          </button>
+        </div>
       </div>
 
       <p className="page-description">

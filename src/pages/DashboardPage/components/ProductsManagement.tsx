@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { useProducts } from '../../../hooks/useProducts';
 import { useCategories } from '../../../hooks/useCategories';
 import { ProductsService } from '../../../services/firebaseService';
+import { ActivityLogsService } from '../../../services/activityLogsService';
+import { exportProductsToExcel } from '../../../utils/excelHelper';
 import ProductFormModal from './ProductFormModal';
 import { ConfirmationModal } from '../../../components/ConfirmationModal/ConfirmationModal';
 import type { Product } from '../../../types';
@@ -26,6 +28,8 @@ const ProductsManagement: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
+  const [exportSuccessMessage, setExportSuccessMessage] = useState<string | null>(null);
   const [errorModal, setErrorModal] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ show: boolean; product: Product | null }>({ show: false, product: null });
   const [deleting, setDeleting] = useState(false);
@@ -37,6 +41,7 @@ const ProductsManagement: React.FC = () => {
   
   const categoryDropdownRef = React.useRef<HTMLDivElement>(null);
   const sortDropdownRef = React.useRef<HTMLDivElement>(null);
+  const exportDropdownRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let filtered = products;
@@ -94,11 +99,56 @@ const ProductsManagement: React.FC = () => {
       if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
         setSortDropdownOpen(false);
       }
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as Node)) {
+        setExportDropdownOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleExportProducts = async (productsToExport: Product[], label: string) => {
+    if (productsToExport.length === 0) {
+      setErrorModal({ show: true, message: 'Không có sản phẩm nào để xuất.' });
+      return;
+    }
+
+    try {
+      setExportDropdownOpen(false);
+      exportProductsToExcel(productsToExport);
+      
+      try {
+        await ActivityLogsService.addLog({
+          action: 'export',
+          productId: 'bulk_export',
+          productName: `Xuất Excel ${label} (${productsToExport.length} sản phẩm)`,
+          timestamp: new Date().toISOString(),
+          details: `Đã xuất ${productsToExport.length} sản phẩm ra file Excel`
+        });
+      } catch (logErr) {
+        console.warn('Could not log export activity:', logErr);
+      }
+
+      setExportSuccessMessage(`Đã xuất thành công ${productsToExport.length} sản phẩm ra file Excel!`);
+      setTimeout(() => {
+        setExportSuccessMessage(null);
+      }, 4000);
+    } catch (err) {
+      console.error('Export error:', err);
+      setErrorModal({
+        show: true,
+        message: err instanceof Error ? err.message : 'Có lỗi xảy ra khi xuất file Excel.'
+      });
+    }
+  };
+
+  const handleExportAll = () => handleExportProducts(products, 'toàn bộ');
+  const handleExportFiltered = () => handleExportProducts(filteredProducts, 'kết quả lọc');
+  const handleExportSelected = () => {
+    const selectedList = products.filter(p => selectedProducts.has(p.id));
+    handleExportProducts(selectedList, 'đã chọn');
+  };
 
   const handleAddProduct = () => {
     setEditingProduct(null);
@@ -275,10 +325,70 @@ const ProductsManagement: React.FC = () => {
     <div className="products-management">
       <div className="page-header">
         <h2><i className="fas fa-box"></i> Quản lý sản phẩm</h2>
-        <button className="btn-primary" onClick={handleAddProduct}>
-          <i className="fas fa-plus"></i> <span>Thêm sản phẩm mới</span>
-        </button>
+        <div className="header-actions">
+          <div className="export-dropdown-wrapper" ref={exportDropdownRef}>
+            <button
+              type="button"
+              className={`btn-export-excel ${exportDropdownOpen ? 'open' : ''}`}
+              onClick={() => setExportDropdownOpen(!exportDropdownOpen)}
+              title="Xuất file Excel danh sách sản phẩm"
+            >
+              <i className="fas fa-file-excel"></i>
+              <span>Xuất Excel</span>
+              <i className="fas fa-chevron-down dropdown-arrow"></i>
+            </button>
+            {exportDropdownOpen && (
+              <div className="export-dropdown-menu">
+                <button
+                  type="button"
+                  className="export-menu-item"
+                  onClick={handleExportAll}
+                >
+                  <i className="fas fa-database"></i>
+                  <span>Xuất tất cả ({products.length} SP)</span>
+                </button>
+                {filteredProducts.length !== products.length && (
+                  <button
+                    type="button"
+                    className="export-menu-item"
+                    onClick={handleExportFiltered}
+                  >
+                    <i className="fas fa-filter"></i>
+                    <span>Xuất kết quả lọc ({filteredProducts.length} SP)</span>
+                  </button>
+                )}
+                {selectedProducts.size > 0 && (
+                  <button
+                    type="button"
+                    className="export-menu-item"
+                    onClick={handleExportSelected}
+                  >
+                    <i className="fas fa-check-square"></i>
+                    <span>Xuất đã chọn ({selectedProducts.size} SP)</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          <button className="btn-primary" onClick={handleAddProduct}>
+            <i className="fas fa-plus"></i> <span>Thêm sản phẩm mới</span>
+          </button>
+        </div>
       </div>
+
+      {exportSuccessMessage && (
+        <div className="export-success-banner">
+          <i className="fas fa-check-circle"></i>
+          <span>{exportSuccessMessage}</span>
+          <button 
+            type="button"
+            className="banner-close-btn"
+            onClick={() => setExportSuccessMessage(null)}
+          >
+            <i className="fas fa-times"></i>
+          </button>
+        </div>
+      )}
       
       <div className="products-filters">
         
@@ -451,11 +561,20 @@ const ProductsManagement: React.FC = () => {
               <span>Đã chọn {selectedProducts.size} sản phẩm</span>
             </div>
             <div className="bulk-actions">
-              <button className="btn-deselect" onClick={handleDeselectAll}>
+              <button 
+                type="button"
+                className="btn-bulk-export" 
+                onClick={handleExportSelected}
+                title="Xuất các sản phẩm đã chọn ra file Excel"
+              >
+                <i className="fas fa-file-excel"></i>
+                <span>Xuất Excel ({selectedProducts.size})</span>
+              </button>
+              <button type="button" className="btn-deselect" onClick={handleDeselectAll}>
                 <i className="fas fa-times"></i>
                 Bỏ chọn tất cả
               </button>
-              <button className="btn-bulk-delete" onClick={handleBulkDelete}>
+              <button type="button" className="btn-bulk-delete" onClick={handleBulkDelete}>
                 <i className="fas fa-trash-alt"></i>
                 Xóa ({selectedProducts.size})
               </button>

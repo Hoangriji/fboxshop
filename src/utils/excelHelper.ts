@@ -684,6 +684,16 @@ const mapRowToProduct = (row: Record<string, unknown>, rowNumber: number): Parse
     if (!product.led_type) {
       product.led_type = product.specs['Đèn LED'] || product.specs['LED'];
     }
+    // @ts-expect-error - Custom mouse field
+    if (!product.dpi && product.specs['DPI']) {
+      // @ts-expect-error - Custom mouse field
+      product.dpi = product.specs['DPI'];
+    }
+    // @ts-expect-error - Custom mouse field
+    if (!product.sensor && product.specs['Cảm biến']) {
+      // @ts-expect-error - Custom mouse field
+      product.sensor = product.specs['Cảm biến'];
+    }
     if ((!product.connection_types || product.connection_types.length === 0) && product.specs['Kết nối']) {
       product.connection_types = parseArray(product.specs['Kết nối'], /[,\n\r;]+/);
     }
@@ -1356,3 +1366,178 @@ export const exportFailedRows = (failedProducts: ParsedProduct[]): void => {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
   XLSX.writeFile(workbook, `loi-nhap-san-pham-${timestamp}.xlsx`);
 };
+
+/**
+ * Export products from database to Excel file matching the import format.
+ * Structure of exported file is 100% compatible with parseExcelFile & validateProducts.
+ */
+export const exportProductsToExcel = (products: Product[], customFilename?: string): void => {
+  if (!products || products.length === 0) {
+    throw new Error('Danh sách sản phẩm trống, không thể xuất file Excel.');
+  }
+
+  const exportData = products.map((product) => {
+    // 1. Determine stock value
+    const parsedP = product as ParsedProduct;
+    const stockVal = typeof parsedP.stock === 'number'
+      ? parsedP.stock
+      : (product.stock_status === 'out_of_stock' ? 0 : 10);
+
+    // 2. Determine stock status text matching parseStockStatus
+    let stockStatusLabel = 'Còn hàng';
+    if (product.stock_status === 'out_of_stock') {
+      stockStatusLabel = 'Hết hàng';
+    } else if (product.stock_status === 'low_stock') {
+      stockStatusLabel = 'Sắp hết';
+    }
+
+    // 3. Format specs cleanly as Key1:Value1;Key2:Value2
+    let specsStr = '';
+    if (product.specs && typeof product.specs === 'object') {
+      specsStr = Object.entries(product.specs)
+        .filter(([k, v]) => k && v !== undefined && v !== null && String(v).trim() !== '')
+        .map(([k, v]) => `${String(k).trim()}:${String(v).trim()}`)
+        .join(';');
+    }
+
+    // 4. Clean images list (comma-separated URLs)
+    const imagesStr = Array.isArray(product.images) && product.images.length > 0
+      ? product.images.filter(Boolean).map(url => String(url).trim()).join(',')
+      : '';
+
+    // 5. Clean tags (comma-separated)
+    const tagsStr = Array.isArray(product.tags) && product.tags.length > 0
+      ? product.tags.filter(Boolean).map(tag => String(tag).trim()).join(',')
+      : '';
+
+    // 6. Clean features (semicolon-separated)
+    const featuresStr = Array.isArray(product.features) && product.features.length > 0
+      ? product.features.filter(Boolean).map(f => String(f).trim()).join(';')
+      : '';
+
+    // 7. Clean connection types & compatibility (comma-separated)
+    const connectionStr = Array.isArray(product.connection_types) && product.connection_types.length > 0
+      ? product.connection_types.filter(Boolean).map(c => String(c).trim()).join(', ')
+      : '';
+
+    const compatibilityStr = Array.isArray(product.compatibility) && product.compatibility.length > 0
+      ? product.compatibility.filter(Boolean).map(c => String(c).trim()).join(', ')
+      : '';
+
+    const useCasesStr = Array.isArray(product.use_cases) && product.use_cases.length > 0
+      ? product.use_cases.filter(Boolean).map(u => String(u).trim()).join(', ')
+      : '';
+
+    // 8. Prices: ensure valid numbers
+    const priceVnd = typeof product.price_vnd === 'number' ? product.price_vnd : (Number(product.price_vnd) || 0);
+    const originalPriceVnd = (product.original_price_vnd !== undefined && product.original_price_vnd !== null && Number(product.original_price_vnd) > 0)
+      ? Number(product.original_price_vnd)
+      : priceVnd;
+
+    return {
+      'Tên sản phẩm': product.name || '',
+      'Thương hiệu': product.brand || '',
+      'Danh mục': product.category || 'other',
+      'Danh mục con': product.subcategory || '',
+      'Loại': product.type || 'physical',
+      'Giá bán (VND)': priceVnd,
+      'Giá gốc (VND)': originalPriceVnd,
+      'Tồn kho': stockVal,
+      'Trạng thái kho': stockStatusLabel,
+      'Kích thước màn hình': product.screen_size || '',
+      'Độ phân giải': product.resolution || '',
+      'Tần số quét': product.refresh_rate || '',
+      'Tấm nền': product.panel_type || '',
+      'Thời gian phản hồi': product.response_time || '',
+      'Cổng kết nối': connectionStr,
+      'Ngàm VESA': product.vesa_mount || '',
+      'Loại bàn phím': product.form_factor || '',
+      'Đèn LED': product.led_type || '',
+      'Tương thích': compatibilityStr,
+      'Loại tai nghe': product.headset_type || '',
+      'Nhu cầu sử dụng': useCasesStr,
+      'Dung lượng': product.storage_capacity || '',
+      'Loại USB': product.usb_type || '',
+      'Loại sản phẩm phụ': product.product_type || '',
+      'Chất liệu': product.material || '',
+      'SKU': product.sku || '',
+      'Mô tả': product.description || '',
+      'Tính năng': featuresStr,
+      'Thông số kỹ thuật': specsStr,
+      'Thẻ tag': tagsStr,
+      'Nổi bật': product.featured ? 'true' : 'false',
+      'Hình ảnh': imagesStr,
+    };
+  });
+
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+
+  // Set column widths matching the 32 columns cleanly
+  worksheet['!cols'] = [
+    { wch: 40 }, // Tên sản phẩm
+    { wch: 15 }, // Thương hiệu
+    { wch: 15 }, // Danh mục
+    { wch: 15 }, // Danh mục con
+    { wch: 10 }, // Loại
+    { wch: 15 }, // Giá bán
+    { wch: 15 }, // Giá gốc
+    { wch: 10 }, // Tồn kho
+    { wch: 14 }, // Trạng thái kho
+    { wch: 20 }, // Kích thước màn hình
+    { wch: 24 }, // Độ phân giải
+    { wch: 12 }, // Tần số quét
+    { wch: 12 }, // Tấm nền
+    { wch: 18 }, // Thời gian phản hồi
+    { wch: 35 }, // Cổng kết nối
+    { wch: 16 }, // Ngàm VESA
+    { wch: 16 }, // Loại bàn phím
+    { wch: 14 }, // Đèn LED
+    { wch: 25 }, // Tương thích
+    { wch: 22 }, // Loại tai nghe
+    { wch: 25 }, // Nhu cầu sử dụng
+    { wch: 14 }, // Dung lượng
+    { wch: 18 }, // Loại USB
+    { wch: 24 }, // Loại sản phẩm phụ
+    { wch: 30 }, // Chất liệu
+    { wch: 24 }, // SKU
+    { wch: 60 }, // Mô tả
+    { wch: 65 }, // Tính năng
+    { wch: 75 }, // Thông số kỹ thuật
+    { wch: 35 }, // Thẻ tag
+    { wch: 10 }, // Nổi bật
+    { wch: 60 }, // Hình ảnh
+  ];
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh_Sach_San_Pham');
+
+  // Sheet 2: Guidelines & Categories Reference
+  const guideData = [
+    { 'Danh mục (Tiếng Việt)': 'Màn Hình', 'Mã danh mục (Category ID)': 'monitor', 'Các bộ lọc tương ứng trên web': 'Thương hiệu, Kích thước (24", 27", 32"...), Độ phân giải (FHD, 2K, 4K...), Tần số quét (60Hz, 75Hz, 144Hz...), Tấm nền (IPS, VA, OLED...), Cổng kết nối (Type-C, HDMI, DP), Tính năng màn hình', 'Ví dụ sản phẩm': 'Màn hình ASUS ProArt PA278CV, ROG Strix XG27ACS, Dell UltraSharp' },
+    { 'Danh mục (Tiếng Việt)': 'Bàn Phím', 'Mã danh mục (Category ID)': 'keyboard', 'Các bộ lọc tương ứng trên web': 'Thương hiệu (Akko, ASUS, Keychron, Logitech...), Kết nối (2.4GHz, Bluetooth, Type-C), Tương thích (Windows, MacOS), Loại bàn phím (Full-size, TKL, 75%, 65%), Đèn LED (RGB, Đơn sắc), Tiện ích', 'Ví dụ sản phẩm': 'Bàn phím cơ ASUS ROG Falchion, Keychron Q1 Pro, Akko 3084B Plus' },
+    { 'Danh mục (Tiếng Việt)': 'Chuột', 'Mã danh mục (Category ID)': 'mouse', 'Các bộ lọc tương ứng trên web': 'Thương hiệu (Logitech, Razer, ASUS, Pulsar...), Kết nối (Không dây Lightspeed, Bluetooth, Type-C), Tương thích, Đèn LED, Tiện ích (Siêu nhẹ, Cảm biến HERO...)', 'Ví dụ sản phẩm': 'Chuột Logitech G Pro X Superlight 2, ASUS ROG Harpe Ace' },
+    { 'Danh mục (Tiếng Việt)': 'Tai Nghe', 'Mã danh mục (Category ID)': 'headset', 'Các bộ lọc tương ứng trên web': 'Thương hiệu (HyperX, ASUS, Sony...), Cổng kết nối, Loại tai nghe (Over-ear chụp tai, In-ear nhét tai, True Wireless), Nhu cầu sử dụng (Gaming, Văn phòng, Nghe nhạc), Tính năng (Âm thanh 7.1, Chống ồn ANC)', 'Ví dụ sản phẩm': 'Tai nghe ASUS ROG Delta II, HyperX Cloud III Wireless' },
+    { 'Danh mục (Tiếng Việt)': 'USB & Phụ Kiện', 'Mã danh mục (Category ID)': 'usb', 'Các bộ lọc tương ứng trên web': 'Thương hiệu (Kingston, SanDisk, Samsung...), Dung lượng (32GB, 64GB, 128GB, 256GB, 1TB...), Loại USB (USB 3.2, Type-C), Tốc độ đọc, Tốc độ ghi, Loại thẻ nhớ (MicroSD, SD)', 'Ví dụ sản phẩm': 'SSD Kingston XS1000 1TB, Thẻ nhớ SanDisk Extreme Pro 128GB' },
+    { 'Danh mục (Tiếng Việt)': 'Sản Phẩm Khác', 'Mã danh mục (Category ID)': 'other', 'Các bộ lọc tương ứng trên web': 'Thương hiệu, Loại sản phẩm (Lót chuột / Mousepad, Giá treo Arm màn hình, Kê tay, Giá đỡ tai nghe), Chất liệu (Vải dệt Nano, Nhôm CNC, Da PU), Khoảng giá', 'Ví dụ sản phẩm': 'Lót chuột ASUS ROG Scabbard II, Arm Human Motion T6 Pro' },
+    { 'Danh mục (Tiếng Việt)': 'Quy tắc giá tiền', 'Mã danh mục (Category ID)': 'price_vnd', 'Các bộ lọc tương ứng trên web': 'Có thể nhập số nguyên (VD: 9890000) hoặc có dấu chấm phân cách hàng nghìn kiểu Việt Nam (VD: 9.890.000 hoặc 9.890.000đ). Hệ thống tự chuẩn hóa.', 'Ví dụ sản phẩm': '9890000 hoặc 9.890.000đ' },
+    { 'Danh mục (Tiếng Việt)': 'Giá ban đầu / Giá gốc', 'Mã danh mục (Category ID)': 'original_price_vnd', 'Các bộ lọc tương ứng trên web': 'Nếu để trống hoặc không nhập, hệ thống sẽ tự động gán giá gốc bằng giá bán hiện tại. Khi hai giá bằng nhau, web chỉ hiển thị giá bán duy nhất (không gạch ngang).', 'Ví dụ sản phẩm': 'Để trống hoặc nhập bằng Giá bán (VND)' },
+    { 'Danh mục (Tiếng Việt)': 'Quy tắc hình ảnh', 'Mã danh mục (Category ID)': 'images', 'Các bộ lọc tương ứng trên web': 'Nhiều link ảnh phân cách bằng dấu phẩy (,), dấu chấm phẩy (;) hoặc xuống dòng (Alt+Enter trong ô Excel).', 'Ví dụ sản phẩm': 'https://link1.jpg, https://link2.jpg' },
+    { 'Danh mục (Tiếng Việt)': 'Quy tắc thông số KT', 'Mã danh mục (Category ID)': 'specs', 'Các bộ lọc tương ứng trên web': 'Định dạng Tên: Giá trị; ngăn cách bằng dấu chấm phẩy (;). Dù bạn điền vào cột riêng hay cột Specs, hệ thống đều tự đồng bộ 2 chiều.', 'Ví dụ sản phẩm': 'Kích thước: 27 inch; Tấm nền: IPS; Độ tương phản: 1000:1; Tỷ lệ: 16:9' },
+  ];
+
+  const guideSheet = XLSX.utils.json_to_sheet(guideData);
+  guideSheet['!cols'] = [
+    { wch: 22 },
+    { wch: 24 },
+    { wch: 65 },
+    { wch: 45 },
+  ];
+  XLSX.utils.book_append_sheet(workbook, guideSheet, 'Huong_Dan_DanhMuc');
+
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const filename = customFilename || `danh-sach-san-pham-${dateStr}.xlsx`;
+
+  XLSX.writeFile(workbook, filename);
+};
+
