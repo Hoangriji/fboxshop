@@ -5,7 +5,8 @@ import {
   query, 
   orderBy,
   limit,
-  onSnapshot
+  onSnapshot,
+  where
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import type { ActivityLog } from '../types';
@@ -54,6 +55,21 @@ export class ActivityLogsService {
       })) as ActivityLog[];
       
       callback(logs);
+    });
+  }
+
+  // Subscribe to all logs within the last N months (real-time)
+  static subscribeToLogsSince(months: number, callback: (logs: ActivityLog[]) => void) {
+    const since = new Date();
+    since.setMonth(since.getMonth() - months);
+    const q = query(
+      this.collection,
+      where('timestamp', '>=', since.toISOString()),
+      orderBy('timestamp', 'desc')
+    );
+
+    return onSnapshot(q, (snapshot) => {
+      callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ActivityLog[]);
     });
   }
 }
