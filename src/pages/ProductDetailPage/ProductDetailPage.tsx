@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useProductDetail } from '../../hooks/useProductDetail';
-import { WishlistButton } from '../../components/WishlistButton';
-import { RelatedProducts } from '../../components/RelatedProducts';
-import { ConfirmationModal } from '../../components/ConfirmationModal';
-import { Spinner } from '../../components/Spinner';
-import { openZaloImmediate } from '../../utils/zaloHelper';
-import './ProductDetailPage.css';
+import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useProductDetail } from "../../hooks/useProductDetail";
+import { WishlistButton } from "../../components/WishlistButton";
+import { RelatedProducts } from "../../components/RelatedProducts";
+import { ConfirmationModal } from "../../components/ConfirmationModal";
+import { Spinner } from "../../components/Spinner";
+import { openZaloImmediate } from "../../utils/zaloHelper";
+import "./ProductDetailPage.css";
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,31 +19,40 @@ const ProductDetailPage: React.FC = () => {
   const currentPrice = product?.price_vnd || 0;
 
   // Calculate stock status
-  const stockStatus = product?.stock_status || 'in_stock';
+  const stockStatus = product?.stock_status || "in_stock";
 
-  // Original price
-  const originalPrice = product?.original_price_vnd;
+  // Original price (defaults to current price if missing or 0)
+  const originalPrice = (product?.original_price_vnd && product?.original_price_vnd > 0)
+    ? product?.original_price_vnd
+    : currentPrice;
+
+  // Only consider discount active when originalPrice is strictly greater than currentPrice
+  const hasDiscount = Boolean(originalPrice && currentPrice && originalPrice > currentPrice);
+  const savings = hasDiscount && originalPrice ? originalPrice - currentPrice : 0;
+  const discountPercent = hasDiscount && originalPrice
+    ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
+    : 0;
 
   // Handle contact for purchase - Copy info and show modal
   const handleZaloPurchase = async () => {
     if (!product) return;
-    
+
     // Tạo message template với thông tin sản phẩm
     const productUrl = window.location.href;
     const messageTemplate = `Tôi muốn mua sản phẩm:
 • Mã SP: ${product.id}
 • Tên: ${product.name}
-• Giá: ${currentPrice.toLocaleString('vi-VN')} VNĐ
+• Giá: ${currentPrice.toLocaleString("vi-VN")} VNĐ
 • Link: ${productUrl}`;
-    
+
     // Copy message template vào clipboard
     try {
       await navigator.clipboard.writeText(messageTemplate);
-      
+
       // Hiển thị modal confirmation
       setShowModal(true);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error("Failed to copy:", err);
       // Nếu không copy được, vẫn hiện modal để user có thể mở Zalo
       setShowModal(true);
     }
@@ -79,7 +88,10 @@ const ProductDetailPage: React.FC = () => {
         <div className="error-container">
           <i className="fas fa-exclamation-triangle"></i>
           <p>Không thể tải thông tin sản phẩm. Vui lòng thử lại!</p>
-          <button onClick={() => window.location.reload()} className="retry-button">
+          <button
+            onClick={() => window.location.reload()}
+            className="retry-button"
+          >
             <i className="fas fa-redo"></i> Thử lại
           </button>
         </div>
@@ -95,7 +107,10 @@ const ProductDetailPage: React.FC = () => {
           <i className="fas fa-box-open"></i>
           <h2>Không tìm thấy sản phẩm</h2>
           <p>Sản phẩm bạn đang tìm không tồn tại hoặc đã bị xóa.</p>
-          <button onClick={() => navigate('/products')} className="back-to-products-button">
+          <button
+            onClick={() => navigate("/products")}
+            className="back-to-products-button"
+          >
             <i className="fas fa-arrow-left"></i> Quay lại trang sản phẩm
           </button>
         </div>
@@ -116,23 +131,27 @@ const ProductDetailPage: React.FC = () => {
           {/* Product Images */}
           <div className="detail-images">
             <div className="detail-main-image">
-              <img 
-                src={product.images?.[selectedImageIndex] || product.images?.[0] || 'https://via.placeholder.com/800'} 
+              <img
+                src={
+                  product.images?.[selectedImageIndex] ||
+                  product.images?.[0] ||
+                  "https://via.placeholder.com/800"
+                }
                 alt={product.name}
               />
-              {product.discount && (
+              {hasDiscount && discountPercent > 0 && (
                 <div className="detail-discount-badge">
-                  -{product.discount}%
+                  -{discountPercent}%
                 </div>
               )}
             </div>
-            
+
             {product.images && product.images.length > 1 && (
               <div className="detail-image-thumbnails">
                 {product.images.map((image, index) => (
                   <button
                     key={index}
-                    className={`detail-thumbnail ${index === selectedImageIndex ? 'active' : ''}`}
+                    className={`detail-thumbnail ${index === selectedImageIndex ? "active" : ""}`}
                     onClick={() => setSelectedImageIndex(index)}
                   >
                     <img src={image} alt={`${product.name} ${index + 1}`} />
@@ -145,21 +164,60 @@ const ProductDetailPage: React.FC = () => {
           {/* Product Info */}
           <div className="detail-info">
             <div className="detail-category">{product.category}</div>
-            
+
             <h1 className="detail-name">{product.name}</h1>
 
             <div className="detail-price-section">
-              <div className="detail-current-price">{currentPrice.toLocaleString()}đ</div>
-              {originalPrice && (
-                <div className="detail-original-price">{originalPrice.toLocaleString()}đ</div>
-              )}
-              {product.discount && originalPrice && (
-                <div className="detail-savings">Tiết kiệm: {(originalPrice - currentPrice).toLocaleString()}đ</div>
-              )}
+              <div className="detail-current-price">
+                {currentPrice.toLocaleString("vi-VN")}đ
+              </div>
+              {hasDiscount && originalPrice > currentPrice ? (
+                <div className="detail-original-price">
+                  {originalPrice.toLocaleString("vi-VN")}đ
+                </div>
+              ) : null}
+              {hasDiscount && savings > 0 ? (
+                <div className="detail-savings">
+                  Tiết kiệm: {savings.toLocaleString("vi-VN")}đ
+                </div>
+              ) : null}
+            </div>
+
+            {/* Product Actions - Nằm ngay dưới giá tiết kiệm */}
+            <div className="detail-actions">
+              <div className="detail-action-buttons">
+                <div>
+                  <button
+                    className="detail-messenger-btn"
+                    onClick={handleZaloPurchase}
+                  >
+                    <i className="fas fa-comments"></i>
+                    <span className="btn-label">
+                      {stockStatus === "out_of_stock"
+                        ? "Liên hệ Zalo để đặt hàng"
+                        : "Inbox Zalo để đặt hàng"}
+                    </span>
+                  </button>
+                </div>
+
+                <WishlistButton
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    price: currentPrice,
+                    image: product.images?.[0] || "",
+                    category: product.category,
+                    description: product.description,
+                    inStock: stockStatus !== "out_of_stock",
+                  }}
+                  variant="full"
+                  size="md"
+                />
+              </div>
             </div>
 
             <div className="detail-stock-status">
-              {stockStatus === 'out_of_stock' ? (
+              {stockStatus === "out_of_stock" ? (
                 <span className="detail-out-of-stock">
                   <i className="fas fa-phone-alt"></i>
                   Liên hệ
@@ -176,69 +234,74 @@ const ProductDetailPage: React.FC = () => {
               <p>{product.description}</p>
             </div>
 
-            {/* Product Actions */}
-            <div className="detail-actions">
-              <div className="detail-action-buttons">
+            {/* Guarantees & Policy */}
+            <div className="detail-guarantees">
+              <div className="guarantee-item">
+                <i className="fas fa-shield-alt"></i>
                 <div>
-                  <button 
-                    className="detail-messenger-btn"
-                    onClick={handleZaloPurchase}
-                  >
-                    <i className="fas fa-comments"></i>
-                    <span className="btn-label">
-                      {stockStatus === 'out_of_stock' ? 'Liên hệ Zalo để đặt hàng' : 'Inbox Zalo để đặt hàng'}
-                    </span>
-                  </button>
-                  
+                  <strong>Chính hãng 100%</strong>
+                  <p>Cam kết chất lượng chuẩn</p>
                 </div>
-                
-                <WishlistButton 
-                  product={{
-                    id: product.id,
-                    name: product.name,
-                    price: currentPrice,
-                    image: product.images?.[0] || '',
-                    category: product.category,
-                    description: product.description,
-                    inStock: stockStatus !== 'out_of_stock'
-                  }} 
-                  variant="full" 
-                  size="md" 
-                />
+              </div>
+              <div className="guarantee-item">
+                <i className="fas fa-truck-fast"></i>
+                <div>
+                  <strong>Giao hàng nhanh</strong>
+                  <p>Toàn quốc an toàn</p>
+                </div>
+              </div>
+              <div className="guarantee-item">
+                <i className="fas fa-headset"></i>
+                <div>
+                  <strong>Hỗ trợ tận tâm</strong>
+                  <p>Tư vấn nhiệt tình qua Zalo</p>
+                </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Features */}
-            {product.features && product.features.length > 0 && (
-              <div className="detail-features">
-                <h3>Tính năng nổi bật</h3>
-                <ul>
-                  {product.features.map((feature, index) => (
-                    <li key={index}>
-                      <i className="fas fa-check"></i>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Specifications */}
+        {/* Bottom Section: Specifications & Features (Balanced layout for Desktop & Tablet) */}
+        {((product.specs && Object.keys(product.specs).length > 0) ||
+          (product.features && product.features.length > 0)) && (
+          <div className="detail-bottom-section">
+            {/* Specs Table */}
             {product.specs && Object.keys(product.specs).length > 0 && (
-              <div className="detail-specifications">
-                <h3>Thông số kỹ thuật</h3>
-                <div className="detail-specs-grid">
+              <div className="detail-specifications-card">
+                <div className="detail-card-header">
+                  <i className="fas fa-sliders-h"></i>
+                  <h2>Thông số kỹ thuật</h2>
+                </div>
+                <div className="detail-specs-table">
                   {Object.entries(product.specs).map(([key, value]) => (
-                    <div key={key} className="detail-spec-item">
-                      <strong>{key}:</strong>
-                      <span>{String(value)}</span>
+                    <div key={key} className="detail-spec-row">
+                      <span className="spec-label">{key}</span>
+                      <span className="spec-value">{String(value)}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Features & Description */}
+            {product.features && product.features.length > 0 && (
+              <div className="detail-features-card">
+                <div className="detail-card-header">
+                  <i className="fas fa-star"></i>
+                  <h2>Tính năng nổi bật</h2>
+                </div>
+                <ul className="detail-features-list">
+                  {product.features.map((feature, index) => (
+                    <li key={index}>
+                      <i className="fas fa-check"></i>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
       {/* Related Products Section */}

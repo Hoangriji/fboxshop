@@ -23,7 +23,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     { name: 'Quản lý sản phẩm', href: '/dashboard/products', icon: <i className="fa-solid fa-boxes-stacked"></i> },
     { name: 'Quản lý đơn hàng', href: '/dashboard/orders', icon: <i className="fa-solid fa-receipt"></i> },
     { name: 'Nhập sản phẩm', href: '/dashboard/import', icon: <i className="fa-solid fa-file-import"></i> },
-    { name: 'Thêm keyboard Akko', href: '/dashboard/akko-keyboard-update', icon: <i className="fa-solid fa-keyboard"></i> },
+    { name: 'Đồng bộ keyboard Akko', href: '/dashboard/akko-keyboard-update', icon: <i className="fa-solid fa-keyboard"></i> },
     { name: 'Sản phẩm nổi bật', href: '/dashboard/featured', icon: <i className="fa-solid fa-star"></i> },
     { name: 'Hình nền Hero', href: '/dashboard/hero-image', icon: <i className="fa-solid fa-image"></i> },
   ];
@@ -126,8 +126,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       <div className={`dashboard-sidebar ${isSidebarOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <h2>
-            <i className="fa-solid fa-store"></i>
-            <span className="brand-text">Fbox Shop</span>
+            <i className="fa-solid fa-store" style={{ color: '#00d2ff', filter: 'drop-shadow(0 0 8px rgba(0, 210, 255, 0.5))' }}></i>
+            <span className="brand-text" style={{ color: '#ffffff', WebkitTextFillColor: '#ffffff', fontWeight: 800 }}>Fbox Shop</span>
           </h2>
           <span className="admin-badge">Admin</span>
         </div>

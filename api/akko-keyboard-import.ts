@@ -1,47 +1,17 @@
+import { fetchAkkoProductsPage, fetchAllAkkoKeyboards } from '../src/lib/akko/client';
+import type { AkkoParsedProduct } from '../src/lib/akko/types';
+
 type RequestBody = {
+  action?: 'fetch_page' | 'fetch_all' | 'fetch_range';
+  page?: number;
+  perPage?: number;
   pageRange?: string;
 };
 
-type ListingProduct = {
-  url: string;
-  name: string;
-  stockStatus: 'in_stock' | 'out_of_stock';
-  listingPrices: number[];
-  thumbnail?: string;
-};
-
-type AkkoProductPayload = {
-  name: string;
-  description: string;
-  images: string[];
-  price_vnd: number;
-  price_virtual: number;
-  original_price_vnd: number;
-  category: string;
-  subcategory: string;
-  tags: string[];
-  type: 'physical';
-  stock_status: 'in_stock' | 'out_of_stock';
-  featured: false;
-  brand: string;
-  connection_types: string[];
-  compatibility: string[];
-  form_factor: string;
-  led_type: string;
-  features: string[];
-  specs: Record<string, string>;
-  review_count: number;
-  discount: number;
-  sku: string;
-  source_url: string;
-};
-
-const PAGE_SIZE = 12;
-const MAX_PAGE = 27;
-
-export default async function handler(req: { method?: string; body?: unknown }, res: {
-  status: (code: number) => { json: (data: object) => void };
-}) {
+export default async function handler(
+  req: { method?: string; body?: unknown },
+  res: { status: (code: number) => { json: (data: object) => void } }
+) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
@@ -49,747 +19,101 @@ export default async function handler(req: { method?: string; body?: unknown }, 
 
   let body: RequestBody;
   try {
-    body = readBody(req.body);
+    body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body ?? {});
   } catch {
     res.status(400).json({ error: 'Invalid JSON body' });
     return;
   }
 
-  let pageRange: { startPage: number; endPage: number; normalizedRange: string };
   try {
-    pageRange = parsePageRangeInput(body.pageRange);
-  } catch (rangeError) {
-    res.status(400).json({ error: rangeError instanceof Error ? rangeError.message : 'pageRange không hợp lệ' });
-    return;
-  }
+    // 1. Fetch All mode
+    if (body.action === 'fetch_all' || body.pageRange === 'all') {
+      const { total, products } = await fetchAllAkkoKeyboards();
+      res.status(200).json({
+        success: true,
+        requestedPageRange: 'all',
+        startPage: 1,
+        endPage: Math.ceil(total / 100),
+        expectedCount: total,
+        fetchedCount: products.length,
+        sourcePages: Math.ceil(total / 100),
+        products,
+      });
+      return;
+    }
 
-  try {
-    const result = await crawlAkkoKeyboards(pageRange.startPage, pageRange.endPage, pageRange.normalizedRange);
-    res.status(200).json(result);
+    // 2. Fetch specific page (WooCommerce Store API pages have 100 or custom perPage)
+    if (body.action === 'fetch_page') {
+      const page = Math.max(1, body.page || 1);
+      const perPage = Math.min(100, Math.max(1, body.perPage || 100));
+      const pageResult = await fetchAkkoProductsPage(page, perPage);
+
+      res.status(200).json({
+        success: true,
+        requestedPageRange: String(page),
+        startPage: page,
+        endPage: page,
+        expectedCount: pageResult.totalProducts,
+        fetchedCount: pageResult.parsedProducts.length,
+        sourcePages: 1,
+        totalPages: pageResult.totalPages,
+        totalProducts: pageResult.totalProducts,
+        products: pageResult.parsedProducts,
+      });
+      return;
+    }
+
+    // 3. Page range mode (e.g. "1" or "1-4" or legacy "2-5")
+    const pageRangeStr = String(body.pageRange ?? '1').trim();
+    const rangeMatch = pageRangeStr.match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+
+    if (!rangeMatch) {
+      res.status(400).json({ error: 'Định dạng trang không hợp lệ. Ví dụ: "1" hoặc "1-4" hoặc "all".' });
+      return;
+    }
+
+    const startPage = Number.parseInt(rangeMatch[1], 10);
+    const endPage = rangeMatch[2] ? Number.parseInt(rangeMatch[2], 10) : startPage;
+
+    if (startPage < 1 || endPage < startPage) {
+      res.status(400).json({ error: 'Khoảng trang không hợp lệ (trang bắt đầu phải >= 1 và <= trang kết thúc).' });
+      return;
+    }
+
+    const allProducts: AkkoParsedProduct[] = [];
+    let totalProducts = 0;
+    let totalPages = 1;
+
+    for (let p = startPage; p <= endPage; p += 1) {
+      const pageResult = await fetchAkkoProductsPage(p, 100);
+      totalProducts = pageResult.totalProducts;
+      totalPages = pageResult.totalPages;
+      allProducts.push(...pageResult.parsedProducts);
+
+      if (p >= pageResult.totalPages) break;
+    }
+
+    const baseTimestamp = Date.now();
+    for (let i = 0; i < allProducts.length; i += 1) {
+      allProducts[i].created_at = new Date(baseTimestamp - ((startPage - 1) * 100 + i) * 60000).toISOString();
+    }
+
+    res.status(200).json({
+      success: true,
+      requestedPageRange: pageRangeStr,
+      startPage,
+      endPage,
+      totalPages,
+      totalProducts,
+      expectedCount: totalProducts,
+      fetchedCount: allProducts.length,
+      sourcePages: Math.min(endPage, totalPages) - startPage + 1,
+      products: allProducts,
+    });
   } catch (error) {
-    console.error('akko-keyboard-import failed', error);
-    res.status(500).json({ error: error instanceof Error ? error.message : 'Không thể lấy dữ liệu Akko' });
+    console.error('akko-keyboard-import error:', error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Không thể lấy dữ liệu từ Akko API',
+    });
   }
 }
-
-const readBody = (body: unknown): RequestBody => {
-  if (typeof body === 'string') {
-    return JSON.parse(body) as RequestBody;
-  }
-  return (body ?? {}) as RequestBody;
-};
-
-const parsePageRangeInput = (rawValue: unknown): { startPage: number; endPage: number; normalizedRange: string } => {
-  const raw = String(rawValue ?? '').trim();
-  if (!raw) {
-    throw new Error('Vui lòng nhập trang cần lấy. Ví dụ: "2" hoặc "2-5".');
-  }
-
-  const singlePattern = /^(\d+)$/;
-  const rangePattern = /^(\d+)\s*-\s*(\d+)$/;
-
-  let startPage = 0;
-  let endPage = 0;
-
-  const singleMatch = raw.match(singlePattern);
-  if (singleMatch) {
-    startPage = Number.parseInt(singleMatch[1], 10);
-    endPage = startPage;
-  } else {
-    const rangeMatch = raw.match(rangePattern);
-    if (!rangeMatch) {
-      throw new Error('Định dạng trang không hợp lệ. Dùng "2" hoặc "2-5".');
-    }
-    startPage = Number.parseInt(rangeMatch[1], 10);
-    endPage = Number.parseInt(rangeMatch[2], 10);
-  }
-
-  if (startPage < 1 || endPage < 1) {
-    throw new Error('Số trang phải bắt đầu từ 1.');
-  }
-  if (startPage > endPage) {
-    throw new Error('Khoảng trang không hợp lệ: trang bắt đầu phải nhỏ hơn hoặc bằng trang kết thúc.');
-  }
-  if (endPage > MAX_PAGE) {
-    throw new Error(`Akko keyboard hiện hỗ trợ tối đa trang ${MAX_PAGE}.`);
-  }
-
-  return {
-    startPage,
-    endPage,
-    normalizedRange: startPage === endPage ? String(startPage) : `${startPage}-${endPage}`,
-  };
-};
-
-const crawlAkkoKeyboards = async (startPage: number, endPage: number, normalizedRange: string) => {
-  const listingProducts: ListingProduct[] = [];
-  const seenUrls = new Set<string>();
-  let pagesScanned = 0;
-
-  for (let page = startPage; page <= endPage; page += 1) {
-    const pageUrl = page === 1
-      ? 'https://akko.vn/keyboard/'
-      : `https://akko.vn/keyboard/page/${page}/`;
-
-    const html = await fetchText(pageUrl);
-    const pageProducts = parseListingProducts(html);
-    pagesScanned += 1;
-
-    if (pageProducts.length === 0) {
-      continue;
-    }
-
-    pageProducts.forEach((item) => {
-      if (!seenUrls.has(item.url)) {
-        listingProducts.push(item);
-        seenUrls.add(item.url);
-      }
-    });
-  }
-
-  const details = await mapWithConcurrency(listingProducts, 4, async (item) => parseProductDetail(item));
-
-  return {
-    requestedPageRange: normalizedRange,
-    startPage,
-    endPage,
-    pageSize: PAGE_SIZE,
-    expectedCount: (endPage - startPage + 1) * PAGE_SIZE,
-    fetchedCount: details.length,
-    sourcePages: pagesScanned,
-    products: details,
-  };
-};
-
-const fetchText = async (url: string): Promise<string> => {
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; uside-shop-bot/1.0; +https://akko.vn/keyboard/)',
-      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Không thể tải ${url} (${response.status})`);
-  }
-  return response.text();
-};
-
-const parseListingProducts = (html: string): ListingProduct[] => {
-  const cards = [...html.matchAll(/<div class="product-small col[\s\S]*?<\/div>\s*<\/div>\s*<\/div>\s*<\/div>/gi)];
-
-  return cards.map((cardMatch) => {
-    const block = cardMatch[0];
-    const url = findFirst(block, /<a href="(https:\/\/akko\.vn\/[^"]+)"/i);
-    if (!url) {
-      return null;
-    }
-
-    const rawName = findFirst(
-      block,
-      /woocommerce-loop-product__title"><a[^>]*>([\s\S]*?)<\/a>/i
-    );
-    const name = decodeHtmlEntities(stripHtml(rawName));
-
-    const listingPrices = extractPriceNumbers(block);
-    const stockStatus = /out-of-stock|outofstock|Hết hàng/i.test(block) ? 'out_of_stock' : 'in_stock';
-    const thumbnail = findFirst(block, /data-src="(https:\/\/[^"]+\.(?:png|jpg|jpeg|webp))"/i);
-
-    return {
-      url,
-      name,
-      stockStatus,
-      listingPrices,
-      thumbnail,
-    } as ListingProduct;
-  }).filter((item): item is ListingProduct => Boolean(item));
-};
-
-const parseProductDetail = async (listing: ListingProduct): Promise<AkkoProductPayload> => {
-  // 1. TẢI HTML VÀ PARSE DỮ LIỆU CƠ BẢN TRƯỚC (Rất quan trọng, phải có cái này mới có specs)
-  const html = await fetchText(listing.url);
-  const schemaProduct = extractSchemaProduct(html);
-  const specs = extractSpecs(html); 
-
-  const shortDescription = extractShortDescription(html);
-  const schemaName = typeof schemaProduct?.name === 'string' ? decodeHtmlEntities(schemaProduct.name) : '';
-  const name = schemaName || listing.name;
-
-  const { original: origFromHtml, sale: saleFromHtml } = extractWooPrices(html);
-  const fallbackPrice = listing.listingPrices[listing.listingPrices.length - 1] ?? listing.listingPrices[0] ?? extractSchemaPrice(schemaProduct) ?? 0;
-
-  const price_vnd = saleFromHtml > 0 ? saleFromHtml : fallbackPrice;
-  const original_price_vnd = origFromHtml > 0 ? origFromHtml : (price_vnd > 0 ? Math.max(origFromHtml, price_vnd) : fallbackPrice);
-  const normalizedOriginal = Math.max(original_price_vnd, price_vnd);
-
-  const stock_status = extractStockStatus(schemaProduct) ?? listing.stockStatus;
-  const images = extractImages(html, schemaProduct, listing.thumbnail);
-  const sku = extractSku(html, schemaProduct);
-  const review_count = extractReviewCount(schemaProduct);
-
-  // 2. TRÍCH XUẤT DỮ LIỆU THÔ TỪ SPECS VỪA LẤY ĐƯỢC
-  const raw_connection_types = extractConnectionTypes(specs);
-  const raw_compatibility = extractCompatibility(specs);
-  const raw_led_type = findSpecValue(specs, ['LED']) ?? '';
-  const raw_form_factor = findSpecValue(specs, ['Layout', 'Form Factor']) ?? '';
-  const raw_brand = 'AKKO'; 
-
-  // 3. ĐƯA VÀO BỘ CHUẨN HÓA (Xóa rác)
-  const connection_types = normalizeConnections(raw_connection_types);
-  const compatibility = normalizeCompatibility(raw_compatibility);
-  const led_type = normalizeLed(raw_led_type);
-  const form_factor = normalizeFormFactor(raw_form_factor);
-  const brand = normalizeBrand(raw_brand);
-
-  // 4. BUILD CÁC TRƯỜNG CÒN LẠI (Sử dụng dữ liệu ĐÃ CHUẨN HÓA để build mô tả)
-  const features = buildFeatures(specs, name);
-  const tags = buildTags(name, specs);
-  const description = buildDescription(shortDescription, features, specs, connection_types, led_type);
-  
-  const discount = normalizedOriginal > price_vnd
-    ? Math.round(((normalizedOriginal - price_vnd) / normalizedOriginal) * 100)
-    : 0;
-
-  // 5. TRẢ VỀ PAYLOAD SẠCH SẼ 100%
-  return {
-    name,
-    description,
-    images,
-    price_vnd,
-    price_virtual: price_vnd,
-    original_price_vnd: normalizedOriginal,
-    category: 'keyboard',
-    subcategory: 'keyboard',
-    tags,
-    type: 'physical',
-    stock_status,
-    featured: false,
-    brand,              // Đã chuẩn hóa: "AKKO"
-    connection_types,   // Đã chuẩn hóa: Lọc hết Mạch Xuôi, gộp 2.4GHz
-    compatibility,      // Đã chuẩn hóa: macOS, Windows...
-    form_factor,        // Đã chuẩn hóa: Full-size, 75%...
-    led_type,           // Đã chuẩn hóa: RGB, Không LED...
-    features,
-    specs,
-    review_count,
-    discount,
-    sku,
-    source_url: listing.url,
-  };
-};
-
-const extractSchemaProduct = (html: string): Record<string, unknown> | null => {
-  const scripts = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi)];
-
-  for (const script of scripts) {
-    const raw = script[1]?.trim();
-    if (!raw) {
-      continue;
-    }
-
-    try {
-      const parsed = JSON.parse(raw) as unknown;
-      const product = findProductNode(parsed);
-      if (product) {
-        return product;
-      }
-    } catch {
-      continue;
-    }
-  }
-
-  return null;
-};
-
-const findProductNode = (node: unknown): Record<string, unknown> | null => {
-  if (!node) {
-    return null;
-  }
-
-  if (Array.isArray(node)) {
-    for (const item of node) {
-      const found = findProductNode(item);
-      if (found) {
-        return found;
-      }
-    }
-    return null;
-  }
-
-  if (typeof node === 'object') {
-    const obj = node as Record<string, unknown>;
-    const typeValue = obj['@type'];
-
-    if (typeof typeValue === 'string' && typeValue.toLowerCase() === 'product') {
-      return obj;
-    }
-    if (Array.isArray(typeValue) && typeValue.some((value) => String(value).toLowerCase() === 'product')) {
-      return obj;
-    }
-
-    if (obj['@graph']) {
-      const foundInGraph = findProductNode(obj['@graph']);
-      if (foundInGraph) {
-        return foundInGraph;
-      }
-    }
-
-    for (const value of Object.values(obj)) {
-      const found = findProductNode(value);
-      if (found) {
-        return found;
-      }
-    }
-  }
-
-  return null;
-};
-
-const extractSchemaPrice = (schemaProduct: Record<string, unknown> | null): number | null => {
-  if (!schemaProduct?.offers) {
-    return null;
-  }
-
-  const offers = Array.isArray(schemaProduct.offers)
-    ? schemaProduct.offers
-    : [schemaProduct.offers];
-
-  for (const offer of offers) {
-    if (offer && typeof offer === 'object') {
-      const record = offer as Record<string, unknown>;
-      const candidate = toPrice(record.price);
-      if (candidate > 0) {
-        return candidate;
-      }
-    }
-  }
-  return null;
-};
-
-const extractStockStatus = (schemaProduct: Record<string, unknown> | null): 'in_stock' | 'out_of_stock' | null => {
-  if (!schemaProduct?.offers) {
-    return null;
-  }
-
-  const offers = Array.isArray(schemaProduct.offers)
-    ? schemaProduct.offers
-    : [schemaProduct.offers];
-
-  for (const offer of offers) {
-    if (offer && typeof offer === 'object') {
-      const availability = String((offer as Record<string, unknown>).availability ?? '');
-      if (/OutOfStock/i.test(availability)) {
-        return 'out_of_stock';
-      }
-      if (/InStock/i.test(availability)) {
-        return 'in_stock';
-      }
-    }
-  }
-  return null;
-};
-
-const extractReviewCount = (schemaProduct: Record<string, unknown> | null): number => {
-  const aggregateRating = schemaProduct?.aggregateRating;
-  if (!aggregateRating || typeof aggregateRating !== 'object') {
-    return 0;
-  }
-  const reviewCount = Number((aggregateRating as Record<string, unknown>).reviewCount ?? 0);
-  return Number.isFinite(reviewCount) && reviewCount > 0 ? reviewCount : 0;
-};
-
-const extractShortDescription = (html: string): string => {
-  const raw = findFirst(html, /woocommerce-product-details__short-description">([\s\S]*?)<\/div>/i) ?? '';
-  return normalizeText(raw);
-};
-
-const extractSpecs = (html: string): Record<string, string> => {
-  const specs: Record<string, string> = {};
-
-  const tableMatch =
-    html.match(/<table[^>]*class="[^"]*(?:shop_attributes|woocommerce-product-attributes)[^"]*"[^>]*>([\s\S]*?)<\/table>/i) ||
-    html.match(/(?:THÔNG SỐ|SPECIFICATION|CHI TIẾT|THÔNG TIN SẢN PHẨM)[\s\S]{0,800}?<\/h[1-6]>[\s\S]{0,200}?<table[^>]*>([\s\S]*?)<\/table>/i) ||
-    html.match(/<table[^>]*>([\s\S]*?)<\/table>/i);
-
-  if (!tableMatch || !tableMatch[1]) {
-    return specs;
-  }
-
-  const tableBody = tableMatch[1];
-  const rows = [...tableBody.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)];
-
-  rows.forEach((rowMatch) => {
-    const rowContent = rowMatch[1];
-    const cells = [...rowContent.matchAll(/<(?:th|td)[^>]*>([\s\S]*?)<\/(?:th|td)>/gi)];
-    if (cells.length >= 2) {
-      const key = normalizeText(cells[0][1]);
-      const value = normalizeText(cells[1][1]);
-      if (key && value) {
-        specs[key] = value;
-      }
-    }
-  });
-
-  return specs;
-};
-
-const extractConnectionTypes = (specs: Record<string, string>): string[] => {
-  const raw = findSpecValue(specs, ['Kết Nối', 'Kết nối', 'Connection']) ?? '';
-  if (!raw) {
-    return [];
-  }
-
-  return splitValues(raw, /\/|\+|,|\|/g);
-};
-
-const extractCompatibility = (specs: Record<string, string>): string[] => {
-  const raw = findSpecValue(specs, ['Tương Thích', 'Compatibility']) ?? '';
-  if (!raw) {
-    return [];
-  }
-
-  return splitValues(raw, /\/|,|\|/g);
-};
-
-const buildFeatures = (
-  specs: Record<string, string>,
-  name: string
-): string[] => {
-  const features: string[] = [];
-  const hotSwap = findSpecValue(specs, ['Hot Swappable', 'Hot Swap']);
-  if (hotSwap) {
-    features.push(`Hotswappable${/yes/i.test(hotSwap) ? '' : `: ${hotSwap}`}`);
-  }
-
-  const nKey = findSpecValue(specs, ['N-Key Rollover']);
-  if (nKey) {
-    features.push(`N-Key Rollover${/yes/i.test(nKey) ? '' : `: ${nKey}`}`);
-  }
-
-  const keycaps = findSpecValue(specs, ['Keycaps']);
-  if (keycaps) {
-    features.push(`Keycaps: ${keycaps}`);
-  }
-
-  const switches = findSpecValue(specs, ['Switches', 'Switch']);
-  if (switches) {
-    features.push(`Switch: ${switches}`);
-  }
-
-  if (/hotswap/i.test(name) && !features.some((item) => /Hotswappable/i.test(item))) {
-    features.push('Hotswappable');
-  }
-
-  return dedupe(features).slice(0, 6);
-};
-
-const buildTags = (name: string, specs: Record<string, string>): string[] => {
-  const tags = ['bàn phím cơ', 'akko', 'keyboard'];
-  const model = findSpecValue(specs, ['Model']) ?? '';
-  const modelDigits = (model.match(/\b\d{3,4}\b/) ?? [])[0];
-  if (modelDigits) {
-    tags.push(modelDigits);
-  } else {
-    const nameDigits = (name.match(/\b\d{3,4}\b/) ?? [])[0];
-    if (nameDigits) {
-      tags.push(nameDigits);
-    }
-  }
-  if (/hotswap/i.test(name) || /hot swappable/i.test(findSpecValue(specs, ['Hot Swappable']) ?? '')) {
-    tags.push('hotswap');
-  }
-
-  return dedupe(tags);
-};
-
-const buildDescription = (
-  shortDescription: string,
-  features: string[],
-  specs: Record<string, string>,
-  connectionTypes: string[],
-  ledType: string
-): string => {
-  const summaryParts: string[] = [];
-  if (features.length > 0) {
-    summaryParts.push(features.slice(0, 4).join(' / '));
-  }
-  if (connectionTypes.length > 0) {
-    summaryParts.push(`Kết nối: ${connectionTypes.join(' / ')}`);
-  }
-  if (ledType) {
-    summaryParts.push(`Đèn nền: ${ledType}`);
-  }
-
-  const compatibility = findSpecValue(specs, ['Tương Thích', 'Compatibility']);
-  if (compatibility) {
-    summaryParts.push(`Tương thích: ${compatibility}`);
-  }
-
-  const summary = summaryParts.join(' • ');
-  const description = shortDescription
-    ? `${shortDescription}${summary ? ` ${summary}` : ''}`
-    : summary;
-
-  return description.trim().slice(0, 1800);
-};
-
-const extractImages = (
-  html: string,
-  schemaProduct: Record<string, unknown> | null,
-  thumbnail?: string
-): string[] => {
-  const result: string[] = [];
-
-  const schemaImage = schemaProduct?.image;
-  if (typeof schemaImage === 'string') {
-    result.push(schemaImage);
-  } else if (Array.isArray(schemaImage)) {
-    schemaImage.forEach((item) => {
-      if (typeof item === 'string') result.push(item);
-    });
-  }
-
-  [...html.matchAll(/data-large_image="([^"]+)"/gi)].forEach((m) => result.push(m[1]));
-
-  [...html.matchAll(/woocommerce-product-gallery__image[\s\S]*?<a[^>]+href="([^"]+)"/gi)].forEach((m) => result.push(m[1]));
-  [...html.matchAll(/woocommerce-product-gallery__image[\s\S]*?<img[^>]+(?:data-src|src)="([^"]+)"/gi)].forEach((m) => result.push(m[1]));
-
-  [...html.matchAll(/<a[^>]+href="(https:\/\/[^"]+\.(?:png|jpg|jpeg|webp))"[^>]*data-elementor-open-lightbox/gi)].forEach((m) => result.push(m[1]));
-
-  if (thumbnail) {
-    result.push(thumbnail);
-  }
-
-  const normalizeImageUrl = (url: string) => {
-    return url.replace(/-\d+x\d+(\.[a-z0-9]+)(?:\?|$)/i, '$1');
-  };
-
-  const cleaned = dedupe(
-    result
-      .map((item) => decodeHtmlEntities(item.trim()))
-      .map((item) => normalizeImageUrl(item))
-      .filter((item) => /^https?:\/\//i.test(item))
-      .filter((item) => /\.(?:png|jpg|jpeg|webp)(?:\?|$)/i.test(item))
-  );
-
-  return cleaned.slice(0, 20);
-};
-
-const extractSku = (html: string, schemaProduct: Record<string, unknown> | null): string => {
-  if (typeof schemaProduct?.sku === 'string' || typeof schemaProduct?.sku === 'number') {
-    return String(schemaProduct.sku);
-  }
-
-  const skuFromHtml = findFirst(html, /sku_wrapper[\s\S]*?<span class="sku">([\s\S]*?)<\/span>/i);
-  return normalizeText(skuFromHtml);
-};
-
-const findSpecValue = (specs: Record<string, string>, candidates: string[]): string | null => {
-  const entries = Object.entries(specs);
-  for (const [key, value] of entries) {
-    const normalizedKey = normalizeName(key);
-    if (candidates.some((candidate) => normalizeName(candidate) === normalizedKey)) {
-      return value;
-    }
-  }
-  return null;
-};
-
-const splitValues = (raw: string, separator: RegExp): string[] => {
-  return dedupe(
-    raw
-      .split(separator)
-      .map((item) => item.trim())
-      .filter(Boolean)
-  );
-};
-
-const extractWooPrices = (html: string): { original: number; sale: number } => {
-  const delMatch = html.match(/<del[^>]*>[\s\S]*?<bdi>\s*([\d.,]+)/i);
-  const insMatch = html.match(/<ins[^>]*>[\s\S]*?<bdi>\s*([\d.,]+)/i);
-
-  if (delMatch && insMatch) {
-    return {
-      original: toPrice(delMatch[1]),
-      sale: toPrice(insMatch[1]),
-    };
-  }
-
-  const regularMatch =
-    html.match(/class="price"[^>]*>[\s\S]*?<bdi>\s*([\d.,]+)/i) ||
-    html.match(/<bdi>\s*([\d.,]+)\s*<span class="woocommerce-Price-currencySymbol"/i);
-
-  const price = regularMatch ? toPrice(regularMatch[1]) : 0;
-  return { original: price, sale: price };
-};
-
-const extractPriceNumbers = (raw: string): number[] => {
-  const prices = [...raw.matchAll(/<bdi>\s*([\d.,]+)\s*<span class="woocommerce-Price-currencySymbol"/gi)]
-    .map((match) => toPrice(match[1]))
-    .filter((price) => price > 0);
-  return dedupe(prices);
-};
-
-const toPrice = (value: unknown): number => {
-  const numeric = String(value ?? '').replace(/[^\d]/g, '');
-  if (!numeric) {
-    return 0;
-  }
-  return Number.parseInt(numeric, 10);
-};
-
-const stripHtml = (value: string | null | undefined): string => {
-  if (!value) {
-    return '';
-  }
-  return value.replace(/<[^>]*>/g, ' ');
-};
-
-const normalizeText = (value: string | null | undefined): string => {
-  return decodeHtmlEntities(stripHtml(value))
-    .replace(/\s+/g, ' ')
-    .trim();
-};
-
-const normalizeName = (value: string): string => value.toLowerCase().trim().replace(/\s+/g, ' ');
-
-const decodeHtmlEntities = (value: string): string => {
-  const namedEntities: Record<string, string> = {
-    '&nbsp;': ' ',
-    '&amp;': '&',
-    '&quot;': '"',
-    '&#039;': '\'',
-    '&#39;': '\'',
-    '&lt;': '<',
-    '&gt;': '>',
-    '&ndash;': '-',
-    '&mdash;': '-',
-    '&#8211;': '-',
-    '&#8212;': '-',
-    '&#038;': '&',
-  };
-
-  let output = value;
-  for (let i = 0; i < 3; i += 1) {
-    let changed = false;
-    Object.entries(namedEntities).forEach(([entity, replacement]) => {
-      if (output.includes(entity)) {
-        output = output.split(entity).join(replacement);
-        changed = true;
-      }
-    });
-
-    output = output.replace(/&#(\d+);/g, (_match, code) => {
-      changed = true;
-      return String.fromCharCode(Number(code));
-    });
-    output = output.replace(/&#x([0-9a-fA-F]+);/g, (_match, code) => {
-      changed = true;
-      return String.fromCharCode(Number.parseInt(code, 16));
-    });
-
-    if (!changed) {
-      break;
-    }
-  }
-  return output;
-};
-
-const findFirst = (source: string, pattern: RegExp): string | null => {
-  const match = source.match(pattern);
-  if (!match || match.length < 2) {
-    return null;
-  }
-  return match[1];
-};
-
-const dedupe = <T>(values: T[]): T[] => [...new Set(values)];
-
-const mapWithConcurrency = async <T, R>(
-  items: T[],
-  concurrency: number,
-  mapper: (item: T, index: number) => Promise<R>
-): Promise<R[]> => {
-  const results: R[] = new Array(items.length);
-  let nextIndex = 0;
-
-  const workers = Array.from({ length: Math.max(1, concurrency) }, async () => {
-    while (nextIndex < items.length) {
-      const current = nextIndex;
-      nextIndex += 1;
-      results[current] = await mapper(items[current], current);
-    }
-  });
-
-  await Promise.all(workers);
-  return results;
-};
-
-// --- BỘ CHUẨN HÓA DỮ LIỆU (DATA NORMALIZER) ---
-
-const normalizeBrand = (brand: string): string => {
-  if (!brand) return 'Unknown';
-  return brand.trim().toUpperCase(); // Biến Akko, akko thành AKKO
-};
-
-const normalizeConnections = (connections: string[]): string[] => {
-  const result = new Set<string>();
-  
-  connections.forEach(conn => {
-    const lowerConn = conn.toLowerCase().trim();
-    
-    // Bỏ qua các dữ liệu rác bị phân loại nhầm
-    if (lowerConn.includes('mạch xuôi') || lowerConn.includes('mạch ngược')) return;
-
-    // Chuẩn hóa nhóm Wireless 2.4GHz
-    if (lowerConn.includes('2.4')) result.add('Wireless 2.4GHz');
-    // Chuẩn hóa nhóm Bluetooth
-    else if (lowerConn.includes('bluetooth')) result.add('Bluetooth');
-    // Chuẩn hóa nhóm Có dây (Wired/Type-C)
-    else if (lowerConn.includes('type-c') || lowerConn.includes('wired')) result.add('USB Type-C');
-    else if (lowerConn.includes('wireless')) result.add('Wireless (Tùy chọn)');
-  });
-
-  return Array.from(result);
-};
-
-const normalizeCompatibility = (compat: string[]): string[] => {
-  const result = new Set<string>();
-  
-  compat.forEach(c => {
-    const lower = c.toLowerCase().trim();
-    if (lower.includes('mac')) result.add('macOS');
-    else if (lower.includes('win')) result.add('Windows');
-    else if (lower.includes('ios')) result.add('iOS');
-    else if (lower.includes('android')) result.add('Android');
-  });
-
-  return Array.from(result);
-};
-
-const normalizeLed = (led: string): string => {
-  if (!led) return 'Không LED';
-  const lower = led.toLowerCase().trim();
-  
-  if (lower === 'no' || lower === 'no led' || lower === 'không') return 'Không LED';
-  if (lower.includes('south-facing') || lower.includes('argb')) return 'South-facing RGB';
-  if (lower.includes('north-facing')) return 'North-facing RGB';
-  if (lower === 'yes') return 'RGB';
-  
-  // Tự động viết hoa chữ cái đầu cho các trường hợp còn lại (VD: white led -> White LED)
-  return led.replace(/\b\w/g, char => char.toUpperCase());
-};
-
-const normalizeFormFactor = (formFactor: string): string => {
-  if (!formFactor) return 'Unknown';
-  const lower = formFactor.toLowerCase().trim();
-
-  if (lower.includes('104') || lower.includes('full')) return 'Full-size (104 phím)';
-  if (lower.includes('tkl') || lower.includes('87')) return 'TKL (87 phím)';
-  if (lower.includes('96') || lower.includes('100') || lower.includes('98')) return '96% / 1800 Compact';
-  if (lower.includes('75')) return '75%';
-  if (lower.includes('65')) return '65%';
-  if (lower.includes('60')) return '60%';
-
-  return formFactor;
-};

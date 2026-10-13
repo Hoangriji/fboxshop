@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/cron/akko-sync",
+      "schedule": "0 2 * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",

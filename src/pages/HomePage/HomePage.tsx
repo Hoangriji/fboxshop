@@ -40,15 +40,18 @@ const HomePage = () => {
   const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
-    const previousHtmlOverflow = document.documentElement.style.overflow;
-    const previousBodyOverflow = document.body.style.overflow;
+    // Thêm class để CSS media query tự động điều khiển overflow (chỉ lock trên desktop > 768px)
+    // Không set inline style để tránh xung đột với mobile và DevTools
+    document.body.classList.add("home-page-active");
 
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
+    // Đảm bảo không còn inline overflow sót lại
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
 
     return () => {
-      document.documentElement.style.overflow = previousHtmlOverflow;
-      document.body.style.overflow = previousBodyOverflow;
+      document.body.classList.remove("home-page-active");
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
     };
   }, []);
 
@@ -128,6 +131,15 @@ const HomePage = () => {
   }, [heroIndex, heroPaused, heroProducts.length]);
 
   useEffect(() => {
+    const isMobile = window.innerWidth <= 768;
+    // Trên mobile: hiển thị tất cả section ngay lập tức, không dùng animation trượt
+    if (isMobile) {
+      Object.values(slideRefs.current).forEach((el) => {
+        el?.classList.add("is-visible");
+      });
+      return;
+    }
+
     const container = containerRef.current;
     const sections = Object.values(slideRefs.current).filter(
       Boolean,
@@ -155,6 +167,9 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) return; // Không chạy hiệu ứng parallax scroll trên mobile để cuộn mượt mà
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -257,20 +272,25 @@ const HomePage = () => {
           slideRefs.current.hero = el;
         }}
       >
-        <div className="hero-shell">
+        <div 
+          className="hero-shell"
+          onMouseEnter={() => setHeroPaused(true)}
+          onMouseLeave={() => setHeroPaused(false)}
+        >
           <div className="hero-backdrop">
             <img
-              src={heroProducts[displayIndex]?.images?.[1]}
+              src={heroProducts[displayIndex]?.images?.[1] || heroProducts[displayIndex]?.images?.[0]}
               alt=""
               className={`hero-bg-image ${isFading ? "fade-out" : ""}`}
             />
+            <div className="hero-gradient-overlay" />
           </div>
           <div className="hero-inner">
             <div className={`hero-copy ${isFading ? "fade-out" : ""}`}>
               <span className="hero-eyebrow">Featured Gear</span>
               <h1 className="hero-title">
                 {heroProducts[displayIndex]?.name
-                  ? heroProducts[displayIndex].name.split("(")[0].trim()
+                  ? heroProducts[displayIndex].name.split("(")[0].replace(/^bàn\s+phím(?:\s+cơ)?\s*/i, '').trim()
                   : "GEAR UP YOUR SETUP"}
               </h1>
               <div className="hero-price">

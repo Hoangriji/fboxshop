@@ -372,8 +372,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       setErrorModal({isOpen: true, title: 'Dữ liệu không hợp lệ', message: 'Giá gốc không được là số âm'});
       return;
     }
-    if (formData.original_price_vnd && formData.price_vnd && formData.original_price_vnd < formData.price_vnd) {
-      setErrorModal({isOpen: true, title: 'Dữ liệu không hợp lệ', message: 'Giá gốc phải lớn hơn hoặc bằng giá bán'});
+    if (formData.original_price_vnd !== undefined && formData.original_price_vnd > 0 && formData.price_vnd && formData.original_price_vnd < formData.price_vnd) {
+      setErrorModal({isOpen: true, title: 'Dữ liệu không hợp lệ', message: 'Giá ban đầu phải lớn hơn hoặc bằng giá hiện tại'});
       return;
     }
     
@@ -409,9 +409,21 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         }
       });
 
+      const currentPriceVnd = typeof formData.price_vnd === 'number' ? formData.price_vnd : Number(formData.price_vnd) || 0;
+      const originalPriceVnd = (formData.original_price_vnd !== undefined && formData.original_price_vnd !== null && Number(formData.original_price_vnd) > 0)
+        ? Number(formData.original_price_vnd)
+        : currentPriceVnd;
+      const discount = originalPriceVnd > currentPriceVnd && originalPriceVnd > 0
+        ? Math.round(((originalPriceVnd - currentPriceVnd) / originalPriceVnd) * 100)
+        : 0;
+
       // Build product data with filter fields
       const productData: Partial<Product> = {
         ...formData,
+        price_vnd: currentPriceVnd,
+        original_price_vnd: originalPriceVnd,
+        price_virtual: originalPriceVnd,
+        discount,
         images,
         features: filteredFeatures.length > 0 ? filteredFeatures : undefined,
         specs: Object.keys(specsObj).length > 0 ? specsObj : undefined,
@@ -450,7 +462,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         <form onSubmit={handleSubmit} className="product-form">
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="name">Tên sản phẩm *</label>
+              <label htmlFor="name">Tên sản phẩm <span className="required-star">*</span></label>
               <input
                 id="name"
                 type="text"
@@ -464,7 +476,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="description">Mô tả *</label>
+              <label htmlFor="description">Mô tả <span className="required-star">*</span></label>
               <textarea
                 id="description"
                 required
@@ -478,7 +490,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
           <div className="form-row form-row-2">
             <div className="form-group">
-              <label>Loại sản phẩm *</label>
+              <label>Loại sản phẩm <span className="required-star">*</span></label>
               <div className="custom-select-dropdown" ref={typeDropdownRef}>
                 <button
                   type="button"
@@ -524,7 +536,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
             </div>
 
             <div className="form-group">
-              <label>Danh mục *</label>
+              <label>Danh mục <span className="required-star">*</span></label>
               <div className="custom-select-dropdown" ref={categoryDropdownRef}>
                 <button
                   type="button"
@@ -575,12 +587,12 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 min="0"
                 value={formData.original_price_vnd || ''}
                 onChange={(e) => setFormData({ ...formData, original_price_vnd: e.target.value ? Number(e.target.value) : undefined })}
-                placeholder="Không bắt buộc"
+                placeholder="Để trống sẽ bằng giá hiện tại"
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="price_vnd">Giá hiện tại (VNĐ) *</label>
+              <label htmlFor="price_vnd">Giá hiện tại (VNĐ) <span className="required-star">*</span></label>
               <input
                 id="price_vnd"
                 type="number"
@@ -595,7 +607,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
           <div className="form-row form-row-2">
             <div className="form-group">
-              <label>Trạng thái kho *</label>
+              <label>Trạng thái kho <span className="required-star">*</span></label>
               <div className="custom-select-dropdown" ref={stockDropdownRef}>
                 <button
                   type="button"
@@ -657,7 +669,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="images">
-                Hình ảnh sản phẩm *
+                <span>Hình ảnh sản phẩm <span className="required-star">*</span></span>
                 <span className="image-size-limit">
                   <i className="fas fa-info-circle"></i>
                   Giới hạn: 5MB/ảnh
@@ -770,7 +782,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
               )}
               
               {uploadedImages.length === 0 && !imageUrls.some(url => url.trim()) && (
-                <small className="warning-text">* Vui lòng tải ảnh lên hoặc nhập URL hình ảnh</small>
+                <small className="warning-text"><span className="required-star">*</span> Vui lòng tải ảnh lên hoặc nhập URL hình ảnh</small>
               )}
             </div>
           </div>

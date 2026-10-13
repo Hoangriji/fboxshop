@@ -57,6 +57,35 @@ export interface Product {
   price_range?: string;
   product_type?: string;
   material?: string;
+  // External source tracking (e.g. Akko)
+  source?: 'akko' | 'manual' | string;
+  source_id?: number | string;
+  source_url?: string;
+  source_synced_at?: string;
+  variants?: Array<{
+    id?: number;
+    name?: string;
+    options?: string[];
+    price_vnd?: number;
+    sku?: string;
+  }>;
+}
+
+// Scrape / Sync Log Types
+export interface ScrapeLog {
+  id: string;
+  source: 'akko' | string;
+  type: 'manual' | 'cron';
+  status: 'success' | 'partial' | 'failed';
+  started_at: string;
+  completed_at: string;
+  total_scanned: number;
+  new_count: number;
+  updated_count: number;
+  out_of_stock_count: number;
+  error_count: number;
+  errors?: string[];
+  message: string;
 }
 
 // Category Types

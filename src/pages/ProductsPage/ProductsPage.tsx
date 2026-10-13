@@ -97,7 +97,7 @@ const PRICE_RANGES: PriceRange[] = [
 
 const ProductsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   const categoryFromUrl = searchParams.get('category') || 'all';
   const [selectedCategory, setSelectedCategory] = React.useState<string>(categoryFromUrl);
@@ -114,7 +114,8 @@ const ProductsPage: React.FC = () => {
     const counts: Record<string, number> = {};
     products.forEach((product) => {
       if (!product.category) return;
-      counts[product.category] = (counts[product.category] || 0) + 1;
+      const cat = product.category === 'usb-storage' ? 'usb' : product.category;
+      counts[cat] = (counts[cat] || 0) + 1;
     });
     return counts;
   }, [products]);
@@ -122,7 +123,19 @@ const ProductsPage: React.FC = () => {
   const totalCount = products.length;
   
   const [sortBy, setSortBy] = React.useState<string>('newest');
-  const [currentPage, setCurrentPage] = React.useState(1);
+  // Current page is stored in URL (?page=) so it survives back navigation and reload
+  const pageParam = parseInt(searchParams.get('page') || '1', 10);
+  const currentPage = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+  const setCurrentPage = React.useCallback((value: number | ((p: number) => number)) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      const prevPage = parseInt(prev.get('page') || '1', 10) || 1;
+      const newPage = typeof value === 'function' ? value(prevPage) : value;
+      if (newPage <= 1) next.delete('page');
+      else next.set('page', String(newPage));
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
   const PRODUCTS_PER_PAGE = 12;
   const [selectedBrands, setSelectedBrands] = React.useState<string[]>([]);
   const [selectedPriceRange, setSelectedPriceRange] = React.useState<string>('');
@@ -698,7 +711,12 @@ const ProductsPage: React.FC = () => {
     
     let filtered = selectedCategory === 'all' 
       ? products 
-      : products.filter(product => product.category === selectedCategory);
+      : products.filter(product => {
+          if (selectedCategory === 'usb') {
+            return product.category === 'usb' || product.category === 'usb-storage';
+          }
+          return product.category === selectedCategory;
+        });
 
     // Filter by search query from URL
     const searchQuery = searchParams.get('search');
@@ -947,23 +965,56 @@ const ProductsPage: React.FC = () => {
     currentPage * PRODUCTS_PER_PAGE
   );
 
-  // Reset to page 1 whenever filters change
+  // Reset to page 1 whenever filters change (but not on initial load / returning from detail)
+  const filterKeyRef = React.useRef<string | null>(null);
   React.useEffect(() => {
-    setCurrentPage(1);
-  }, [filteredProducts.length, selectedCategory]);
+    if (productsLoading || !products || products.length === 0) return;
+    const key = `${selectedCategory}|${filteredProducts.length}`;
+    if (filterKeyRef.current === null) {
+      filterKeyRef.current = key;
+      return;
+    }
+    if (filterKeyRef.current !== key) {
+      filterKeyRef.current = key;
+      setCurrentPage(1);
+    }
+  }, [filteredProducts.length, selectedCategory, productsLoading, products, setCurrentPage]);
+
+  // Clamp page if it exceeds total pages after data loads
+  React.useEffect(() => {
+    if (productsLoading || totalPages === 0) return;
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages, productsLoading, setCurrentPage]);
 
   // Helper: build page number range with ellipsis
   const getPageRange = (current: number, total: number): (number | '...')[] => {
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    if (total <= 4) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+
+    // Khi trang hiện tại là trang đầu (1): 1 trang kế bên (2), trang hiện tại (1), trang cuối (total) -> 3 số và ...
+    if (current === 1) {
+      return [1, 2, '...', total];
+    }
+
+    // Khi trang hiện tại là trang cuối (total): 1 trang kế bên (total - 1), trang hiện tại (total), trang đầu (1) -> 3 số và ...
+    if (current === total) {
+      return [1, '...', total - 1, total];
+    }
+
+    // Các trường hợp còn lại: số trang đầu (1), cuối (total), trang hiện tại, và 2 trang kế bên (current - 1, current + 1)
+    const rawPages = Array.from(new Set([1, current - 1, current, current + 1, total]))
+      .filter(p => p >= 1 && p <= total)
+      .sort((a, b) => a - b);
+
     const pages: (number | '...')[] = [];
-    const delta = 2;
-    const left = Math.max(2, current - delta);
-    const right = Math.min(total - 1, current + delta);
-    pages.push(1);
-    if (left > 2) pages.push('...');
-    for (let i = left; i <= right; i++) pages.push(i);
-    if (right < total - 1) pages.push('...');
-    pages.push(total);
+    for (let i = 0; i < rawPages.length; i++) {
+      if (i > 0 && rawPages[i] > rawPages[i - 1] + 1) {
+        pages.push('...');
+      }
+      pages.push(rawPages[i]);
+    }
+
     return pages;
   };
 

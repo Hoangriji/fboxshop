@@ -103,16 +103,15 @@ const Header: React.FC<HeaderProps> = ({
     }
   }, [searchQuery, products]);
 
-  // Helper to get product name without parentheses and "Bàn phím" prefix (for search suggestions only)
+  // Helper to get product name without parentheses and "Bàn phím" / "Bàn phím cơ" prefix (for search suggestions only)
   const getDisplayName = (name: string) => {
     let displayName = name;
     const parenIndex = displayName.indexOf('(');
     if (parenIndex !== -1) {
       displayName = displayName.substring(0, parenIndex).trim();
     }
-    if (displayName.toLowerCase().startsWith('bàn phím')) {
-      displayName = displayName.substring('bàn phím'.length).trim();
-    }
+    // Remove "bàn phím cơ" or "bàn phím" prefix cleanly (case-insensitive)
+    displayName = displayName.replace(/^bàn\s+phím(?:\s+cơ)?\s*/i, '').trim();
     return displayName;
   };
 

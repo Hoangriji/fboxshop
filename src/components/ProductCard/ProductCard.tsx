@@ -27,16 +27,15 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onViewDetails }) => {
   const [isFlipped, setIsFlipped] = useState(false);
 
-  // Helper to get product name without parentheses and "Bàn phím" prefix
+  // Helper to get product name without parentheses and "Bàn phím" / "Bàn phím cơ" prefix
   const getDisplayName = (name: string) => {
     let displayName = name;
     const parenIndex = displayName.indexOf('(');
     if (parenIndex !== -1) {
       displayName = displayName.substring(0, parenIndex).trim();
     }
-    if (displayName.toLowerCase().startsWith('bàn phím')) {
-      displayName = displayName.substring('bàn phím'.length).trim();
-    }
+    // Remove "bàn phím cơ" or "bàn phím" prefix cleanly (case-insensitive)
+    displayName = displayName.replace(/^bàn\s+phím(?:\s+cơ)?\s*/i, '').trim();
     return displayName;
   };
 
@@ -105,15 +104,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onViewDetails
             </div> */}
 
             <div className="card-price">
-              {product.originalPrice &&
-                product.originalPrice > (product.price || 0) && (
-                  <span className="card-price-original">
-                    {product.originalPrice.toLocaleString("vi-VN")}đ
-                  </span>
-                )}
               <span className="card-price-current">
                 {(product.price || 0).toLocaleString("vi-VN")}đ
               </span>
+              {typeof product.originalPrice === 'number' &&
+              product.originalPrice > (product.price || 0) ? (
+                <span className="card-price-original">
+                  {product.originalPrice.toLocaleString("vi-VN")}đ
+                </span>
+              ) : null}
             </div>
 
             <button

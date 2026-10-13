@@ -1581,30 +1581,55 @@ const OrderManagement: React.FC = () => {
         </button>
       </div>
 
-      <div className="page-header">
+      <div className="page-header orders-page-header">
         <h2><i className={`fas ${pageIcon}`}></i> {pageTitle}</h2>
-        <div className="search-wrapper">
-          <i className="fas fa-search"></i>
-          <input
-            type="text"
-            className="search-input"
-            placeholder={searchPlaceholder}
-            value={activeTab === 'orders' ? orderSearchQuery : customerSearchQuery}
-            onChange={(e) => {
-              if (activeTab === 'orders') {
-                setOrderSearchQuery(e.target.value);
-              } else {
-                setCustomerSearchQuery(e.target.value);
-              }
-            }}
-          />
+        <div className="orders-header-actions">
+          <div className="search-wrapper">
+            <i className="fas fa-search"></i>
+            <input
+              type="text"
+              className="search-input"
+              placeholder={searchPlaceholder}
+              value={activeTab === 'orders' ? orderSearchQuery : customerSearchQuery}
+              onChange={(e) => {
+                if (activeTab === 'orders') {
+                  setOrderSearchQuery(e.target.value);
+                } else {
+                  setCustomerSearchQuery(e.target.value);
+                }
+              }}
+            />
+            {activeTab === 'orders' ? (
+              orderSearchQuery && (
+                <button
+                  type="button"
+                  className="search-clear-btn"
+                  onClick={() => setOrderSearchQuery('')}
+                  aria-label="Xoá tìm kiếm"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              )
+            ) : (
+              customerSearchQuery && (
+                <button
+                  type="button"
+                  className="search-clear-btn"
+                  onClick={() => setCustomerSearchQuery('')}
+                  aria-label="Xoá tìm kiếm"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              )
+            )}
+          </div>
+          {activeTab === 'orders' && (
+            <button className="btn-primary" onClick={() => setIsCreateOrderOpen(true)}>
+              <i className="fas fa-plus"></i>
+              <span>Tạo đơn hàng mới</span>
+            </button>
+          )}
         </div>
-        {activeTab === 'orders' && (
-          <button className="btn-primary" onClick={() => setIsCreateOrderOpen(true)}>
-            <i className="fas fa-plus"></i>
-            <span>Tạo đơn hàng mới</span>
-          </button>
-        )}
       </div>
 
       <div className="tab-panel" key={activeTab}>

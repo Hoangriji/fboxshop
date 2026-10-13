@@ -320,7 +320,7 @@
   cursor: pointer;
 }
 
-.search-input {
+.mobile-search-input-wrapper .search-input {
   position: fixed;
   top: calc(70px + 0.75rem);
   left: 1rem;
@@ -338,8 +338,8 @@
   z-index: 1002;
 }
 
-.search-container.open .search-input,
-.search-input:focus {
+.search-container.open .mobile-search-input-wrapper .search-input,
+.mobile-search-input-wrapper .search-input:focus {
   opacity: 1;
   pointer-events: auto;
 }

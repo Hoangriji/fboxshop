@@ -26,11 +26,16 @@ export const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
   onViewDetails 
 }) => {
   // Convert database Product format to ProductCard format
+  const currentPrice = databaseProduct.price_vnd || 0;
+  const originalPrice = (databaseProduct.original_price_vnd && databaseProduct.original_price_vnd > 0)
+    ? databaseProduct.original_price_vnd
+    : currentPrice;
+
   const product: SimpleProduct = {
     id: databaseProduct.id, // Keep as string from database
     name: databaseProduct.name,
-    price: databaseProduct.price_vnd,
-    originalPrice: databaseProduct.original_price_vnd,
+    price: currentPrice,
+    originalPrice: originalPrice,
     image: databaseProduct.images?.[0] || 'https://via.placeholder.com/300x200?text=No+Image',
     category: databaseProduct.category,
     description: databaseProduct.description,

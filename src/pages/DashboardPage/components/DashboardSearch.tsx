@@ -35,6 +35,7 @@ const DashboardSearch: React.FC = () => {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [results, setResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -43,6 +44,7 @@ const DashboardSearch: React.FC = () => {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const mobileInputRef = useRef<HTMLInputElement>(null);
   const fetchedRef = useRef(false);
 
   // Load all products once (cached for the session)
@@ -72,7 +74,7 @@ const DashboardSearch: React.FC = () => {
     setActiveIdx(-1);
   }, [query, allProducts]);
 
-  // Close on outside click
+  // Close desktop dropdown on outside click
   useEffect(() => {
     const handle = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -82,6 +84,19 @@ const DashboardSearch: React.FC = () => {
     document.addEventListener('mousedown', handle);
     return () => document.removeEventListener('mousedown', handle);
   }, []);
+
+  // Handle mobile search open/close
+  const handleOpenMobile = () => {
+    ensureProducts();
+    setMobileOpen(true);
+    setTimeout(() => mobileInputRef.current?.focus(), 50);
+  };
+
+  const handleCloseMobile = () => {
+    setMobileOpen(false);
+    setQuery('');
+    setResults([]);
+  };
 
   const handleFocus = () => {
     ensureProducts();
@@ -96,7 +111,11 @@ const DashboardSearch: React.FC = () => {
   const handleClear = () => {
     setQuery('');
     setResults([]);
-    inputRef.current?.focus();
+    if (mobileOpen) {
+      mobileInputRef.current?.focus();
+    } else {
+      inputRef.current?.focus();
+    }
   };
 
   const handleCopyId = async (id: string, e: React.MouseEvent) => {
@@ -110,12 +129,19 @@ const DashboardSearch: React.FC = () => {
     e.stopPropagation();
     navigate(`/dashboard/products?search=${encodeURIComponent(product.name)}`);
     setOpen(false);
+    setMobileOpen(false);
     setQuery('');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!open) return;
-    if (e.key === 'Escape') { setOpen(false); inputRef.current?.blur(); return; }
+    if (!open && !mobileOpen) return;
+    if (e.key === 'Escape') {
+      setOpen(false);
+      setMobileOpen(false);
+      inputRef.current?.blur();
+      mobileInputRef.current?.blur();
+      return;
+    }
     if (!results.length) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -128,6 +154,7 @@ const DashboardSearch: React.FC = () => {
       const p = results[activeIdx];
       navigate(`/dashboard/products?search=${encodeURIComponent(p.name)}`);
       setOpen(false);
+      setMobileOpen(false);
       setQuery('');
     }
   };
@@ -136,107 +163,244 @@ const DashboardSearch: React.FC = () => {
   const showDropdown = open && (loading || query.trim().length > 0);
 
   return (
-    <div className="ds-container" ref={containerRef}>
-      <div className={`ds-input-wrap ${open ? 'ds-focused' : ''}`}>
-        <i className="fas fa-search ds-icon-search"></i>
-        <input
-          ref={inputRef}
-          type="text"
-          className="ds-input"
-          placeholder="Tìm sản phẩm theo tên, mã SP, SKU, thương hiệu..."
-          value={query}
-          onChange={handleChange}
-          onFocus={handleFocus}
-          onKeyDown={handleKeyDown}
-          autoComplete="off"
-          spellCheck={false}
-        />
-        {query && (
-          <button className="ds-clear-btn" onClick={handleClear} tabIndex={-1} aria-label="Xoá">
-            <i className="fas fa-times"></i>
-          </button>
+    <>
+      {/* DESKTOP SEARCH BAR (visible on >= 992px) */}
+      <div className="ds-container ds-desktop-container" ref={containerRef}>
+        <div className={`ds-input-wrap ${open ? 'ds-focused' : ''}`}>
+          <i className="fas fa-search ds-icon-search"></i>
+          <input
+            ref={inputRef}
+            type="text"
+            className="ds-input"
+            placeholder="Tìm sản phẩm theo tên, mã SP, SKU, thương hiệu..."
+            value={query}
+            onChange={handleChange}
+            onFocus={handleFocus}
+            onKeyDown={handleKeyDown}
+            autoComplete="off"
+            spellCheck={false}
+          />
+          {query && (
+            <button className="ds-clear-btn" onClick={handleClear} tabIndex={-1} aria-label="Xoá">
+              <i className="fas fa-times"></i>
+            </button>
+          )}
+        </div>
+
+        {showDropdown && (
+          <div className="ds-dropdown">
+            {loading && !hasResults && (
+              <div className="ds-empty">
+                <i className="fas fa-spinner fa-spin"></i>
+                <span>Đang tải sản phẩm...</span>
+              </div>
+            )}
+
+            {!loading && query.trim().length > 0 && !hasResults && (
+              <div className="ds-empty">
+                <i className="fas fa-box-open"></i>
+                <span>Không tìm thấy sản phẩm nào phù hợp</span>
+              </div>
+            )}
+
+            {hasResults && (
+              <>
+                <div className="ds-results-header">
+                  <span><i className="fas fa-list"></i> {results.length} kết quả</span>
+                  <span className="ds-hint">↑↓ điều hướng · Enter chọn · Esc đóng</span>
+                </div>
+                <ul className="ds-list">
+                  {results.map((p, idx) => {
+                    const stockCfg = STOCK_CONFIG[p.stock_status ?? 'in_stock'];
+                    const catLabel = CATEGORY_LABELS[p.category] ?? p.category;
+                    return (
+                      <li
+                        key={p.id}
+                        className={`ds-item ${idx === activeIdx ? 'ds-item-active' : ''}`}
+                        onMouseEnter={() => setActiveIdx(idx)}
+                        onClick={(e) => handleGoToProduct(p, e)}
+                      >
+                        <div className="ds-thumb">
+                          {p.images?.[0]
+                            ? <img src={p.images[0]} alt={p.name} />
+                            : <i className="fas fa-image"></i>
+                          }
+                        </div>
+
+                        <div className="ds-info">
+                          <div className="ds-name">{p.name}</div>
+                          <div className="ds-meta">
+                            <span className="ds-cat">{catLabel}</span>
+                            {p.brand && <span className="ds-brand">{p.brand}</span>}
+                            {p.sku && <span className="ds-sku">SKU: {p.sku}</span>}
+                          </div>
+                          <div className="ds-meta ds-meta-2">
+                            <span className="ds-price">{(p.price_vnd ?? 0).toLocaleString('vi-VN')}đ</span>
+                            <span className={`ds-stock ${stockCfg.cls}`}>{stockCfg.label}</span>
+                          </div>
+                        </div>
+
+                        <div className="ds-actions">
+                          <button
+                            className={`ds-copy-btn ${copiedId === p.id ? 'ds-copied' : ''}`}
+                            onClick={(e) => handleCopyId(p.id, e)}
+                            title="Copy mã SP"
+                          >
+                            <i className={`fas ${copiedId === p.id ? 'fa-check' : 'fa-copy'}`}></i>
+                            <span>{copiedId === p.id ? 'Đã copy' : 'ID'}</span>
+                          </button>
+                          <button
+                            className="ds-open-btn"
+                            onClick={(e) => handleGoToProduct(p, e)}
+                            title="Mở trong quản lý SP"
+                          >
+                            <i className="fas fa-external-link-alt"></i>
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+          </div>
         )}
       </div>
 
-      {showDropdown && (
-        <div className="ds-dropdown">
-          {loading && !hasResults && (
-            <div className="ds-empty">
-              <i className="fas fa-spinner fa-spin"></i>
-              <span>Đang tải sản phẩm...</span>
-            </div>
-          )}
+      {/* MOBILE SEARCH TRIGGER (visible on < 992px) */}
+      <div className="ds-mobile-trigger-wrapper">
+        <button
+          type="button"
+          className="ds-mobile-trigger-btn"
+          onClick={handleOpenMobile}
+          aria-label="Tìm kiếm sản phẩm"
+          title="Tìm kiếm sản phẩm"
+        >
+          <i className="fas fa-search"></i>
+        </button>
+      </div>
 
-          {!loading && query.trim().length > 0 && !hasResults && (
-            <div className="ds-empty">
-              <i className="fas fa-box-open"></i>
-              <span>Không tìm thấy sản phẩm nào phù hợp</span>
-            </div>
-          )}
+      {/* MOBILE FULL-WIDTH FLOATING SEARCH OVERLAY */}
+      {mobileOpen && (
+        <>
+          {/* Backdrop */}
+          <div className="ds-mobile-backdrop" onClick={handleCloseMobile}></div>
 
-          {hasResults && (
-            <>
-              <div className="ds-results-header">
-                <span><i className="fas fa-list"></i> {results.length} kết quả</span>
-                <span className="ds-hint">↑↓ điều hướng · Enter chọn · Esc đóng</span>
+          {/* Floating Search Bar & Results */}
+          <div className="ds-mobile-overlay-box">
+            <div className="ds-mobile-search-row">
+              <div className="ds-mobile-input-box">
+                <i className="fas fa-search ds-mobile-search-icon"></i>
+                <input
+                  ref={mobileInputRef}
+                  type="text"
+                  className="ds-mobile-input"
+                  placeholder="Tìm tên, SKU, mã SP, thương hiệu..."
+                  value={query}
+                  onChange={handleChange}
+                  onKeyDown={handleKeyDown}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                {query && (
+                  <button
+                    type="button"
+                    className="ds-mobile-clear-btn"
+                    onClick={handleClear}
+                    aria-label="Xoá tìm kiếm"
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                )}
               </div>
-              <ul className="ds-list">
-                {results.map((p, idx) => {
-                  const stockCfg = STOCK_CONFIG[p.stock_status ?? 'in_stock'];
-                  const catLabel = CATEGORY_LABELS[p.category] ?? p.category;
-                  return (
-                    <li
-                      key={p.id}
-                      className={`ds-item ${idx === activeIdx ? 'ds-item-active' : ''}`}
-                      onMouseEnter={() => setActiveIdx(idx)}
-                      onClick={(e) => handleGoToProduct(p, e)}
-                    >
-                      <div className="ds-thumb">
-                        {p.images?.[0]
-                          ? <img src={p.images[0]} alt={p.name} />
-                          : <i className="fas fa-image"></i>
-                        }
-                      </div>
+              <button
+                type="button"
+                className="ds-mobile-close-btn"
+                onClick={handleCloseMobile}
+                aria-label="Đóng tìm kiếm"
+              >
+                <span>Hủy</span>
+              </button>
+            </div>
 
-                      <div className="ds-info">
-                        <div className="ds-name">{p.name}</div>
-                        <div className="ds-meta">
-                          <span className="ds-cat">{catLabel}</span>
-                          {p.brand && <span className="ds-brand">{p.brand}</span>}
-                          {p.sku && <span className="ds-sku">SKU: {p.sku}</span>}
-                        </div>
-                        <div className="ds-meta ds-meta-2">
-                          <span className="ds-price">{(p.price_vnd ?? 0).toLocaleString('vi-VN')}đ</span>
-                          <span className={`ds-stock ${stockCfg.cls}`}>{stockCfg.label}</span>
-                        </div>
-                      </div>
+            {/* Mobile Search Suggestions Dropdown */}
+            {(loading || query.trim().length > 0) && (
+              <div className="ds-mobile-dropdown">
+                {loading && !hasResults && (
+                  <div className="ds-empty">
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <span>Đang tải sản phẩm...</span>
+                  </div>
+                )}
 
-                      <div className="ds-actions">
-                        <button
-                          className={`ds-copy-btn ${copiedId === p.id ? 'ds-copied' : ''}`}
-                          onClick={(e) => handleCopyId(p.id, e)}
-                          title="Copy mã SP"
-                        >
-                          <i className={`fas ${copiedId === p.id ? 'fa-check' : 'fa-copy'}`}></i>
-                          <span>{copiedId === p.id ? 'Đã copy' : 'ID'}</span>
-                        </button>
-                        <button
-                          className="ds-open-btn"
-                          onClick={(e) => handleGoToProduct(p, e)}
-                          title="Mở trong quản lý SP"
-                        >
-                          <i className="fas fa-external-link-alt"></i>
-                        </button>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </>
-          )}
-        </div>
+                {!loading && query.trim().length > 0 && !hasResults && (
+                  <div className="ds-empty">
+                    <i className="fas fa-box-open"></i>
+                    <span>Không tìm thấy sản phẩm phù hợp</span>
+                  </div>
+                )}
+
+                {hasResults && (
+                  <>
+                    <div className="ds-results-header">
+                      <span><i className="fas fa-list"></i> {results.length} kết quả</span>
+                      <span className="ds-hint">Chạm để mở quản lý</span>
+                    </div>
+                    <ul className="ds-list">
+                      {results.map((p) => {
+                        const stockCfg = STOCK_CONFIG[p.stock_status ?? 'in_stock'];
+                        const catLabel = CATEGORY_LABELS[p.category] ?? p.category;
+                        return (
+                          <li
+                            key={p.id}
+                            className="ds-item"
+                            onClick={(e) => handleGoToProduct(p, e)}
+                          >
+                            <div className="ds-thumb">
+                              {p.images?.[0] ? (
+                                <img src={p.images[0]} alt={p.name} />
+                              ) : (
+                                <i className="fas fa-image"></i>
+                              )}
+                            </div>
+
+                            <div className="ds-info">
+                              <div className="ds-name">{p.name}</div>
+                              <div className="ds-meta">
+                                <span className="ds-cat">{catLabel}</span>
+                                {p.brand && <span className="ds-brand">{p.brand}</span>}
+                              </div>
+                              <div className="ds-meta ds-meta-2">
+                                <span className="ds-price">
+                                  {(p.price_vnd ?? 0).toLocaleString('vi-VN')}đ
+                                </span>
+                                <span className={`ds-stock ${stockCfg.cls}`}>
+                                  {stockCfg.label}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="ds-actions">
+                              <button
+                                className="ds-open-btn"
+                                onClick={(e) => handleGoToProduct(p, e)}
+                                title="Xem sản phẩm"
+                              >
+                                <i className="fas fa-arrow-right"></i>
+                              </button>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </>
       )}
-    </div>
+    </>
   );
 };
 

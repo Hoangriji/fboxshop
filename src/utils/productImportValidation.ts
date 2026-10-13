@@ -46,7 +46,9 @@ export const validateProduct = (product: ParsedProduct): ValidationResult => {
     'mouse',
     'headset',
     'monitor',
+    'usb',
     'usb-storage',
+    'digital',
     'digital-products',
     'other'
   ];
@@ -95,7 +97,7 @@ export const validateProduct = (product: ParsedProduct): ValidationResult => {
   }
 
   // Price logic validation
-  if (product.original_price_vnd && product.price_vnd) {
+  if (product.original_price_vnd && product.price_vnd && product.original_price_vnd > 0) {
     if (product.original_price_vnd < product.price_vnd) {
       warnings.push('Giá gốc nhỏ hơn giá bán, không hợp lý');
     }
@@ -189,7 +191,43 @@ export const toCleanProduct = (product: ParsedProduct): Omit<Product, 'id'> => {
   delete (clean as ParsedProduct)._errors;
   delete (clean as ParsedProduct)._warnings;
 
-  // Ensure required fields
+  // Ensure stock_status
+  if (!clean.stock_status) {
+    clean.stock_status = (product.stock !== undefined && product.stock === 0) ? 'out_of_stock' : 'in_stock';
+  }
+
+  // Remove temporary Excel-only stock field from Firestore Product
+  delete (clean as ParsedProduct).stock;
+
+  // Normalize category to standard Firestore IDs
+  if (clean.category === 'usb-storage') {
+    clean.category = 'usb';
+  } else if (clean.category === 'digital-products') {
+    clean.category = 'digital';
+  }
+
+  // Ensure original_price_vnd defaults to price_vnd if missing, null, or <= 0
+  const curPrice = typeof clean.price_vnd === 'number' ? clean.price_vnd : Number(clean.price_vnd) || 0;
+  if (!clean.original_price_vnd || clean.original_price_vnd <= 0) {
+    clean.original_price_vnd = curPrice;
+  }
+  clean.price_virtual = clean.original_price_vnd;
+  if (clean.original_price_vnd > curPrice) {
+    clean.discount = Math.round(((clean.original_price_vnd - curPrice) / clean.original_price_vnd) * 100);
+  } else {
+    clean.discount = 0;
+  }
+
+  // Ensure source tracking for manual/excel import
+  if (!clean.source) {
+    clean.source = 'manual';
+  }
+
+  // Ensure timestamps
+  if (!clean.created_at) {
+    clean.created_at = new Date().toISOString();
+  }
+
   return clean as Omit<Product, 'id'>;
 };
 

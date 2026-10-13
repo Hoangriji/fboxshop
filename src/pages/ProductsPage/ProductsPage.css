@@ -7,7 +7,7 @@
 .products-container {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2rem 2rem 3.5rem 2rem;
 }
 
 /* Page Header */
@@ -1139,16 +1139,17 @@
 /* Tablet - Under 1000px */
 @media (max-width: 1000px) {
   .products-page {
-    padding-top: 65px;
+    padding-top: 0;
   }
   
   .products-container {
-    padding: 1.7rem;
+    padding: 1.5rem 1.5rem 3.5rem 1.5rem;
   }
   
+  .products-page .page-header,
   .page-header {
-    margin-bottom: 2.55rem;
-    padding: 1.7rem 0;
+    margin-bottom: 1.5rem;
+    padding: 1rem 0;
   }
   
   .header-content h1.page-title {
@@ -1244,19 +1245,20 @@
 /* Tablet - Under 800px */
 @media (max-width: 800px) {
   .products-page {
-    padding-top: 60px;
+    padding-top: 0;
   }
   
   .products-container {
-    padding: 1.5rem;
+    padding: 1rem 1rem 3.5rem 1rem;
   }
   
+  .products-page .page-header,
   .page-header {
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 0.5rem;
     text-align: center;
-    margin-bottom: 2.25rem;
-    padding: 1.5rem 0;
+    margin-bottom: 1rem;
+    padding: 0.75rem 0;
   }
   
   .header-content h1.page-title {
@@ -1363,23 +1365,25 @@
 /* Mobile - Under 600px */
 @media (max-width: 600px) {
   .products-page {
-    padding-top: 55px;
+    padding-top: 0;
   }
   
   .products-container {
-    padding: 1.25rem;
+    padding: 0.5rem 1rem 3rem 1rem;
   }
   
+  .products-page .page-header,
   .page-header {
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding: 1.25rem 0;
+    gap: 0;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0;
   }
   
   .header-content h1.page-title {
-    gap: 0.625rem;
-    font-size: 1.75rem;
+    gap: 0.35rem;
+    font-size: 1.5rem;
     flex-direction: column;
+    margin: 0;
   }
   
   .page-description {
@@ -1513,22 +1517,24 @@
 /* Mobile - Under 400px */
 @media (max-width: 400px) {
   .products-page {
-    padding-top: 50px;
+    padding-top: 0;
   }
   
   .products-container {
-    padding: 1rem;
+    padding: 0.5rem 0.75rem 2.5rem 0.75rem;
   }
   
+  .products-page .page-header,
   .page-header {
-    gap: 0.875rem;
-    margin-bottom: 1.75rem;
-    padding: 1rem 0;
+    gap: 0;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
   }
   
   .header-content h1.page-title {
-    gap: 0.5rem;
-    font-size: 1.6rem;
+    gap: 0.25rem;
+    font-size: 1.35rem;
+    margin: 0;
   }
   
   .page-description {
@@ -2157,7 +2163,7 @@
     font-size: 0.75rem;
   }
 
-  .header-content{
-    margin-top: 1rem;
+  .header-content {
+    margin-top: 0;
   }
 }

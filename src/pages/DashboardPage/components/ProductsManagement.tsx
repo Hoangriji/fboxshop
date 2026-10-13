@@ -234,6 +234,18 @@ const ProductsManagement: React.FC = () => {
           return;
         }
       }
+
+      // Kiểm tra giới hạn sản phẩm physical featured (nổi bật)
+      if (productData.type !== 'digital' && productData.featured && (!editingProduct || !editingProduct.featured)) {
+        const currentPhysicalFeaturedCount = products.filter(
+          p => p.featured && p.type !== 'digital' && p.id !== editingProduct?.id
+        ).length;
+        
+        if (currentPhysicalFeaturedCount >= 8) {
+          setErrorModal({ show: true, message: 'Chỉ được chọn tối đa 8 sản phẩm vật lý nổi bật cho carousel! Vui lòng bỏ nổi bật sản phẩm khác trước.' });
+          return;
+        }
+      }
       
       if (editingProduct) {
         await ProductsService.updateProduct(editingProduct.id, productData);

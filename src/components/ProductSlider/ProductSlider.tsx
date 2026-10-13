@@ -57,11 +57,27 @@ const ProductSlider: React.FC<ProductSliderProps> = memo(({
     }
   }, []);
 
+  const handleMouseEnter = useCallback(() => {
+    if (swiperRef.current?.swiper?.autoplay) {
+      swiperRef.current.swiper.autoplay.stop();
+    }
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (swiperRef.current?.swiper?.autoplay && autoplay) {
+      swiperRef.current.swiper.autoplay.start();
+    }
+  }, [autoplay]);
+
   const canLoop = products.length > slidesPerView;
 
   return (
     <div className="product-slider-wrapper">
-      <div className="product-slider-container">
+      <div 
+        className="product-slider-container"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
         {showNavigation && (
           <>
             <button
@@ -91,15 +107,21 @@ const ProductSlider: React.FC<ProductSliderProps> = memo(({
           loop={canLoop}
           grabCursor={true}
           speed={500}
-          autoplay={autoplay ? { delay: 5000, disableOnInteraction: false } : false}
+          autoplay={
+            autoplay
+              ? {
+                  delay: 5000,
+                  disableOnInteraction: false,
+                  pauseOnMouseEnter: true,
+                }
+              : false
+          }
           navigation={false}
           breakpoints={{
-            320: { slidesPerView: 1.1, spaceBetween: 16 },
-            480: { slidesPerView: 2, spaceBetween: 16 },
-            640: { slidesPerView: 2.5, spaceBetween: 20 },
-            768: { slidesPerView: 3, spaceBetween: 20 },
-            1024: { slidesPerView: 3.5, spaceBetween: 24 },
-            1280: { slidesPerView: slidesPerView, spaceBetween },
+            0:    { slidesPerView: 1, spaceBetween: 12, centeredSlides: true },
+            640:  { slidesPerView: 2, spaceBetween: 16, centeredSlides: false },
+            900:  { slidesPerView: 3, spaceBetween: 20, centeredSlides: false },
+            1280: { slidesPerView: slidesPerView, spaceBetween, centeredSlides: false },
           }}
           className="product-swiper"
         >

@@ -156,10 +156,14 @@ body {
   background-attachment: fixed;
 }
 
-html,
-body {
+html {
   width: 100%;
   overflow-x: hidden;
+}
+
+body {
+  width: 100%;
+  overflow-x: clip;
 }
 
 /* Enhanced dark theme body gradient */
@@ -190,7 +194,7 @@ body {
   text-transform: uppercase;
   font-family: var(--font-family);
   overflow: hidden;
-  transition: color 0.8s ease-in-out;
+  transition: color 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1;
 }
 
@@ -204,7 +208,7 @@ body {
   height: 100%;
   background-color: white;
   transform: scaleX(0);
-  transition: transform 0.8s ease-in-out;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: -1;
 }
 
@@ -266,7 +270,7 @@ body {
   text-transform: uppercase;
   font-family: var(--font-family);
   overflow: hidden;
-  transition: color 0.8s ease-in-out;
+  transition: color 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1;
 }
 
@@ -280,7 +284,7 @@ body {
   height: 100%;
   background-color: black;
   transform: scaleX(0);
-  transition: transform 0.8s ease-in-out;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: -1;
 }
 
@@ -650,10 +654,24 @@ h1, h2, h3, h4, h5, h6,
 
 @media (max-width: 768px) {
   .snap-page {
-    scroll-snap-type: y proximity;
+    scroll-snap-type: none !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    scroll-behavior: auto !important;
   }
 
-  .snap-section.no-snap-mobile {
-    scroll-snap-align: none;
+  .snap-section {
+    min-height: auto !important;
+    scroll-snap-align: none !important;
+    scroll-snap-stop: normal !important;
   }
+}
+
+/* Required Field Indicator */
+.required-star {
+  color: #ef4444 !important;
+  font-weight: 700;
+  margin-left: 3px;
+  line-height: 1;
 }

@@ -5,6 +5,7 @@ import {
   getDoc, 
   addDoc, 
   updateDoc, 
+  setDoc,
   deleteDoc, 
   query, 
   where, 
@@ -12,7 +13,8 @@ import {
   onSnapshot,
   limit,
   startAfter,
-  QueryDocumentSnapshot
+  QueryDocumentSnapshot,
+  writeBatch
 } from 'firebase/firestore';
 import type { DocumentData } from 'firebase/firestore';
 import { 
@@ -257,11 +259,23 @@ export class ProductsService {
   // Create product
   static async createProduct(product: Omit<Product, 'id'>): Promise<string> {
     try {
+      const curPrice = typeof product.price_vnd === 'number' ? product.price_vnd : Number(product.price_vnd) || 0;
+      const origPrice = (product.original_price_vnd !== undefined && product.original_price_vnd !== null && Number(product.original_price_vnd) > 0)
+        ? Number(product.original_price_vnd)
+        : curPrice;
+      const discount = origPrice > curPrice && origPrice > 0
+        ? Math.round(((origPrice - curPrice) / origPrice) * 100)
+        : 0;
+
       // Remove undefined fields (Firebase doesn't accept undefined)
       const cleanedProduct = Object.fromEntries(
         Object.entries({
           ...product,
-          created_at: new Date().toISOString(),
+          price_vnd: curPrice,
+          original_price_vnd: origPrice,
+          price_virtual: origPrice,
+          discount,
+          created_at: product.created_at || new Date().toISOString(),
           updated_at: new Date().toISOString()
         }).filter(([, value]) => value !== undefined)
       );
@@ -292,12 +306,34 @@ export class ProductsService {
       
       // Get product name for logging
       const productDoc = await getDoc(docRef);
-      const productName = productDoc.exists() ? (productDoc.data() as Product).name : 'Unknown';
+      const existingProduct = productDoc.exists() ? (productDoc.data() as Product) : null;
+      const productName = existingProduct ? existingProduct.name : 'Unknown';
+
+      const finalUpdates: Partial<Product> = { ...updates };
+      if (finalUpdates.price_vnd !== undefined || finalUpdates.original_price_vnd !== undefined) {
+        const curPrice = finalUpdates.price_vnd !== undefined 
+          ? Number(finalUpdates.price_vnd) 
+          : (existingProduct ? existingProduct.price_vnd : 0);
+        
+        let origPrice = finalUpdates.original_price_vnd !== undefined 
+          ? Number(finalUpdates.original_price_vnd) 
+          : (existingProduct ? existingProduct.original_price_vnd : undefined);
+        
+        if (origPrice === undefined || origPrice <= 0) {
+          origPrice = curPrice;
+        }
+
+        finalUpdates.original_price_vnd = origPrice;
+        finalUpdates.price_virtual = origPrice;
+        finalUpdates.discount = origPrice > curPrice && origPrice > 0
+          ? Math.round(((origPrice - curPrice) / origPrice) * 100)
+          : 0;
+      }
       
       // Remove undefined fields (Firebase doesn't accept undefined)
       const cleanedUpdates = Object.fromEntries(
         Object.entries({
-          ...updates,
+          ...finalUpdates,
           updated_at: new Date().toISOString()
         }).filter(([, value]) => value !== undefined)
       );
@@ -358,6 +394,109 @@ export class ProductsService {
     );
     
     return results;
+  }
+
+  // Get all existing Akko keyboard products
+  static async getAkkoProducts(): Promise<Product[]> {
+    try {
+      const q = query(this.collection, where('category', '==', 'keyboard'));
+      const snapshot = await getDocs(q);
+      const products = snapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      })) as Product[];
+      
+      return products.filter(p => 
+        p.source === 'akko' || 
+        p.brand?.toLowerCase() === 'akko' || 
+        p.name.toLowerCase().includes('akko')
+      );
+    } catch (error) {
+      console.error('FirebaseService - Error getting Akko products:', error);
+      return [];
+    }
+  }
+
+  // Delete all existing Akko products using fast batching
+  static async deleteAkkoProducts(
+    onProgress?: (deleted: number, total: number) => void
+  ): Promise<number> {
+    const akkoProducts = await this.getAkkoProducts();
+    if (akkoProducts.length === 0) return 0;
+
+    let deletedCount = 0;
+    const batchSize = 100;
+    
+    for (let i = 0; i < akkoProducts.length; i += batchSize) {
+      const chunk = akkoProducts.slice(i, i + batchSize);
+      const batch = writeBatch(db);
+      for (const p of chunk) {
+        batch.delete(doc(this.collection, p.id));
+      }
+      await batch.commit();
+      deletedCount += chunk.length;
+      if (onProgress) {
+        onProgress(deletedCount, akkoProducts.length);
+      }
+    }
+
+    await ActivityLogsService.addLog({
+      action: 'delete',
+      productId: 'akko_bulk_delete',
+      productName: `Xóa toàn bộ Akko (${deletedCount} sản phẩm)`,
+      timestamp: new Date().toISOString(),
+      category: 'keyboard',
+      details: `Đã xóa sạch ${deletedCount} sản phẩm Akko cũ để chuẩn bị cào lại`
+    });
+
+    return deletedCount;
+  }
+
+  // Fast batch create products (up to 100 per batch commit)
+  static async fastBatchCreateProducts(
+    products: Omit<Product, 'id'>[],
+    onProgress?: (current: number, total: number) => void
+  ): Promise<{ success: number; failed: number }> {
+    const batchSize = 100;
+    let success = 0;
+
+    // Process from oldest to newest so newest products are committed last
+    // while strictly preserving each product's p.created_at timestamp
+    const chronologicalProducts = [...products].reverse();
+
+    for (let i = 0; i < chronologicalProducts.length; i += batchSize) {
+      const chunk = chronologicalProducts.slice(i, i + batchSize);
+      const batch = writeBatch(db);
+
+      for (const p of chunk) {
+        const docRef = doc(this.collection);
+        const cleaned = Object.fromEntries(
+          Object.entries({
+            ...p,
+            created_at: p.created_at || new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }).filter(([, value]) => value !== undefined)
+        );
+        batch.set(docRef, cleaned);
+      }
+
+      await batch.commit();
+      success += chunk.length;
+      if (onProgress) {
+        onProgress(success, chronologicalProducts.length);
+      }
+    }
+
+    await ActivityLogsService.addLog({
+      action: 'create',
+      productId: 'akko_bulk_import',
+      productName: `Nhập Akko hàng loạt (${success} sản phẩm)`,
+      timestamp: new Date().toISOString(),
+      category: 'keyboard',
+      details: `Đã nhập thành công ${success} sản phẩm Akko mới vào hệ thống`
+    });
+
+    return { success, failed: 0 };
   }
 
   // Bulk create products (for import)
@@ -700,9 +839,9 @@ export class SiteConfigService {
 
   // Update site configuration
   static async updateSiteConfig(config: Record<string, unknown>): Promise<void> {
-    await updateDoc(this.docRef, {
+    await setDoc(this.docRef, {
       ...config,
       updatedAt: new Date().toISOString()
-    });
+    }, { merge: true });
   }
 }
