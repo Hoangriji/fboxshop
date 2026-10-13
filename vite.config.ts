@@ -92,40 +92,19 @@ export default defineConfig(({ mode }) => {
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // This prevents "Cannot read properties of undefined" errors
-          if (id.includes('node_modules/react') || 
-              id.includes('node_modules/react-dom') ||
-              id.includes('node_modules/react-router') ||
-              id.includes('node_modules/scheduler')) {
-            return 'react-vendor';
-          }
-          
+          // NOTE: React and every library that depends on React (router, swr, zustand,
+          // motion, swiper, ant-design charts...) MUST stay in the same 'vendor' chunk.
+          // Splitting them creates circular chunk imports -> "Cannot read properties of
+          // undefined (reading 'createContext')" in production.
+
           // Firebase - can be safely separated (doesn't use React internals)
           if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) {
             return 'firebase-vendor';
           }
-          
-          // Charts - Heavy but isolated (lazy loaded only in dashboard)
-          if (id.includes('node_modules/@ant-design') || id.includes('node_modules/@antv')) {
-            return 'charts-vendor';
-          }
-          
-          // Swiper - Heavy UI library (lazy loaded)
-          if (id.includes('node_modules/swiper')) {
-            return 'swiper-vendor';
-          }
-          
-          // Animation libraries (GSAP, Motion)
-          if (id.includes('node_modules/gsap') || id.includes('node_modules/motion')) {
-            return 'animation-vendor';
-          }
 
-          if (id.includes('node_modules/swr')) {
-            return 'swr-vendor';
-          }
-          
-          if (id.includes('node_modules/zustand')) {
-            return 'zustand-vendor';
+          // Excel parser - pure JS, no React
+          if (id.includes('node_modules/xlsx')) {
+            return 'xlsx-vendor';
           }
         
           // Dashboard pages
