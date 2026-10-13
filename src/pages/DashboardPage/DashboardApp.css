@@ -2226,7 +2226,8 @@
 /* ========================================
    EXPORT EXCEL BUTTONS & DROPDOWN STYLES
    ======================================== */
-.header-actions {
+.page-header .header-actions,
+.dashboard-app .header-actions {
   display: flex;
   align-items: center;
   gap: 0.75rem;

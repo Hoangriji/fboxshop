@@ -255,100 +255,48 @@
   gap: 0.75rem;
 }
 
-/* Filter Button - Normal State (like btn-secondary) */
+/* Filter Button - Clean Modern Pill */
 .filter-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 14px 28px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--dark-text-primary);
-  background: var(--theme-surface);
-  border: 1px solid var(--theme-border);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-  box-shadow:
-    inset -6px -6px 12px var(--theme-shadow-dark),
-    inset 6px 6px 12px var(--theme-shadow-light);
-}
-
-:root:not(.light-theme) .filter-btn {
-  color: var(--dark-text-primary);
-  background: rgba(30, 30, 46, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    inset -8px -8px 16px rgba(0, 0, 0, 0.6),
-    inset 6px 6px 12px rgba(255, 255, 255, 0.08),
-    0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-/* Filter Button - Hover State (like btn-secondary:hover) */
-.filter-btn:hover {
-  color: var(--dark-text-primary);
-  border-color: var(--accent-border);
-  box-shadow: 
-    inset -8px -8px 16px var(--theme-shadow-dark), 
-    inset 6px 6px 12px var(--theme-shadow-light), 
-    0 0 15px var(--accent-glow);
-}
-
-:root:not(.light-theme) .filter-btn:hover {
-  color: var(--dark-text-primary);
-  border-color: var(--accent-primary);
-  background: var(--accent-primary);
-  box-shadow:
-    inset -10px -10px 20px rgba(0, 0, 0, 0.7),
-    inset 8px 8px 16px rgba(255, 255, 255, 0.12),
-    0 8px 25px rgba(0, 0, 0, 0.4),
-    0 0 20px var(--accent-glow);
-}
-
-/* Filter Button - Active State (like btn-primary) */
-.filter-btn.active {
-  padding: 14px 28px;
-  font-size: 14px;
+  padding: 8px 18px;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: white !important;
-  background: var(--accent-primary) !important;
-  letter-spacing: 0.5px;
-  border: 1px solid var(--accent-border) !important;
-  border-radius: 12px;
-  box-shadow:
-    inset -6px -6px 12px rgba(0, 0, 0, 0.3),
-    inset 6px 6px 12px rgba(255, 255, 255, 0.1),
-    0 0 15px var(--accent-glow);
+  color: var(--theme-text-primary, #111827);
+  background: #ffffff;
+  border: 1px solid var(--theme-border, #e2e8f0);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-small, 0 1px 3px rgba(0,0,0,0.05));
 }
 
-:root:not(.light-theme) .filter-btn.active {
-  color: white !important;
-  background: var(--accent-primary) !important;
-  box-shadow:
-    inset -8px -8px 16px rgba(0, 0, 0, 0.5),
-    inset 6px 6px 12px rgba(255, 255, 255, 0.2),
-    0 8px 25px rgba(0, 0, 0, 0.4),
-    0 0 20px var(--accent-glow);
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+.filter-btn:hover {
+  background: var(--theme-bg-tertiary, #f1f5f9);
+  border-color: var(--theme-text-primary, #111827);
+  color: var(--theme-text-primary, #111827);
+  transform: translateY(-1px);
 }
 
-.filter-btn.active:hover {
-  box-shadow: 
-    inset -8px -8px 16px rgba(0, 0, 0, 0.4), 
-    inset 6px 6px 12px rgba(255, 255, 255, 0.15), 
-    0 0 25px var(--accent-glow);
-}
-
-:root:not(.light-theme) .filter-btn.active:hover {
-  box-shadow:
-    inset -10px -10px 20px rgba(0, 0, 0, 0.6),
-    inset 8px 8px 16px rgba(255, 255, 255, 0.25),
-    0 15px 35px rgba(0, 0, 0, 0.5),
-    0 0 35px var(--accent-glow);
+.filter-btn.active {
+  padding: 8px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff !important;
+  background: #111827 !important;
+  border-color: #111827 !important;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(17, 24, 39, 0.2);
 }
 
 .filter-btn i {
-  opacity: 0.8;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.filter-btn.active i {
+  opacity: 1;
 }
 
 .sort-select-wrapper:hover 

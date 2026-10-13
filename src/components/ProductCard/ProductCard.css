@@ -127,7 +127,7 @@
   position: absolute;
   bottom: 0;
   width: 100%;
-  height:fit-content;
+  height: fit-content;
 
   box-sizing: border-box;
   z-index: 1;
@@ -306,7 +306,8 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   flex: 1;
-  padding-right: 30px; /* Balance the 30px button on left for true center */
+  padding-right: 30px;
+  /* Balance the 30px button on left for true center */
   white-space: nowrap;
 }
 
@@ -347,10 +348,6 @@
   border-bottom: 1px solid var(--theme-border);
 }
 
-.card-back-btn:hover {
-  background: var(--accent-primary);
-  color: var(--dark-primary);
-}
 
 .card-back-btn i {
   font-size: 14px;
@@ -369,6 +366,12 @@
   overflow-x: hidden;
   margin-bottom: 0;
   padding-right: 5px;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+.product-card-specs-container:focus {
+  outline: none;
 }
 
 /* Custom Scrollbar */

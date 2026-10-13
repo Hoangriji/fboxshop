@@ -272,7 +272,7 @@ const HomePage = () => {
           slideRefs.current.hero = el;
         }}
       >
-        <div 
+        <div
           className="hero-shell"
           onMouseEnter={() => setHeroPaused(true)}
           onMouseLeave={() => setHeroPaused(false)}
@@ -407,7 +407,7 @@ const HomePage = () => {
       >
         <div className="slide-inner">
           <div className="slide-head">
-            <span className="slide-eyebrow">Top picks</span>
+            <span className="slide-eyebrow">Lựa chọn hàng đầu</span>
             <h2 className="slide-title">Sản phẩm nổi bật</h2>
             {/* <p className="slide-subtitle">Những lựa chọn gaming gear được yêu thích nhất.</p> */}
           </div>

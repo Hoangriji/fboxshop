@@ -1,9 +1,30 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useProducts } from '../../hooks/useProducts';
+import { useCategories } from '../../hooks/useCategories';
 import type { Product } from '../../types';
 import logo from '../../assets/logo.png';
 import './Header.css';
+
+const CATEGORY_ICONS: Record<string, string> = {
+  keyboard: 'fas fa-keyboard',
+  monitor: 'fas fa-desktop',
+  headphones: 'fas fa-headphones',
+  headset: 'fas fa-headphones',
+  mouse: 'fas fa-mouse',
+  usb: 'fas fa-usb',
+  'usb-storage': 'fas fa-usb',
+  other: 'fas fa-box-open',
+};
+
+const DEFAULT_CATEGORIES: Array<{ id: string; name: string; icon: string }> = [
+  { id: 'keyboard', name: 'Bàn Phím', icon: 'fas fa-keyboard' },
+  { id: 'monitor', name: 'Màn Hình', icon: 'fas fa-desktop' },
+  { id: 'headphones', name: 'Tai Nghe', icon: 'fas fa-headphones' },
+  { id: 'mouse', name: 'Chuột', icon: 'fas fa-mouse' },
+  { id: 'usb', name: 'USB & Phụ Kiện', icon: 'fas fa-usb' },
+  { id: 'other', name: 'Sản Phẩm Khác', icon: 'fas fa-box-open' },
+];
 
 interface HeaderProps {
   currentPage: string;
@@ -20,13 +41,44 @@ const Header: React.FC<HeaderProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isClickingSuggestion, setIsClickingSuggestion] = useState(false);
+  const [productsDropdownOpen, setProductsDropdownOpen] = useState(false);
+  const [mobileProductsExpanded, setMobileProductsExpanded] = useState(false);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const desktopInputRef = useRef<HTMLInputElement | null>(null);
   const headerRef = useRef<HTMLElement | null>(null);
+  const productsDropdownRef = useRef<HTMLLIElement | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const suggestionsRef = useRef<HTMLDivElement | null>(null);
   
   const { products } = useProducts();
+  const { categories } = useCategories();
+
+  const subnavCategories = useMemo(() => {
+    const valid = categories.filter(c => c.id !== 'digital');
+    if (valid.length > 0) {
+      return valid.map(c => ({
+        ...c,
+        icon: c.icon || CATEGORY_ICONS[c.id] || 'fas fa-box'
+      }));
+    }
+    return DEFAULT_CATEGORIES;
+  }, [categories]);
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    products.forEach((product) => {
+      if (!product.category || product.category === 'digital') return;
+      let cat = product.category;
+      if (cat === 'usb-storage') cat = 'usb';
+      if (cat === 'headset') cat = 'headphones';
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+    return counts;
+  }, [products]);
+
+  const totalCount = useMemo(() => {
+    return products.filter(p => p.category && p.category !== 'digital').length;
+  }, [products]);
 
   // Set a CSS variable with the header height so pages can offset content accordingly
   useEffect(() => {
@@ -115,16 +167,24 @@ const Header: React.FC<HeaderProps> = ({
     return displayName;
   };
 
-  // Close suggestions on Escape
+  // Close suggestions and dropdown on Escape or outside click
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setShowSuggestions(false);
+        setProductsDropdownOpen(false);
+      }
+    };
+    const handleClickOutside = (e: MouseEvent) => {
+      if (productsDropdownRef.current && !productsDropdownRef.current.contains(e.target as Node)) {
+        setProductsDropdownOpen(false);
       }
     };
     document.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('keydown', onKey);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
@@ -135,17 +195,85 @@ const Header: React.FC<HeaderProps> = ({
           {/* Main Navigation */}
           <nav className="main-nav">
             <ul className="nav-menu">
-              {navigationItems.map((item) => (
-                <li key={item.id} className="nav-item">
-                  <Link
-                    to={item.path}
-                    className={`nav-link ${currentPage === item.id ? 'active' : ''}`}
-                  >
-                    <i className={item.icon}></i>
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
+              {navigationItems.map((item) => {
+                if (item.id === 'products') {
+                  return (
+                    <li
+                      key={item.id}
+                      className="nav-item nav-item-dropdown"
+                      ref={productsDropdownRef}
+                      onMouseEnter={() => setProductsDropdownOpen(true)}
+                      onMouseLeave={() => setProductsDropdownOpen(false)}
+                    >
+                      <Link
+                        to={item.path}
+                        className={`nav-link ${currentPage === item.id ? 'active' : ''}`}
+                        onClick={() => setProductsDropdownOpen(false)}
+                      >
+                        <i className={item.icon}></i>
+                        <span>{item.label}</span>
+                        <i className={`fas fa-chevron-down nav-chevron ${productsDropdownOpen ? 'open' : ''}`}></i>
+                      </Link>
+
+                      {/* Dropdown Menu */}
+                      <div className={`nav-dropdown-menu ${productsDropdownOpen ? 'show' : ''}`}>
+                        <div className="nav-dropdown-header">
+                          <i className="fas fa-layer-group"></i>
+                          <span>Lọc Theo Danh Mục</span>
+                        </div>
+
+                        <div className="nav-dropdown-grid">
+                          <Link
+                            to="/products?category=all"
+                            className="nav-dropdown-item all-products"
+                            onClick={() => setProductsDropdownOpen(false)}
+                          >
+                            <div className="nav-dropdown-item-icon">
+                              <i className="fas fa-th"></i>
+                            </div>
+                            <div className="nav-dropdown-item-text">
+                              <span className="nav-dropdown-item-name">Tất cả</span>
+                            </div>
+                            <span className="nav-dropdown-item-count">{totalCount}</span>
+                          </Link>
+
+                          {subnavCategories.map((cat) => {
+                            const count = categoryCounts[cat.id] || 0;
+                            return (
+                              <Link
+                                key={cat.id}
+                                to={`/products?category=${cat.id}`}
+                                className="nav-dropdown-item"
+                                onClick={() => setProductsDropdownOpen(false)}
+                              >
+                                <div className="nav-dropdown-item-icon">
+                                  <i className={cat.icon}></i>
+                                </div>
+                                <div className="nav-dropdown-item-text">
+                                  <span className="nav-dropdown-item-name">{cat.name}</span>
+                                </div>
+                                <span className="nav-dropdown-item-count">{count}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                }
+
+                return (
+                  <li key={item.id} className="nav-item">
+                    <Link
+                      to={item.path}
+                      className={`nav-link ${currentPage === item.id ? 'active' : ''}`}
+                    >
+                      <i className={item.icon}></i>
+                      <span>{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </nav>
 
@@ -345,17 +473,77 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         <nav className="mobile-menu-nav">
-          {navigationItems.map((item) => (
-            <Link
-              key={item.id}
-              to={item.path}
-              className={`mobile-nav-link ${currentPage === item.id ? 'active' : ''}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <i className={item.icon}></i>
-              {item.label}
-            </Link>
-          ))}
+          {navigationItems.map((item) => {
+            if (item.id === 'products') {
+              return (
+                <div key={item.id} className="mobile-nav-group">
+                  <div className="mobile-nav-row">
+                    <Link
+                      to={item.path}
+                      className={`mobile-nav-link ${currentPage === item.id ? 'active' : ''}`}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <i className={item.icon}></i>
+                      <span>{item.label}</span>
+                    </Link>
+                    <button
+                      type="button"
+                      className={`mobile-nav-expand-btn ${mobileProductsExpanded ? 'expanded' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMobileProductsExpanded(!mobileProductsExpanded);
+                      }}
+                      aria-label="Mở rộng danh mục"
+                    >
+                      <i className="fas fa-chevron-down"></i>
+                    </button>
+                  </div>
+
+                  {mobileProductsExpanded && (
+                    <div className="mobile-subnav-list">
+                      <Link
+                        to="/products?category=all"
+                        className="mobile-subnav-item"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <i className="fas fa-th"></i>
+                        <span>Tất cả</span>
+                        <span className="mobile-subnav-badge">{totalCount}</span>
+                      </Link>
+
+                      {subnavCategories.map((cat) => {
+                        const count = categoryCounts[cat.id] || 0;
+                        return (
+                          <Link
+                            key={cat.id}
+                            to={`/products?category=${cat.id}`}
+                            className="mobile-subnav-item"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            <i className={cat.icon}></i>
+                            <span>{cat.name}</span>
+                            <span className="mobile-subnav-badge">{count}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={item.id}
+                to={item.path}
+                className={`mobile-nav-link ${currentPage === item.id ? 'active' : ''}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <i className={item.icon}></i>
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
       </div>
     </header>
